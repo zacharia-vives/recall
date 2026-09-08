@@ -260,6 +260,40 @@ Face ID itself is on Luke's list: it needs a phone with a face on it.
 | Y3 | The picture itself is downloaded, so it works with no wifi | pass |
 | Y4 | And she sees it when she opens the card | pass, 500px wide on screen |
 
+## Z. The consent screen, and taking it back
+
+Added the same evening, so tested the same evening. Twenty two checks, all
+passing, against the live database.
+
+| # | What was checked | Result |
+| --- | --- | --- |
+| Z1 | Linking shows the consent screen, not the cards | pass |
+| Z2 | Nothing has been fetched or sent before she answers | pass, no family card on the phone yet |
+| Z3 | It says where the cards would be kept | pass, a computer in Germany |
+| Z4 | It says letters from a doctor need a clear yes | pass |
+| Z5 | It says she can refuse and keep the app | pass |
+| Z6 | It says she can stop later | pass |
+| Z7 | It carries the medical line | pass |
+| Z8 | Both answers are offered as buttons, equally | pass |
+| Z9 | Yes fetches the family cards | pass |
+| Z10 | The consent is recorded somewhere provable | pass, in the activity log until patch 002 is applied, in the consents table after |
+| Z11 | The record names the version of the words that were read | pass, 2026-09-08 |
+| Z12 | It is remembered locally so she is not asked twice | pass |
+| Z13 | The app carries on to a screen she can read | pass |
+| Z14 | The help screen offers a way to stop sharing | pass |
+| Z15 | It asks first, in the app, not in a browser box | pass |
+| Z16 | And says what it costs before she agrees | pass, what family has stays with them |
+| Z17 | Stopping removes the link, so nothing new is shared | pass |
+| Z18 | The local note is cleared with it | pass |
+| Z19 | Her own cards are all still there afterwards | pass, four cards |
+| Z20 | The message says what happened in plain words | pass |
+| Z21 | A no removes the link too, so a no is a real no | pass |
+| Z22 | And the app carries on working on its own | pass |
+
+The whole lifecycle is readable afterwards in the log the family and she both
+see: a phone was linked, she agreed with notice version 2026-09-08, she stopped
+sharing new cards.
+
 ## The accessibility pass
 
 Axe 4.10, WCAG 2.0 A and AA, 2.1 A and AA, 2.2 AA.
