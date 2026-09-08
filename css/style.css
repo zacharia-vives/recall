@@ -133,7 +133,8 @@ h1 {
   cursor: pointer;
 }
 .card:hover { border-color: var(--orange); }
-.card .thumb {
+.card .thumb,
+.today-main .thumb {
   flex: 0 0 auto;
   width: 72px;
   height: 72px;
@@ -146,19 +147,22 @@ h1 {
   font-weight: 700;
   overflow: hidden;
 }
-.card .thumb img {
+.card .thumb img,
+.today-main .thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.card .title {
+.card .title,
+.today-main .title {
   display: block;
   font-size: 24px;
   font-weight: 700;
   color: var(--ink);
   margin: 0 0 4px;
 }
-.card .meta {
+.card .meta,
+.today-main .meta {
   display: block;
   font-size: 18px;
   color: var(--mid);
@@ -344,6 +348,59 @@ fieldset.kinds input {
   padding: 12px 16px;
   font-size: 19px;
   margin: 0 0 16px;
+}
+
+/* today items, which carry their own buttons */
+.today-item {
+  border: 3px solid var(--orange);
+  border-radius: 14px;
+  background: var(--orange-soft);
+  overflow: hidden;
+}
+.today-item.missed { border-color: var(--orange-dark); }
+.today-main {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--body);
+  padding: 16px;
+  cursor: pointer;
+}
+.today-acts {
+  display: flex;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+.today-acts .big { flex: 1 1 0; font-size: 20px; min-height: 60px; }
+.status {
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--orange-dark);
+  margin-top: 4px;
+}
+
+/* first run */
+.welcome {
+  border: 2px solid var(--rule);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 18px 20px;
+}
+.welcome p { margin: 0 0 14px; }
+.welcome p:last-child { margin-bottom: 0; }
+.welcome .warn {
+  border-top: 2px solid var(--rule);
+  padding-top: 14px;
+  color: var(--mid);
+  font-size: 20px;
 }
 
 /* who can see my cards, and the family door */

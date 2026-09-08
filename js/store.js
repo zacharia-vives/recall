@@ -1,15 +1,15 @@
 // Store: everything is kept on the device in IndexedDB.
-// Requirement P1: local only by default, nothing leaves the phone unless the
-// user signs in later. The Supabase adapter comes in step 5 and gets the same
-// four functions, so nothing above this file has to change.
+// Requirement P1: local only by default, nothing leaves the phone unless a
+// helper links it to a household. js/cloud.js does that half, and it is never
+// loaded unless js/config.js is filled in.
 
 const DB_NAME = "recall";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 // Bump this when the example cards change. Anyone who already used the app then
 // loses the old examples and gets the new ones, while their own cards are left
 // alone.
-const SEED_VERSION = 2;
+const SEED_VERSION = 3;
 const SEED_KEY = "recall.seedVersion";
 
 let db = null;
@@ -18,6 +18,16 @@ function open() {
   if (db) return Promise.resolve(db);
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+    // If another tab still holds an older version of the database, the upgrade
+    // is blocked and this request would otherwise wait for ever without an
+    // error. Fail loudly instead, so the app can say something useful.
+    req.onblocked = () => {
+      reject(new Error("Recall is open in another tab. Close it and try again."));
+    };
+    window.setTimeout(() => {
+      if (!db) reject(new Error("The storage on this phone did not open."));
+    }, 8000);
     req.onupgradeneeded = () => {
       const d = req.result;
       if (!d.objectStoreNames.contains("records")) {
@@ -26,6 +36,11 @@ function open() {
       }
       if (!d.objectStoreNames.contains("photos")) {
         d.createObjectStore("photos", { keyPath: "id" });
+      }
+      if (!d.objectStoreNames.contains("reminders")) {
+        const r = d.createObjectStore("reminders", { keyPath: "id" });
+        r.createIndex("recordId", "recordId");
+        r.createIndex("dueAt", "dueAt");
       }
     };
     req.onsuccess = () => {
@@ -52,6 +67,8 @@ export function newId() {
   return "r" + Date.now() + Math.floor(Math.random() * 1000);
 }
 
+/* ----------------------------------------------------------------- records */
+
 export async function allRecords() {
   const store = await tx("records", "readonly");
   const rows = await ask(store.getAll());
@@ -73,14 +90,24 @@ export async function saveRecord(record) {
 export async function deleteRecord(id) {
   const store = await tx("records", "readwrite");
   await ask(store.delete(id));
-  // Requirement P8: the photo goes too, not only the row.
+  // Requirement P8: the photo and the reminders go too, not only the row.
   const photos = await tx("photos", "readwrite");
   await ask(photos.delete(id));
+  const rems = await remindersFor(id);
+  for (const r of rems) await deleteReminder(r.id);
 }
+
+/* ------------------------------------------------------------------ photos */
 
 export async function savePhoto(id, blob) {
   const store = await tx("photos", "readwrite");
   await ask(store.put({ id: id, blob: blob }));
+}
+
+export async function hasPhotoStored(id) {
+  const store = await tx("photos", "readonly");
+  const row = await ask(store.get(id));
+  return Boolean(row);
 }
 
 export async function photoUrl(id) {
@@ -89,6 +116,89 @@ export async function photoUrl(id) {
   if (!row) return null;
   return URL.createObjectURL(row.blob);
 }
+
+/* --------------------------------------------------------------- reminders */
+
+export async function allReminders() {
+  const store = await tx("reminders", "readonly");
+  const rows = await ask(store.getAll());
+  rows.sort((a, b) => (a.dueAt > b.dueAt ? 1 : -1));
+  return rows;
+}
+
+export async function remindersFor(recordId) {
+  const rows = await allReminders();
+  return rows.filter((r) => r.recordId === recordId);
+}
+
+export async function saveReminder(reminder) {
+  const store = await tx("reminders", "readwrite");
+  await ask(store.put(reminder));
+  return reminder;
+}
+
+export async function deleteReminder(id) {
+  const store = await tx("reminders", "readwrite");
+  await ask(store.delete(id));
+}
+
+// One row per record with a repeat on it, instead of a new row for every
+// occurrence. Requirement R3.3.
+export function periodMs(repeat) {
+  if (repeat === "daily") return 24 * 3600 * 1000;
+  if (repeat === "twice_daily") return 12 * 3600 * 1000;
+  if (repeat === "weekly") return 7 * 24 * 3600 * 1000;
+  return 0;
+}
+
+// R3.4. Marking done is the answer to "did I take it?", so a repeating reminder
+// moves on to its next time instead of disappearing.
+export async function markReminderDone(id) {
+  const store = await tx("reminders", "readwrite");
+  const reminder = await ask(store.get(id));
+  if (!reminder) return null;
+
+  reminder.lastDoneAt = new Date().toISOString();
+  const step = periodMs(reminder.repeat);
+  if (step > 0) {
+    let next = new Date(reminder.dueAt).getTime();
+    const now = Date.now();
+    while (next <= now) next += step;
+    reminder.dueAt = new Date(next).toISOString();
+  }
+  await ask(store.put(reminder));
+  return reminder;
+}
+
+// Three values and no more, the same three the family side sees (P17).
+export function reminderStatus(reminder) {
+  const due = new Date(reminder.dueAt).getTime();
+  const now = Date.now();
+  const step = periodMs(reminder.repeat);
+
+  if (reminder.lastDoneAt) {
+    const done = new Date(reminder.lastDoneAt).getTime();
+    if (step === 0) return "done";
+    if (now - done < step) return "done";
+  }
+  if (due < now - 12 * 3600 * 1000) return "missed";
+  return "coming";
+}
+
+// What the today screen shows: due in the next two days, plus anything overdue
+// that was never marked done.
+export async function dueSoon() {
+  const rows = await allReminders();
+  const horizon = Date.now() + 48 * 3600 * 1000;
+  return rows.filter((r) => {
+    const status = reminderStatus(r);
+    if (status === "missed") return true;
+    if (status === "done") return false;
+    return new Date(r.dueAt).getTime() <= horizon;
+  });
+}
+
+/* -------------------------------------------------------------- the seeds */
 
 // A few example cards on first run, so the app is never an empty screen.
 export async function seedIfEmpty() {
@@ -121,17 +231,21 @@ export async function seedIfEmpty() {
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 3600 * 1000);
   tomorrow.setHours(10, 0, 0, 0);
+  const tonight = new Date(now.getTime() + 3 * 3600 * 1000);
+
+  const letterId = newId();
+  const personId = newId();
+  const placeId = newId();
 
   const examples = [
     {
-      id: newId(),
+      id: letterId,
       kind: "letter",
       title: "Cardiology, check-up",
       people: ["doctor Vermeulen", "Marie (daughter)"],
       place: "AZ Groeninge, Kortrijk",
       happensAt: tomorrow.toISOString(),
       tags: ["appointment", "heart"],
-      remind: "day-before",
       spokenText: "Your appointment with the cardiologist is tomorrow at ten, at AZ Groeninge.",
       ocrText: "",
       hasPhoto: false,
@@ -139,14 +253,13 @@ export async function seedIfEmpty() {
       example: true
     },
     {
-      id: newId(),
+      id: personId,
       kind: "person",
       title: "Marie, your daughter",
       people: ["Marie"],
-      place: "Gent",
+      place: "Ghent",
       happensAt: "",
       tags: ["family"],
-      remind: "",
       spokenText: "This is Marie, your daughter. She called on Tuesday evening.",
       ocrText: "",
       hasPhoto: false,
@@ -154,14 +267,13 @@ export async function seedIfEmpty() {
       example: true
     },
     {
-      id: newId(),
+      id: placeId,
       kind: "place",
       title: "The bench at Sint-Anna",
       people: ["Jan", "Marie"],
       place: "Sint-Anna park",
       happensAt: "",
       tags: ["1963"],
-      remind: "",
       spokenText: "The bench at Sint-Anna, where you and Jan sat in 1963.",
       ocrText: "",
       hasPhoto: false,
@@ -170,8 +282,28 @@ export async function seedIfEmpty() {
     }
   ];
 
-  for (const r of examples) {
-    await saveRecord(r);
-  }
+  for (const r of examples) await saveRecord(r);
+
+  // One appointment reminder and one repeating one, so the today screen shows
+  // both shapes from the first minute.
+  await saveReminder({
+    id: newId(),
+    recordId: letterId,
+    dueAt: new Date(tomorrow.getTime() - 24 * 3600 * 1000).toISOString(),
+    repeat: "none",
+    spokenText: "Your appointment with the cardiologist is tomorrow at ten.",
+    lastDoneAt: null,
+    example: true
+  });
+  await saveReminder({
+    id: newId(),
+    recordId: personId,
+    dueAt: tonight.toISOString(),
+    repeat: "daily",
+    spokenText: "Marie calls around seven in the evening.",
+    lastDoneAt: null,
+    example: true
+  });
+
   return allRecords();
 }

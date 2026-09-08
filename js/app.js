@@ -16,6 +16,7 @@ const KINDS = {
 };
 
 const screens = {
+  welcome: document.getElementById("screen-welcome"),
   today: document.getElementById("screen-today"),
   records: document.getElementById("screen-records"),
   record: document.getElementById("screen-record"),
@@ -27,8 +28,11 @@ const video = document.getElementById("video");
 const toast = document.getElementById("toast");
 
 let records = [];
+let reminders = [];
 let pendingPhoto = null; // the blob we just took, waiting to be saved
 let pendingText = "";    // the text we read off it, also waiting
+
+const WELCOME_KEY = "recall.welcomed";
 
 /* helpers */
 
@@ -100,22 +104,60 @@ async function paintThumbs(container) {
   }
 }
 
-function renderToday() {
+// R3.2. The today screen is reminders first, because that is what the keeper
+// opens the app for, and every row carries its own two buttons.
+function todayItemHtml(reminder, record) {
+  const kind = KINDS[record.kind] || KINDS.letter;
+  const status = store.reminderStatus(reminder);
+  const spoken = reminder.spokenText || record.spokenText || record.title;
+
+  return '<div class="today-item ' + (status === "missed" ? "missed" : "") + '">' +
+    '<button class="today-main" data-open="' + esc(record.id) + '">' +
+      '<span class="thumb" data-thumb="' + esc(record.id) + '">' + kind.badge + "</span>" +
+      "<span>" +
+        '<span class="title">' + esc(record.title) + "</span>" +
+        '<span class="meta">' + esc(readableDate(reminder.dueAt)) + "</span>" +
+        (status === "missed" ? '<span class="status">this one has passed</span>' : "") +
+      "</span>" +
+    "</button>" +
+    '<div class="today-acts">' +
+      '<button class="big" type="button" data-say="' + esc(spoken) + '">Read it out loud</button>' +
+      '<button class="big ghost" type="button" data-done="' + esc(reminder.id) + '">Mark done</button>' +
+    "</div>" +
+  "</div>";
+}
+
+async function renderToday() {
   const dateEl = document.getElementById("today-date");
   dateEl.textContent = new Date().toLocaleDateString("en-GB", {
     weekday: "long", day: "numeric", month: "long"
   });
 
-  const due = records.filter(isDueSoon);
   const list = document.getElementById("today-list");
+  const due = await store.dueSoon();
 
-  if (due.length === 0) {
+  const rows = [];
+  const covered = {};
+  due.forEach((reminder) => {
+    const record = records.find((r) => r.id === reminder.recordId);
+    if (!record) return;
+    covered[record.id] = true;
+    rows.push(todayItemHtml(reminder, record));
+  });
+
+  // Appointments that are coming up but that nobody set a reminder for still
+  // belong here, otherwise the screen lies.
+  records.filter((r) => isDueSoon(r) && !covered[r.id]).forEach((r) => {
+    rows.push(cardHtml(r, "due"));
+  });
+
+  if (rows.length === 0) {
     list.innerHTML =
       '<p class="empty">Nothing is due today or tomorrow.<br>' +
       "Point the camera at a letter to add something.</p>";
     return;
   }
-  list.innerHTML = due.map((r) => cardHtml(r, "due")).join("");
+  list.innerHTML = rows.join("");
   paintThumbs(list);
 }
 
@@ -146,15 +188,23 @@ async function renderRecord(id) {
   }
   document.getElementById("record-title").textContent = record.title;
 
+  const mine = reminders.filter((r) => r.recordId === record.id);
+  const reminder = mine.length ? mine[0] : null;
+  const repeatWords = {
+    none: "once", daily: "every day",
+    twice_daily: "twice a day", weekly: "every week"
+  };
+
   const rows = [
     ["Kind", (KINDS[record.kind] || KINDS.letter).label],
     ["Who", (record.people || []).join(", ")],
     ["Where", record.place],
     ["When", readableDate(record.happensAt)],
     ["Tags", (record.tags || []).join(", ")],
-    ["Reminder", record.remind === "day-before" ? "the day before"
-      : record.remind === "daily" ? "every day"
-      : record.remind === "twice" ? "twice a day" : "none"]
+    ["Reminder", reminder
+      ? readableDate(reminder.dueAt) + ", " + (repeatWords[reminder.repeat] || "once")
+      : ""],
+    ["Last done", reminder && reminder.lastDoneAt ? readableDate(reminder.lastDoneAt) : ""]
   ].filter((row) => row[1]);
 
   box.innerHTML =
@@ -166,6 +216,10 @@ async function renderRecord(id) {
     "</div>" +
     '<div class="actions">' +
       '<button class="big" type="button" id="btn-say">Read it out loud</button>' +
+      (reminder && store.reminderStatus(reminder) !== "done"
+        ? '<button class="big ghost" type="button" data-done="' + esc(reminder.id) +
+          '">Mark done</button>'
+        : "") +
       '<button class="big danger" type="button" id="btn-del">Delete this card</button>' +
     "</div>" +
     '<p class="disclaimer">Recall is not a medical device. Keep the paper letter, ' +
@@ -191,6 +245,33 @@ async function renderRecord(id) {
     say("The card is deleted.");
     go("#/records");
   });
+}
+
+/* first run */
+
+function welcomed() {
+  try {
+    return window.localStorage.getItem(WELCOME_KEY) === "yes";
+  } catch (err) {
+    return true;
+  }
+}
+
+const WELCOME_SPOKEN =
+  "This is Recall. Recall keeps the things you would hate to lose. " +
+  "Point the camera at a letter. Recall makes the print bigger and reads it out loud, " +
+  "and then it keeps it for you. Everything stays on this phone until someone in your " +
+  "family links it. Recall is not a medical device. Keep your papers, and always follow " +
+  "what your doctor or pharmacist tells you.";
+
+function finishWelcome() {
+  try {
+    window.localStorage.setItem(WELCOME_KEY, "yes");
+  } catch (err) {
+    // nothing to do, they will see it again next time
+  }
+  speech.stop();
+  go("#/today");
 }
 
 /* the household this phone belongs to, if a helper ever linked it */
@@ -248,6 +329,89 @@ async function linkThisPhone(event) {
   }
 }
 
+/* syncing with the household, once a helper has linked this phone (step 5c) */
+
+async function syncHousehold() {
+  const id = linkedHousehold();
+  if (!isConfigured() || !id) return;
+
+  try {
+    const cloud = await import("./cloud.js");
+
+    // up: anything made on this phone that the family has not seen yet
+    for (const record of records) {
+      if (record.cloudAt) continue;
+      const saved = await cloud.addRecord(id, {
+        id: record.id,
+        kind: record.kind,
+        title: record.title,
+        people: record.people,
+        place: record.place,
+        happensAt: record.happensAt || null,
+        tags: record.tags,
+        ocrText: record.ocrText,
+        spokenText: record.spokenText
+      });
+      if (record.hasPhoto) {
+        const url = await store.photoUrl(record.id);
+        if (url) {
+          const blob = await fetch(url).then((r) => r.blob());
+          const path = await cloud.uploadPhoto(id, record.id, blob);
+          await cloud.updateRecord(id, saved.id, { photo_path: path }, "the photo was added");
+        }
+      }
+      record.cloudAt = new Date().toISOString();
+      await store.saveRecord(record);
+    }
+
+    // down: cards and reminders the family added
+    const remote = await cloud.listRecords(id, false);
+    for (const row of remote) {
+      if (records.some((r) => r.id === row.id)) continue;
+      await store.saveRecord({
+        id: row.id,
+        kind: row.kind,
+        title: row.title,
+        people: row.people || [],
+        place: row.place || "",
+        happensAt: row.happens_at || "",
+        tags: row.tags || [],
+        spokenText: row.spoken_text || "",
+        ocrText: row.ocr_text || "",
+        hasPhoto: Boolean(row.photo_path),
+        createdAt: row.created_at,
+        cloudAt: new Date().toISOString()
+      });
+      if (row.photo_path) {
+        const link = await cloud.photoLink(row.photo_path);
+        if (link) {
+          const blob = await fetch(link).then((r) => r.blob());
+          await store.savePhoto(row.id, blob);
+        }
+      }
+    }
+
+    const remoteReminders = await cloud.listReminders(id);
+    for (const row of remoteReminders) {
+      if (reminders.some((r) => r.id === row.id)) continue;
+      await store.saveReminder({
+        id: row.id,
+        recordId: row.record_id,
+        dueAt: row.due_at,
+        repeat: row.repeat,
+        spokenText: row.spoken_text || "",
+        lastDoneAt: row.done_at || null
+      });
+    }
+
+    records = await store.allRecords();
+    reminders = await store.allReminders();
+  } catch (err) {
+    // No network, a paused project, or not linked properly. The app carries on
+    // with what is on the phone, which is the whole point of P1.
+  }
+}
+
 /* screens */
 
 function show(name) {
@@ -270,6 +434,11 @@ function go(hash) {
 
 async function route() {
   const hash = location.hash || "#/today";
+
+  if (!welcomed()) {
+    show("welcome");
+    return;
+  }
 
   if (hash.startsWith("#/record/")) {
     show("record");
@@ -301,7 +470,7 @@ async function route() {
     return;
   }
   show("today");
-  renderToday();
+  await renderToday();
 }
 
 /* the capture and save flow */
@@ -378,7 +547,31 @@ async function saveNew(event) {
 
   if (pendingPhoto) await store.savePhoto(id, pendingPhoto);
   await store.saveRecord(record);
+
+  // R3.1. A reminder never stands alone, it hangs on the card it belongs to.
+  const choice = document.getElementById("f-remind").value;
+  if (choice) {
+    const base = record.happensAt ? new Date(record.happensAt).getTime() : Date.now() + 3600 * 1000;
+    let dueAt = base;
+    let repeat = "none";
+    if (choice === "day-before") dueAt = base - 24 * 3600 * 1000;
+    if (choice === "daily") repeat = "daily";
+    if (choice === "twice") repeat = "twice_daily";
+    if (dueAt < Date.now()) dueAt = Date.now() + 3600 * 1000;
+
+    await store.saveReminder({
+      id: store.newId(),
+      recordId: id,
+      dueAt: new Date(dueAt).toISOString(),
+      repeat: repeat,
+      spokenText: record.spokenText || record.title,
+      lastDoneAt: null
+    });
+  }
+
   records = await store.allRecords();
+  reminders = await store.allReminders();
+  syncHousehold();
   pendingPhoto = null;
   say("Kept.");
   go("#/record/" + id);
@@ -393,8 +586,26 @@ function wire() {
     btn.addEventListener("click", () => go(btn.dataset.go));
   });
 
-  document.addEventListener("click", (event) => {
-    const card = event.target.closest("[data-open]");
+  document.addEventListener("click", async (event) => {
+    const target = event.target;
+
+    const sayIt = target.closest("[data-say]");
+    if (sayIt) {
+      if (speech.speaking()) speech.stop();
+      else if (!speech.speak(sayIt.dataset.say)) say("This browser cannot read out loud.");
+      return;
+    }
+
+    const doneIt = target.closest("[data-done]");
+    if (doneIt) {
+      await store.markReminderDone(doneIt.dataset.done);
+      reminders = await store.allReminders();
+      say("Marked done.");
+      await route();
+      return;
+    }
+
+    const card = target.closest("[data-open]");
     if (card) go("#/record/" + card.dataset.open);
   });
 
@@ -422,6 +633,12 @@ function wire() {
 
   document.getElementById("new-form").addEventListener("submit", saveNew);
 
+  document.getElementById("btn-welcome-read").addEventListener("click", () => {
+    if (speech.speaking()) speech.stop();
+    else speech.speak(WELCOME_SPOKEN);
+  });
+  document.getElementById("btn-welcome-start").addEventListener("click", finishWelcome);
+
   const help = document.getElementById("help");
   document.getElementById("btn-help").addEventListener("click", () => help.showModal());
   document.getElementById("help-close").addEventListener("click", () => help.close());
@@ -434,9 +651,21 @@ function wire() {
 
 async function init() {
   wire();
-  records = await store.seedIfEmpty();
+
+  try {
+    records = await store.seedIfEmpty();
+    reminders = await store.allReminders();
+  } catch (err) {
+    // Storage refused to open. Say so rather than showing an empty screen that
+    // looks like lost cards.
+    records = [];
+    reminders = [];
+    say(err.message || "The storage on this phone did not open.");
+  }
+
   await route();
   showWhoHasAccess();
+  syncHousehold();
 
   if ("serviceWorker" in navigator) {
     // updateViaCache none plus an explicit update check, otherwise a browser can

@@ -10,7 +10,7 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
@@ -23,6 +23,23 @@
 </header>
 
 <main id="main">
+
+  <!-- first run -->
+  <section id="screen-welcome" class="screen" hidden aria-labelledby="welcome-title">
+    <h1 id="welcome-title">This is Recall</h1>
+    <div class="welcome">
+      <p>Recall keeps the things you would hate to lose.</p>
+      <p>Point the camera at a letter. Recall makes the print bigger and reads it
+        out loud, and then it keeps it for you.</p>
+      <p>Everything stays on this phone until someone in your family links it.</p>
+      <p class="warn">Recall is not a medical device. Keep your papers, and always
+        follow what your doctor or pharmacist tells you.</p>
+    </div>
+    <div class="actions">
+      <button id="btn-welcome-read" class="big ghost" type="button">Read this out loud</button>
+      <button id="btn-welcome-start" class="big" type="button">Start</button>
+    </div>
+  </section>
 
   <!-- today -->
   <section id="screen-today" class="screen" aria-labelledby="today-title">
@@ -149,6 +166,6 @@
   </div>
 </dialog>
 
-<script type="module" src="js/app.js"></script>
+<script type="module" src="js/app.js?v=3"></script>
 </body>
 </html>

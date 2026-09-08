@@ -193,6 +193,7 @@ export async function addRecord(householdId, record) {
   const row = {
     household_id: householdId,
     created_by: user.id,
+    id: record.id || undefined,
     kind: record.kind,
     title: record.title,
     people: record.people || [],
@@ -253,11 +254,12 @@ export async function listReminders(householdId) {
   return data || [];
 }
 
-export async function setReminder(householdId, recordId, dueAt, repeat, spokenText) {
+export async function setReminder(householdId, recordId, dueAt, repeat, spokenText, id) {
   const db = await getClient();
   const { data, error } = await db
     .from("reminders")
     .insert({
+      id: id || undefined,
       household_id: householdId,
       record_id: recordId,
       due_at: dueAt,
