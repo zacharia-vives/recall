@@ -57,6 +57,7 @@ Then open <http://localhost:8080>.
     js/speech.js              reading out loud
     sw.js                     working offline
     db/schema.sql             the database, households, roles and policies
+    tests/rls_test.py         the security test, run it after any schema change
     docs/analysis.md          the full analysis and the requirements
     docs/state-of-play.pdf    where the project stands, seven pages
 
@@ -94,6 +95,19 @@ database, and this is the whole setup.
 
 Then the family app works: sign in, create a household, and use "Link her phone"
 to turn any phone into the keeper phone with a six letter code.
+
+## The security test
+
+`tests/rls_test.py` opens two separate anonymous sessions against the live
+project and checks twenty three things: that one household cannot see another,
+that a stranger cannot write into it or read its photos, that the keeper can add
+a card but not edit one, that a link code works once and only once, and that
+deleting a household takes everything with it. It cleans up after itself.
+
+    python tests/rls_test.py
+
+Run it after every change to `db/schema.sql`. It needs no secrets, only the
+public anon key that is already in `js/config.js`.
 
 ## Language
 
