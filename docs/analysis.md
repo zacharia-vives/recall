@@ -87,6 +87,37 @@ MoSCoW. Must is the demo and does not slip.
 | R4.6 | Shared household accounts | Could |
 | R4.7 | itsme or FranceConnect | Won't |
 
+### R5 The family interface
+
+The keeper is not the person who knows what matters, so the family gets a
+screen of its own over the same store.
+
+| ID | Requirement | Priority |
+| --- | --- | --- |
+| R5.1 | Sign in with an emailed link, never a password | Must |
+| R5.2 | See every card in the household, newest first | Must |
+| R5.3 | Add a card by typing, with a photo from the phone | Must |
+| R5.4 | Set and change a reminder, including a repeat | Must |
+| R5.5 | Follow up with three values and no more: coming, done, missed | Must |
+| R5.6 | Write the sentence Recall says out loud | Must |
+| R5.7 | Move a card to the bin and restore it within thirty days, never destroy it outright | Should |
+| R5.8 | Invite a second family member | Should |
+| R5.9 | Read the same activity log the keeper reads | Should |
+| R5.10 | Watch what the keeper does: when they opened the app, how long they looked | Won't |
+
+### R6 Household, roles and device linking
+
+| ID | Requirement | Priority |
+| --- | --- | --- |
+| R6.1 | A card belongs to a household, never to one person | Must |
+| R6.2 | Two roles and no more: keeper and helper | Must |
+| R6.3 | Link the keeper phone once, with a six letter code or the square that carries it, and never ask that phone to log in again | Must |
+| R6.4 | Every rule about who may read or change what is enforced in the database, never in the browser | Must |
+| R6.5 | Invite a second helper with a link that expires | Should |
+| R6.6 | Claiming a link code can never change a role that already exists | Should |
+| R6.7 | More than one keeper in one household | Could |
+| R6.8 | A keeper with a password of their own | Won't |
+
 ## 4. Non-functional requirements
 
 | ID | Requirement |
