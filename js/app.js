@@ -18,6 +18,7 @@ const KINDS = {
 };
 
 const screens = {
+  stuck: document.getElementById("screen-stuck"),
   welcome: document.getElementById("screen-welcome"),
   today: document.getElementById("screen-today"),
   records: document.getElementById("screen-records"),
@@ -1046,6 +1047,21 @@ function wire() {
     await drawLockSettings();
   });
 
+  document.getElementById("btn-stuck-retry").addEventListener("click", () => {
+    window.location.reload();
+  });
+  document.getElementById("btn-stuck-fresh").addEventListener("click", async () => {
+    const msg = document.getElementById("stuck-msg");
+    msg.hidden = false;
+    msg.textContent = "Clearing the store on this phone.";
+    try {
+      await store.startFresh();
+      window.location.reload();
+    } catch (err) {
+      msg.textContent = err.message || String(err);
+    }
+  });
+
   const help = document.getElementById("help");
   document.getElementById("btn-help").addEventListener("click", async () => {
     await drawLockSettings();
@@ -1097,11 +1113,17 @@ async function init() {
     records = await store.seedIfEmpty();
     reminders = await store.allReminders();
   } catch (err) {
-    // Storage refused to open. Say so rather than showing an empty screen that
-    // looks like lost cards.
     records = [];
     reminders = [];
-    say(err.message || "The storage on this phone did not open.");
+    // A wedged store is not something a toast can help with: an empty Today
+    // screen looks exactly like lost cards. Say what happened and offer the two
+    // things that can be done about it. R8.1.
+    if (err && err.stuck) {
+      show("stuck");
+      document.getElementById("stuck-msg").hidden = true;
+      return;
+    }
+    say(err.message || "The store on this phone did not open.");
   }
 
   const linked = await claimFromLink();

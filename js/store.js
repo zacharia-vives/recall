@@ -23,10 +23,19 @@ function open() {
     // is blocked and this request would otherwise wait for ever without an
     // error. Fail loudly instead, so the app can say something useful.
     req.onblocked = () => {
-      reject(new Error("Recall is open in another tab. Close it and try again."));
+      const err = new Error("Recall is open in another tab. Close it and try again.");
+      err.stuck = true;
+      reject(err);
     };
+    // Seen on a real browser: every open on this database name hangs with no
+    // error and no blocked event, because the store itself is wedged. Nothing
+    // in here can repair that, so fail in a way the app can offer a way out of.
     window.setTimeout(() => {
-      if (!db) reject(new Error("The storage on this phone did not open."));
+      if (!db) {
+        const err = new Error("The store on this phone will not open.");
+        err.stuck = true;
+        reject(err);
+      }
     }, 8000);
     req.onupgradeneeded = () => {
       const d = req.result;
@@ -48,6 +57,20 @@ function open() {
       resolve(db);
     };
     req.onerror = () => reject(req.error);
+  });
+}
+
+// R8.2. The last way out. Cards that came from the family are in the household
+// and come straight back; cards that only ever lived on this phone are gone,
+// which is why the screen that calls this says so in those words.
+export function startFresh() {
+  db = null;
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.deleteDatabase(DB_NAME);
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => reject(req.error || new Error("The store would not go."));
+    req.onblocked = () => reject(new Error("Close Recall in your other tabs first."));
+    window.setTimeout(() => reject(new Error("The store would not go. Close Recall everywhere and try again.")), 8000);
   });
 }
 

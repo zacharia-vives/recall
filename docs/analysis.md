@@ -147,6 +147,21 @@ The code itself is never stored. What is stored is a random salt and the result
 of a hundred and fifty thousand PBKDF2 rounds over the code, so four numbers
 cannot simply be read out of the phone.
 
+### R8 When the phone itself goes wrong
+
+Found while testing on 8 September: on one browser every attempt to open the
+local store hung with no error and no blocked event, because the store itself
+was wedged. Nothing in the app can repair that, and an empty Today screen looks
+exactly like lost cards, so the app has to say what happened and offer a way
+out.
+
+| ID | Requirement | Priority |
+| --- | --- | --- |
+| R8.1 | If the local store will not open, say so on its own screen, never with a toast over an empty Today | Must |
+| R8.2 | Offer both ways out: try again after closing other tabs, and start fresh on this phone | Must |
+| R8.3 | Say plainly what starting fresh costs: family cards come back, cards that only ever lived on this phone do not | Must |
+| R8.4 | Recover the cards of an unlinked phone whose store is wedged | Won't, and this is the argument for linking |
+
 ## 4. Non-functional requirements
 
 | ID | Requirement |
