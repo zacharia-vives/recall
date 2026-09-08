@@ -104,6 +104,7 @@ screen of its own over the same store.
 | R5.8 | Invite a second family member | Should |
 | R5.9 | Read the same activity log the keeper reads | Should |
 | R5.10 | Watch what the keeper does: when they opened the app, how long they looked | Won't |
+| R5.11 | A photo taken on her phone reaches the family with the card, and a photo the family adds reaches her phone | Must |
 
 ### R6 Household, roles and device linking
 

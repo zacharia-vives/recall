@@ -598,6 +598,7 @@ async function syncHousehold(options) {
           spokenText: row.spoken_text || "",
           ocrText: row.ocr_text || "",
           hasPhoto: Boolean(row.photo_path),
+          photoPath: row.photo_path || "",
           createdAt: row.created_at,
           cloudAt: new Date().toISOString()
         });
@@ -671,15 +672,18 @@ async function syncHousehold(options) {
   for (const record of records) {
     if (record.cloudAt || record.example) continue;
     try {
-      await cloud.pushRecord(id, record);
-      if (record.hasPhoto) {
+      // The photo goes up first, so its path can travel with the card itself.
+      // The old order uploaded the picture and then tried to attach it with an
+      // update, which the database refuses from a keeper phone, so the family
+      // got the card and the picture stayed on the phone.
+      if (record.hasPhoto && !record.photoPath) {
         const url = await store.photoUrl(record.id);
         if (url) {
           const blob = await fetch(url).then((r) => r.blob());
-          const path = await cloud.uploadPhoto(id, record.id, blob);
-          await cloud.updateRecord(id, record.id, { photo_path: path }, "the photo was added");
+          record.photoPath = await cloud.uploadPhoto(id, record.id, blob);
         }
       }
+      await cloud.pushRecord(id, record);
       record.cloudAt = new Date().toISOString();
       await store.saveRecord(record);
       changed = true;

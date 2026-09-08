@@ -254,7 +254,11 @@ export async function pushRecord(householdId, record) {
     happens_at: record.happensAt || null,
     tags: record.tags || [],
     ocr_text: record.ocrText || "",
-    spoken_text: record.spokenText || ""
+    spoken_text: record.spokenText || "",
+    // The keeper may insert a card but may never edit one, which the security
+    // test checks. So the photo has to travel with the insert: adding it
+    // afterwards was refused by the database and the picture stayed behind.
+    photo_path: record.photoPath || null
   };
   const { data, error } = await db
     .from("records")
