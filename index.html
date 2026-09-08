@@ -10,7 +10,7 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css?v=20">
+<link rel="stylesheet" href="css/style.css?v=21">
 </head>
 <body>
 
@@ -77,21 +77,23 @@
     </div>
   </section>
 
-  <!-- the store is wedged, R8.1. Never seen by anybody whose phone is well -->
+  <!-- the store is wedged, R8.1. Never seen by anybody whose device is well.
+       This screen says device rather than phone: it is the one screen that can
+       come up on a family member's computer as easily as on her phone. -->
   <section id="screen-stuck" class="screen" hidden aria-labelledby="stuck-title">
     <h1 id="stuck-title">Recall cannot open its store</h1>
     <div class="welcome">
-      <p>Something in this phone's own storage is stuck, so Recall cannot read
+      <p>Something in this device's own storage is stuck, so Recall cannot read
         your cards. This is not something you did.</p>
       <p><b>First try this:</b> close Recall everywhere else, in every tab and
         window, and press the button below.</p>
-      <p>If that does not help, Recall can start fresh on this phone. Cards your
-        family added come straight back. Cards that were only ever on this phone
+      <p>If that does not help, Recall can start fresh on this device. Cards your
+        family added come straight back. Cards that were only ever kept here
         cannot be brought back.</p>
     </div>
     <div class="actions">
       <button id="btn-stuck-retry" class="big" type="button">Try again</button>
-      <button id="btn-stuck-fresh" class="big danger" type="button">Start fresh on this phone</button>
+      <button id="btn-stuck-fresh" class="big danger" type="button">Start fresh on this device</button>
     </div>
     <p id="stuck-msg" class="link-msg" hidden></p>
   </section>
@@ -273,6 +275,6 @@
   </div>
 </dialog>
 
-<script type="module" src="js/app.js?v=20"></script>
+<script type="module" src="js/app.js?v=21"></script>
 </body>
 </html>

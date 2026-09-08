@@ -32,7 +32,7 @@ function open() {
     // in here can repair that, so fail in a way the app can offer a way out of.
     window.setTimeout(() => {
       if (!db) {
-        const err = new Error("The store on this phone will not open.");
+        const err = new Error("The store on this device will not open.");
         err.stuck = true;
         reject(err);
       }
@@ -61,7 +61,7 @@ function open() {
 }
 
 // R8.2. The last way out. Cards that came from the family are in the household
-// and come straight back; cards that only ever lived on this phone are gone,
+// and come straight back; cards that only ever lived on this device are gone,
 // which is why the screen that calls this says so in those words.
 export function startFresh() {
   db = null;
