@@ -18,6 +18,8 @@ const views = {
 };
 
 let household = null;   // { id, name, role, myName }
+let myUserId = null;
+let creating = false;   // guards against a second click while one is in flight
 let cards = [];
 let reminders = [];
 
@@ -84,19 +86,34 @@ async function showHouseholds() {
   const rows = await cloud.myMemberships();
   const box = document.getElementById("household-list");
 
-  if (rows.length === 0) {
+  // One row per household, not one per membership, and never a duplicate.
+  const seen = {};
+  const unique = [];
+  rows.forEach((m) => {
+    if (seen[m.household_id]) return;
+    seen[m.household_id] = true;
+    unique.push(m);
+  });
+
+  if (unique.length === 0) {
     box.innerHTML = '<p class="none">You are not part of a household yet. Set one up below.</p>';
   } else {
-    box.innerHTML = rows.map((m) => {
+    box.innerHTML = unique.map((m) => {
       const name = m.households ? m.households.name : "household";
+      const mine = m.households && myUserId && m.households.created_by === myUserId;
       return '<div class="row-item">' +
         '<span class="badge">' + esc(name.slice(0, 1).toUpperCase()) + "</span>" +
         '<span class="grow"><span class="t">' + esc(name) + "</span>" +
-        '<span class="s">you are the ' + esc(m.role) + "</span></span>" +
+        '<span class="s">you are the ' + esc(m.role) +
+        (mine ? ", and you created it" : "") + "</span></span>" +
         '<span class="acts"><button class="btn small" data-open-hh="' + esc(m.household_id) +
         '" data-hh-name="' + esc(name) + '" data-hh-role="' + esc(m.role) +
-        '" data-hh-me="' + esc(m.display_name || "") + '">Open</button></span>' +
-        "</div>";
+        '" data-hh-me="' + esc(m.display_name || "") + '">Open</button>' +
+        (mine
+          ? '<button class="btn small danger" data-drop-hh="' + esc(m.household_id) +
+            '" data-drop-name="' + esc(name) + '">Delete</button>'
+          : "") +
+        "</span></div>";
     }).join("");
   }
   showPane("households");
@@ -104,6 +121,17 @@ async function showHouseholds() {
 
 async function createHousehold(event) {
   event.preventDefault();
+
+  // Without this, a double click makes two households. It made three during
+  // testing, which is how this guard came to exist.
+  if (creating) return;
+  creating = true;
+  const button = event.target.querySelector('button[type="submit"]');
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Creating...";
+  }
+
   const name = document.getElementById("hh-name").value.trim();
   const me = document.getElementById("hh-me").value.trim();
   try {
@@ -114,6 +142,13 @@ async function createHousehold(event) {
     say("The household is ready.");
   } catch (err) {
     say("Could not create it: " + (err.message || err));
+  } finally {
+    creating = false;
+    const button = document.querySelector('#form-household button[type="submit"]');
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Create it";
+    }
   }
 }
 
@@ -406,6 +441,20 @@ function wire() {
       await refresh();
       return;
     }
+    const drop = t.closest("[data-drop-hh]");
+    if (drop) {
+      const label = drop.dataset.dropName;
+      if (!window.confirm("Delete " + label + " and everything in it? This cannot be undone.")) return;
+      try {
+        await cloud.deleteHousehold(drop.dataset.dropHh);
+        say(label + " is gone.");
+        await showHouseholds();
+      } catch (err) {
+        say("Could not delete it: " + (err.message || err));
+      }
+      return;
+    }
+
     if (t.dataset.remove) {
       if (!window.confirm("Remove " + t.dataset.name + "? She will see that this happened.")) return;
       await cloud.removeMember(t.dataset.remove, household.id, t.dataset.name);
@@ -429,6 +478,7 @@ async function init() {
     return;
   }
 
+  myUserId = user.id;
   document.getElementById("btn-out").hidden = false;
   document.getElementById("who").textContent = user.email || "signed in";
 

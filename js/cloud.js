@@ -70,7 +70,7 @@ export async function myMemberships() {
   if (!db) return [];
   const { data, error } = await db
     .from("memberships")
-    .select("id, role, display_name, household_id, households(id, name)")
+    .select("id, role, display_name, household_id, households(id, name, created_by)")
     .order("accepted_at", { ascending: true });
   if (error) throw error;
   return data || [];
@@ -133,14 +133,41 @@ export async function createDeviceLink(householdId, displayName) {
   return { code: code, expiresAt: expires };
 }
 
-// Runs on the keeper phone: an anonymous account, then claim the code.
+// Runs on the keeper phone. The identity used here must always be a fresh
+// anonymous one: if somebody types the code while still signed in as family,
+// the old version claimed the code with the family account and demoted it to
+// keeper, quietly taking away its right to edit or invite.
 export async function claimDeviceLink(code) {
   const db = await getClient();
   const user = await currentUser();
-  if (!user) await signInAnonymously();
+  if (!user || user.is_anonymous !== true) {
+    if (user) await signOut();
+    await signInAnonymously();
+  }
   const { data, error } = await db.rpc("claim_keeper_device", { link_code: code.toUpperCase() });
   if (error) throw error;
   return data;
+}
+
+// Only the helper who created a household can remove it, and the database
+// enforces that. Everything in it goes with it.
+export async function deleteHousehold(householdId) {
+  const db = await getClient();
+  const { error } = await db.from("households").delete().eq("id", householdId);
+  if (error) throw error;
+}
+
+// The seam that itsme, FranceConnect and the EU wallet would plug into one day.
+// They are all OpenID Connect, so the app side is this one function, and the
+// difference is entirely commercial: a contract and a legal entity.
+export async function signInWithProvider(provider, redirectTo) {
+  const db = await getClient();
+  if (!db) throw new Error("The cloud is not configured yet");
+  const { error } = await db.auth.signInWithOAuth({
+    provider: provider,
+    options: { redirectTo: redirectTo }
+  });
+  if (error) throw error;
 }
 
 /* ----------------------------------------------------------------- invites */

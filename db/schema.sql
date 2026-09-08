@@ -212,6 +212,11 @@ begin
     raise exception 'this code is not valid any more';
   end if;
 
+  -- A helper must never be turned into a keeper by typing a code.
+  if public.is_helper(link.household_id) then
+    raise exception 'this account already helps in this household, so it cannot become the keeper phone. Sign out here first, or use her own phone';
+  end if;
+
   insert into public.memberships (household_id, user_id, role, display_name, invited_by)
   values (link.household_id, auth.uid(), 'keeper', link.display_name, link.created_by)
   on conflict (household_id, user_id) do update set role = 'keeper';
@@ -393,6 +398,28 @@ drop policy if exists "members withdraw consent" on public.consents;
 create policy "members withdraw consent" on public.consents
   for update using (public.is_member(household_id))
   with check (public.is_member(household_id));
+
+-- A policy cannot compare against the old row, so a trigger keeps a member from
+-- promoting themselves by editing their own role.
+
+create or replace function public.guard_membership_role()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.role <> old.role and not public.is_helper(old.household_id) then
+    raise exception 'only a helper can change a role in this household';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists memberships_guard_role on public.memberships;
+create trigger memberships_guard_role
+  before update on public.memberships
+  for each row execute function public.guard_membership_role();
 
 -- ---------------------------------------------------------------- storage
 -- Create the bucket private, and keep photos at photos/<household>/<record>.jpg
