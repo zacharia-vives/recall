@@ -58,6 +58,7 @@ Then open <http://localhost:8080>.
     sw.js                     working offline
     db/schema.sql             the database, households, roles and policies
     docs/analysis.md          the full analysis and the requirements
+    docs/state-of-play.pdf    where the project stands, seven pages
 
 ## Rules for this project
 
