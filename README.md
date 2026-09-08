@@ -40,6 +40,27 @@ out in <https://claude.ai/code/artifact/a6b6aec6-b408-4d5a-9fe3-858225129e9e>
   ID or a fingerprint on top where the phone has them. Family can always
   unlock the phone again with a fresh phone code, so nobody is locked out
 
+## Testing
+
+`docs/test-plan.md` is the plan and the results: every screen of both apps, the
+whole intake path, the household and phone flows, the lock, the offline shell,
+an Axe pass with no violations left, and `tests/rls_test.py` at twenty five of
+twenty five against the live database.
+
+```
+python tests/rls_test.py
+```
+
+## Releasing
+
+One version number covers every file the browser can cache, so a phone can
+never run a new page against older modules:
+
+```
+python tools/bump.py        # what everything is on now
+python tools/bump.py 20     # set it everywhere, then commit and push
+```
+
 ## Running it locally
 
 There is no build step. You only need a web server, because the camera and the
