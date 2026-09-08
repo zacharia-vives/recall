@@ -258,6 +258,33 @@ body.helper input, body.helper select {
 #qr-holder { display: inline-block; }
 .qr .hint { font-size: 12px; word-break: break-all; max-width: 240px; }
 
+.wizard {
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 14px 0 8px;
+  background: var(--card);
+}
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.step {
+  color: var(--mid);
+  border-bottom: 3px solid var(--rule);
+  padding-bottom: 4px;
+  flex: 1 1 120px;
+}
+.step[aria-current="step"] { color: var(--ink); border-bottom-color: var(--orange); }
+.step.past { color: var(--ok, #2F6B4F); border-bottom-color: #DCEBE1; }
+.wstep p:first-child { margin-top: 0; }
+
 .inline-form { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
 .inline-form .field { margin-bottom: 0; flex: 1 1 220px; }
 

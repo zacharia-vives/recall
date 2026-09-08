@@ -1,23 +1,24 @@
 // Service worker. Keeps the app shell available with no network, which matters
 // because the today screen has to work in a kitchen with bad wifi.
 
-const CACHE = "recall-v11";
+const CACHE = "recall-v12";
 
 const SHELL = [
   "./",
   "index.html",
   "helper.html",
-  "css/style.css?v=10",
-  "css/helper.css?v=10",
-  "js/app.js?v=10",
+  "css/style.css?v=11",
+  "css/helper.css?v=11",
+  "js/app.js?v=11",
   "js/store.js",
   "js/speech.js",
   "js/camera.js",
   "js/ocr.js",
   "js/config.js",
   "js/install.js",
+  "js/lock.js",
   "js/cloud.js",
-  "js/helper.js?v=10",
+  "js/helper.js?v=11",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png"

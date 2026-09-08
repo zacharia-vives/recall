@@ -34,6 +34,11 @@ out in <https://claude.ai/code/artifact/a6b6aec6-b408-4d5a-9fe3-858225129e9e>
 - Reads the text of a letter on the device itself and pulls the date out of it
 - Works with no account and no internet, everything stays on the phone
 - Installs on the home screen of an Android phone
+- A three step wizard on the family side that moves Recall to another
+  phone, shows which phones are linked and removes the old one
+- An optional code of four or six numbers before Recall opens, with Face
+  ID or a fingerprint on top where the phone has them. Family can always
+  unlock the phone again with a fresh phone code, so nobody is locked out
 
 ## Running it locally
 

@@ -10,7 +10,7 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body>
 
@@ -21,6 +21,42 @@
   <span class="brand">Recall</span>
   <button id="btn-help" class="icon-btn" type="button" aria-label="How it works">?</button>
 </header>
+
+<!-- R7.3, R7.4. Only ever shown when family has put a code on this phone. -->
+<div id="lockscreen" class="lockscreen" hidden>
+  <img src="icons/icon-192.png" alt="" class="lock-logo" width="72" height="72">
+  <h1>Recall is locked</h1>
+  <p id="lock-say" class="lock-say">Type your numbers.</p>
+  <p id="lock-dots" class="dots" aria-hidden="true"></p>
+  <button id="btn-face" class="big" type="button" hidden>Use Face ID</button>
+  <div class="keypad">
+    <button class="key" type="button" data-key="1">1</button>
+    <button class="key" type="button" data-key="2">2</button>
+    <button class="key" type="button" data-key="3">3</button>
+    <button class="key" type="button" data-key="4">4</button>
+    <button class="key" type="button" data-key="5">5</button>
+    <button class="key" type="button" data-key="6">6</button>
+    <button class="key" type="button" data-key="7">7</button>
+    <button class="key" type="button" data-key="8">8</button>
+    <button class="key" type="button" data-key="9">9</button>
+    <button class="key key-wide" type="button" data-key="clear">Start again</button>
+    <button class="key" type="button" data-key="0">0</button>
+    <button class="key" type="button" data-key="back">Back</button>
+  </div>
+  <details class="lock-rescue">
+    <summary>Family: unlock this phone</summary>
+    <p>Make a new phone code in the family app and type it here. It unlocks this
+      phone and takes the numbers off it, so you can set new ones.</p>
+    <form id="form-rescue">
+      <label class="field">
+        <span class="label">Code from the family app</span>
+        <input id="rescue-code" maxlength="6" autocapitalize="characters" autocomplete="off">
+      </label>
+      <button class="big" type="submit">Unlock this phone</button>
+    </form>
+    <p id="rescue-msg" class="link-msg" hidden></p>
+  </details>
+</div>
 
 <main id="main">
 
@@ -178,9 +214,34 @@
       </form>
       <p id="link-msg" class="link-msg" hidden></p>
     </div>
+
+    <h3>A code to unlock this phone</h3>
+    <p class="hint-line">Only if it is wanted. She has to be able to use this
+      phone alone, so nothing here is compulsory, and the code never locks her
+      out for good: you can always unlock the phone with a fresh phone code from
+      the family app.</p>
+    <p id="lock-state" class="hint-line"></p>
+    <form id="form-setcode">
+      <label class="field">
+        <span class="label">Numbers, four or six</span>
+        <input id="new-code" type="password" inputmode="numeric" autocomplete="off" maxlength="6">
+      </label>
+      <label class="field">
+        <span class="label">Type them again</span>
+        <input id="new-code-2" type="password" inputmode="numeric" autocomplete="off" maxlength="6">
+      </label>
+      <button class="big" type="submit">Use this code</button>
+    </form>
+    <div class="lock-actions">
+      <button id="btn-face-on" class="big ghost" type="button" hidden>Also allow Face ID</button>
+      <button id="btn-face-off" class="big ghost" type="button" hidden>Turn Face ID off</button>
+      <button id="btn-lock-now" class="big ghost" type="button" hidden>Lock the phone now</button>
+      <button id="btn-lock-off" class="big danger" type="button" hidden>Take the code off</button>
+    </div>
+    <p id="lock-msg" class="link-msg" hidden></p>
   </div>
 </dialog>
 
-<script type="module" src="js/app.js?v=10"></script>
+<script type="module" src="js/app.js?v=11"></script>
 </body>
 </html>

@@ -306,16 +306,19 @@ async function saveCard(event) {
 
 async function renderHouse() {
   const list = await cloud.members(household.id);
-  document.getElementById("members-list").innerHTML = list.map((m) =>
+  await renderDevices(list);
+
+  // People, not phones. Her phones are their own list, because removing one is
+  // a different decision from removing a person.
+  const people = list.filter((m) => m.role === "helper");
+  document.getElementById("members-list").innerHTML = people.map((m) =>
     '<div class="row-item">' +
     '<span class="badge">' + esc((m.display_name || "?").slice(0, 1).toUpperCase()) + "</span>" +
     '<span class="grow"><span class="t">' + esc(m.display_name || "someone") + "</span>" +
     '<span class="s">since ' + esc(when(m.accepted_at)) + "</span></span>" +
-    '<span class="pill ' + esc(m.role) + '">' + esc(m.role) + "</span>" +
-    (m.role === "helper"
-      ? '<span class="acts"><button class="btn small danger" data-remove="' + esc(m.id) +
-        '" data-name="' + esc(m.display_name || "someone") + '">Remove</button></span>'
-      : "") +
+    '<span class="pill helper">helper</span>' +
+    '<span class="acts"><button class="btn small danger" data-remove="' + esc(m.id) +
+    '" data-name="' + esc(m.display_name || "someone") + '">Remove</button></span>' +
     "</div>"
   ).join("");
 
@@ -329,32 +332,110 @@ async function renderHouse() {
     : '<p class="none">Nothing has happened yet.</p>';
 }
 
-// The keeper app lives one directory up from this page.
-function keeperUrl(code) {
-  const base = location.href.replace(/helper\.html.*$/, "");
-  return base + "?link=" + encodeURIComponent(code);
+/* her phones, and the wizard that moves Recall to another one. R7.1, R7.2 */
+
+function deviceRow(m, withRemove) {
+  return '<div class="row-item">' +
+    '<span class="badge">\u260E</span>' +
+    '<span class="grow"><span class="t">' + esc(m.display_name || "her phone") + "</span>" +
+    '<span class="s">linked ' + esc(when(m.accepted_at)) + "</span></span>" +
+    (withRemove
+      ? '<span class="acts"><button class="btn small danger" data-remove="' + esc(m.id) +
+        '" data-name="' + esc(m.display_name || "her phone") + '">Remove</button></span>'
+      : "") +
+    "</div>";
 }
 
-const QR_LIB = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+async function renderDevices(list) {
+  const rows = (list || await cloud.members(household.id)).filter((m) => m.role === "keeper");
+  document.getElementById("devices-list").innerHTML = rows.length
+    ? rows.map((m) => deviceRow(m, true)).join("")
+    : '<p class="none">No phone is linked yet. Set one up below.</p>';
+  return rows;
+}
 
-function loadQrLibrary() {
-  if (window.QRCode) return Promise.resolve(window.QRCode);
-  return new Promise((resolve, reject) => {
-    const tag = document.createElement("script");
-    tag.src = QR_LIB;
-    tag.onload = () => resolve(window.QRCode);
-    tag.onerror = () => reject(new Error("the square could not load"));
-    document.head.appendChild(tag);
+let waitTimer = null;
+let knownDevices = [];
+let freshDevice = null;   // the phone that was just linked, never offered for removal
+
+function wizardStep(number) {
+  [1, 2, 3].forEach((n) => {
+    document.getElementById("w-" + n).hidden = n !== number;
+    const step = document.getElementById("step-" + n);
+    step.classList.toggle("past", n < number);
+    if (n === number) step.setAttribute("aria-current", "step");
+    else step.removeAttribute("aria-current");
   });
 }
 
-async function makeLinkCode() {
+function stopWaiting() {
+  if (waitTimer) {
+    window.clearInterval(waitTimer);
+    waitTimer = null;
+  }
+}
+
+function openWizard() {
+  document.getElementById("wizard").hidden = false;
+  document.getElementById("w-name").value = "";
+  wizardStep(1);
+}
+
+function closeWizard() {
+  stopWaiting();
+  document.getElementById("wizard").hidden = true;
+}
+
+// Polling, not a subscription, because a subscription is one more thing that
+// can be broken by the wifi in the room. Every three seconds is fast enough
+// for somebody standing next to you holding a phone.
+function waitForPhone() {
+  const line = document.getElementById("w-waiting");
+  const started = Date.now();
+  stopWaiting();
+
+  waitTimer = window.setInterval(async () => {
+    if (Date.now() - started > 15 * 60 * 1000) {
+      stopWaiting();
+      line.textContent = "The code has expired. Make a new one.";
+      return;
+    }
+    let now = [];
+    try {
+      now = await cloud.members(household.id);
+    } catch (err) {
+      return; // try again on the next tick
+    }
+    const fresh = now.filter(
+      (m) => m.role === "keeper" && !knownDevices.some((old) => old.id === m.id)
+    );
+    if (!fresh.length) return;
+
+    stopWaiting();
+    document.getElementById("w-done").textContent =
+      (fresh[0].display_name || "That phone") + " is linked and has every card.";
+    freshDevice = fresh[0].id;
+    const others = now.filter(
+      (m) => m.role === "keeper" && !fresh.some((f) => f.id === m.id)
+    );
+    document.getElementById("w-others").innerHTML = others.length
+      ? others.map((m) => deviceRow(m, true)).join("")
+      : '<p class="none">There is no older phone to remove.</p>';
+    wizardStep(3);
+  }, 3000);
+}
+
+async function makeWizardCode() {
   const wrap = document.getElementById("qr-wrap");
   const urlLine = document.getElementById("qr-url");
+  const name = document.getElementById("w-name").value.trim();
+
   try {
-    const link = await cloud.createDeviceLink(household.id, household.name);
+    knownDevices = await cloud.members(household.id);
+    const link = await cloud.createDeviceLink(household.id, name || "her phone");
     document.getElementById("link-code").textContent = link.code;
-    say("Good for fifteen minutes.");
+    document.getElementById("w-waiting").textContent = "Waiting for her phone.";
+    wizardStep(2);
 
     const url = keeperUrl(link.code);
     urlLine.textContent = url;
@@ -378,10 +459,32 @@ async function makeLinkCode() {
       wrap.hidden = true;
       say("Let her type the six letters, the square did not load.");
     }
+
+    waitForPhone();
   } catch (err) {
     say("Could not make a code: " + (err.message || err));
   }
 }
+
+// The keeper app lives one directory up from this page.
+function keeperUrl(code) {
+  const base = location.href.replace(/helper\.html.*$/, "");
+  return base + "?link=" + encodeURIComponent(code);
+}
+
+const QR_LIB = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+
+function loadQrLibrary() {
+  if (window.QRCode) return Promise.resolve(window.QRCode);
+  return new Promise((resolve, reject) => {
+    const tag = document.createElement("script");
+    tag.src = QR_LIB;
+    tag.onload = () => resolve(window.QRCode);
+    tag.onerror = () => reject(new Error("the square could not load"));
+    document.head.appendChild(tag);
+  });
+}
+
 
 async function sendInvite(event) {
   event.preventDefault();
@@ -431,7 +534,20 @@ function wire() {
   document.getElementById("form-household").addEventListener("submit", createHousehold);
   document.getElementById("form-card").addEventListener("submit", saveCard);
   document.getElementById("form-invite").addEventListener("submit", sendInvite);
-  document.getElementById("btn-link").addEventListener("click", makeLinkCode);
+  document.getElementById("btn-wizard").addEventListener("click", openWizard);
+  document.getElementById("btn-w-code").addEventListener("click", makeWizardCode);
+  document.getElementById("btn-w-again").addEventListener("click", makeWizardCode);
+  document.getElementById("btn-w-cancel").addEventListener("click", closeWizard);
+  document.getElementById("btn-w-stop").addEventListener("click", () => {
+    stopWaiting();
+    document.getElementById("w-waiting").textContent =
+      "Not waiting any more. The code still works for fifteen minutes.";
+  });
+  document.getElementById("btn-w-finish").addEventListener("click", async () => {
+    closeWizard();
+    await renderHouse();
+    say("Her phone is set up.");
+  });
 
   document.getElementById("btn-new-card").addEventListener("click", () => openCardForm(null));
   document.getElementById("btn-cancel-card").addEventListener("click", () => {
@@ -503,6 +619,14 @@ function wire() {
       if (!window.confirm("Remove " + t.dataset.name + "? She will see that this happened.")) return;
       await cloud.removeMember(t.dataset.remove, household.id, t.dataset.name);
       await renderHouse();
+      // The wizard shows its own copy of the list on the last step.
+      if (!document.getElementById("w-3").hidden) {
+        const rows = (await cloud.members(household.id))
+          .filter((m) => m.role === "keeper" && m.id !== freshDevice);
+        document.getElementById("w-others").innerHTML = rows.length
+          ? rows.map((m) => deviceRow(m, true)).join("")
+          : '<p class="none">Only the new phone is linked now.</p>';
+      }
       say("Removed.");
     }
   });

@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#231710">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=10">
-<link rel="stylesheet" href="css/helper.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=11">
+<link rel="stylesheet" href="css/helper.css?v=11">
 </head>
 <body class="helper">
 
@@ -165,18 +165,61 @@
       <h2>Who has access</h2>
       <div id="members-list" class="rows"></div>
 
-      <h2>Link her phone</h2>
-      <p class="hint">Press the button, then let her phone camera look at the square.
-        It opens Recall on her phone and links it, and she never sees a login screen
-        again. If the camera will not cooperate, she can type the six letters instead.
-        The code is good for fifteen minutes.</p>
-      <div class="linkbox">
-        <button id="btn-link" class="btn" type="button">Make a code</button>
-        <output id="link-code" class="code"></output>
-      </div>
-      <div id="qr-wrap" class="qr" hidden>
-        <div id="qr-holder"></div>
-        <p class="hint" id="qr-url"></p>
+      <h2>Her phones</h2>
+      <div id="devices-list" class="rows"></div>
+      <button id="btn-wizard" class="btn" type="button">Set up a phone</button>
+
+      <!-- R7.1, R7.2. The same three steps whether this is the first phone or a
+           replacement, because the family should not have to know the difference. -->
+      <div id="wizard" class="wizard" hidden>
+        <ol class="steps">
+          <li id="step-1" class="step" aria-current="step">1. What happens</li>
+          <li id="step-2" class="step">2. Show her the square</li>
+          <li id="step-3" class="step">3. Finish</li>
+        </ol>
+
+        <div id="w-1" class="wstep">
+          <p>Her cards live in the household, not on the phone, so a new phone has
+            everything the moment it is linked. Nothing is copied and nothing is lost.
+            The old phone keeps working until you remove it here, which is the last
+            step.</p>
+          <label class="field">
+            <span class="label">What to call this phone</span>
+            <input id="w-name" placeholder="Godelieve, new phone">
+          </label>
+          <div class="form-actions">
+            <button id="btn-w-code" class="btn" type="button">Make the code</button>
+            <button id="btn-w-cancel" class="btn ghost" type="button">Cancel</button>
+          </div>
+        </div>
+
+        <div id="w-2" class="wstep" hidden>
+          <p>On her phone, open the camera and point it at this square. It opens
+            Recall and links the phone. If the camera will not cooperate, she can
+            type the six letters instead. Both are good for fifteen minutes.</p>
+          <div class="linkbox">
+            <output id="link-code" class="code"></output>
+          </div>
+          <div id="qr-wrap" class="qr" hidden>
+            <div id="qr-holder"></div>
+            <p class="hint" id="qr-url"></p>
+          </div>
+          <p id="w-waiting" class="msg">Waiting for her phone.</p>
+          <div class="form-actions">
+            <button id="btn-w-again" class="btn ghost" type="button">Make a new code</button>
+            <button id="btn-w-stop" class="btn ghost" type="button">Stop waiting</button>
+          </div>
+        </div>
+
+        <div id="w-3" class="wstep" hidden>
+          <p id="w-done" class="msg">That phone is linked.</p>
+          <p class="hint">If this replaces an older phone, remove the old one here.
+            It loses access the moment you do.</p>
+          <div id="w-others" class="rows"></div>
+          <div class="form-actions">
+            <button id="btn-w-finish" class="btn" type="button">Finished</button>
+          </div>
+        </div>
       </div>
 
       <h2>Invite another helper</h2>
@@ -199,6 +242,6 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script type="module" src="js/helper.js?v=10"></script>
+<script type="module" src="js/helper.js?v=11"></script>
 </body>
 </html>

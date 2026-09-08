@@ -118,6 +118,35 @@ screen of its own over the same store.
 | R6.7 | More than one keeper in one household | Could |
 | R6.8 | A keeper with a password of their own | Won't |
 
+### R7 Her phone, and the lock on it
+
+Phones break, get lost and get replaced, and the person holding this one cannot
+set up a new one alone. Moving Recall is therefore a job for the family app, in
+steps, with the old phone still working until somebody deliberately removes it.
+
+| ID | Requirement | Priority |
+| --- | --- | --- |
+| R7.1 | Family can move Recall to another phone in three steps, without losing a card | Should |
+| R7.2 | Family can see which phones are linked, when each was linked, and remove one | Should |
+| R7.3 | An optional code of four or six numbers before Recall opens | Should |
+| R7.4 | Face ID or a fingerprint instead of the numbers, where the phone offers it | Could |
+| R7.5 | A phone nobody can get into is opened again with a fresh phone code from the family app, which also takes the numbers off | Must, if R7.3 is used |
+| R7.6 | The lock never comes on by itself: no timer, and never while she is reading | Must, if R7.3 is used |
+| R7.7 | Encrypting the cards on the phone with the code | Won't, this version |
+
+Two things worth being plain about. The lock is a lock on the screen, not
+encryption: the cards sit in IndexedDB and anybody with the phone, a cable and
+patience can read them. It stops a curious visitor, a grandchild and a stranger
+who picks the phone up in a waiting room, which is the risk that actually
+happens here. And Face ID means the phone asks the person to prove they own the
+phone; there is no server checking the answer, because Recall has no server of
+its own. It is one step better than the numbers, never the only way in, and the
+numbers always stay as the fallback.
+
+The code itself is never stored. What is stored is a random salt and the result
+of a hundred and fifty thousand PBKDF2 rounds over the code, so four numbers
+cannot simply be read out of the phone.
+
 ## 4. Non-functional requirements
 
 | ID | Requirement |
@@ -216,6 +245,8 @@ than their own memory, we have done real harm.
 | Storing photos | Yes | Supabase Storage 1 GB free, IndexedDB locally |
 | Seeing only your own data | Yes | Row level security in Postgres |
 | Signing in without a password | Yes | Supabase magic link |
+| Face ID or a fingerprint as a screen lock | Yes | WebAuthn platform authenticator, checked by the phone itself |
+| Encrypting the cards at rest on the phone | Partly | The code could derive a key, but she must never be locked out of her own memory, so version one keeps a screen lock only |
 | A notification while the app is closed | Partly | Web Push, but something has to send it: a scheduled Supabase function |
 | Scheduling a notification locally | No | Notification Triggers does not exist in browsers |
 | Counting steps in the background | No | Needs Health Connect or HealthKit, so a native app |

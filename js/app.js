@@ -7,6 +7,7 @@ import * as camera from "./camera.js";
 import * as ocr from "./ocr.js";
 import { isConfigured } from "./config.js";
 import * as install from "./install.js";
+import * as lock from "./lock.js";
 
 const HOUSEHOLD_KEY = "recall.householdId";
 
@@ -309,6 +310,157 @@ async function showWhoHasAccess() {
     line.hidden = false;
   } catch (err) {
     line.hidden = true;
+  }
+}
+
+/* the lock, R7.3 and R7.4 */
+
+let typed = "";
+
+// Locking happens when the app is opened, and when family asks for it. It
+// deliberately does not happen on a timer: she may put the phone down in the
+// middle of reading a letter and pick it up again, and a phone that locks
+// itself while she reads is a phone she stops using.
+function showLock() {
+  typed = "";
+  document.body.classList.add("is-locked");
+  const box = document.getElementById("lockscreen");
+  box.hidden = false;
+  document.getElementById("btn-face").hidden = !lock.faceReady();
+  drawDots();
+  speech.stop();
+  camera.stop(video);
+}
+
+function hideLock() {
+  typed = "";
+  document.body.classList.remove("is-locked");
+  document.getElementById("lockscreen").hidden = true;
+  document.getElementById("rescue-msg").hidden = true;
+}
+
+function drawDots() {
+  const want = lock.codeLength() || 4;
+  let out = "";
+  for (let i = 0; i < want; i += 1) out += i < typed.length ? "\u25CF" : "\u25CB";
+  document.getElementById("lock-dots").textContent = out;
+}
+
+function lockSay(text) {
+  document.getElementById("lock-say").textContent = text;
+}
+
+async function pressKey(key) {
+  if (key === "back") {
+    typed = typed.slice(0, -1);
+    drawDots();
+    return;
+  }
+  if (key === "clear") {
+    typed = "";
+    drawDots();
+    lockSay("Type your numbers.");
+    return;
+  }
+
+  if (typed.length >= lock.codeLength()) return;
+  typed += key;
+  drawDots();
+
+  if (typed.length < lock.codeLength()) return;
+
+  const ok = await lock.checkCode(typed);
+  if (ok) {
+    hideLock();
+    lockSay("Type your numbers.");
+    return;
+  }
+  typed = "";
+  drawDots();
+  lockSay("That is not it. Try again, or ask your family.");
+}
+
+async function unlockWithFace() {
+  try {
+    const ok = await lock.checkFace();
+    if (ok) hideLock();
+    else lockSay("That did not work. Type your numbers instead.");
+  } catch (err) {
+    lockSay("Face ID did not work. Type your numbers instead.");
+  }
+}
+
+// R7.5. There has to be a way back in that does not depend on her memory. A
+// fresh phone code from the family app both unlocks the phone and takes the
+// numbers off it, and only family can make one of those.
+async function rescueWithCode(event) {
+  event.preventDefault();
+  const msg = document.getElementById("rescue-msg");
+  const code = document.getElementById("rescue-code").value.trim();
+  msg.hidden = false;
+  msg.textContent = "Checking the code.";
+
+  if (!isConfigured()) {
+    msg.textContent = "This phone is not linked to a family, so there is no code to check.";
+    return;
+  }
+
+  try {
+    const cloud = await import("./cloud.js");
+    const id = await cloud.claimDeviceLink(code);
+    window.localStorage.setItem(HOUSEHOLD_KEY, id);
+    lock.clearLock();
+    hideLock();
+    say("The phone is unlocked and the code is off. Set a new one in the help screen.");
+    await showWhoHasAccess();
+    await syncHousehold({ loud: true });
+  } catch (err) {
+    msg.textContent = "That code did not work: " + (err.message || err);
+  }
+}
+
+/* the family side of the lock, in the help screen */
+
+async function drawLockSettings() {
+  const state = document.getElementById("lock-state");
+  const faceOn = document.getElementById("btn-face-on");
+  const faceOff = document.getElementById("btn-face-off");
+  const lockNow = document.getElementById("btn-lock-now");
+  const lockOff = document.getElementById("btn-lock-off");
+
+  const on = lock.locked();
+  const canFace = await lock.faceAvailable();
+
+  state.textContent = on
+    ? "This phone asks for " + lock.codeLength() + " numbers when Recall is opened" +
+      (lock.faceReady() ? ", and Face ID works as well." : ".")
+    : "This phone asks for nothing. Recall opens straight away.";
+
+  faceOn.hidden = !(on && canFace && !lock.faceReady());
+  faceOff.hidden = !(on && lock.faceReady());
+  lockNow.hidden = !on;
+  lockOff.hidden = !on;
+}
+
+async function saveCode(event) {
+  event.preventDefault();
+  const msg = document.getElementById("lock-msg");
+  const one = document.getElementById("new-code");
+  const two = document.getElementById("new-code-2");
+  msg.hidden = false;
+
+  if (one.value !== two.value) {
+    msg.textContent = "The two do not match.";
+    return;
+  }
+  try {
+    await lock.setCode(one.value);
+    one.value = "";
+    two.value = "";
+    msg.textContent = "Done. Recall will ask for those numbers next time it opens.";
+    await drawLockSettings();
+  } catch (err) {
+    msg.textContent = err.message || String(err);
   }
 }
 
@@ -858,8 +1010,47 @@ function wire() {
     document.getElementById("install-box").hidden = true;
   });
 
+  document.querySelectorAll(".key").forEach((key) => {
+    key.addEventListener("click", () => pressKey(key.dataset.key));
+  });
+  document.getElementById("btn-face").addEventListener("click", unlockWithFace);
+  document.getElementById("form-rescue").addEventListener("submit", rescueWithCode);
+
+  document.getElementById("form-setcode").addEventListener("submit", saveCode);
+  document.getElementById("btn-lock-off").addEventListener("click", async () => {
+    lock.clearLock();
+    document.getElementById("lock-msg").hidden = false;
+    document.getElementById("lock-msg").textContent = "The code is off.";
+    await drawLockSettings();
+  });
+  document.getElementById("btn-lock-now").addEventListener("click", () => {
+    document.getElementById("help").close();
+    showLock();
+  });
+  document.getElementById("btn-face-on").addEventListener("click", async () => {
+    const msg = document.getElementById("lock-msg");
+    msg.hidden = false;
+    msg.textContent = "Ask her to look at the phone.";
+    try {
+      await lock.addFace("her phone");
+      msg.textContent = "Face ID works on this phone now. The numbers still work too.";
+    } catch (err) {
+      msg.textContent = "Face ID was not set up: " + (err.message || err);
+    }
+    await drawLockSettings();
+  });
+  document.getElementById("btn-face-off").addEventListener("click", async () => {
+    lock.removeFace();
+    document.getElementById("lock-msg").hidden = false;
+    document.getElementById("lock-msg").textContent = "Face ID is off. The numbers still work.";
+    await drawLockSettings();
+  });
+
   const help = document.getElementById("help");
-  document.getElementById("btn-help").addEventListener("click", () => help.showModal());
+  document.getElementById("btn-help").addEventListener("click", async () => {
+    await drawLockSettings();
+    help.showModal();
+  });
   document.getElementById("help-close").addEventListener("click", () => help.close());
 
   if (isConfigured()) {
@@ -898,6 +1089,9 @@ async function claimFromLink() {
 
 async function init() {
   wire();
+
+  // Before anything is drawn, so a locked phone never shows a card in passing.
+  if (lock.locked()) showLock();
 
   try {
     records = await store.seedIfEmpty();
