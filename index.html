@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recall</title>
+<meta name="description" content="Recall bewaart wat je niet wil vergeten. Richt de camera op een brief en Recall leest hem voor en bewaart hem.">
+<meta name="theme-color" content="#F0692B">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="icons/favicon-32.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<a class="skip" href="#main">Naar de inhoud</a>
+
+<header class="topbar">
+  <img src="icons/icon-192.png" alt="" class="logo" width="44" height="44">
+  <span class="brand">Recall</span>
+  <button id="btn-help" class="icon-btn" type="button" aria-label="Uitleg">?</button>
+</header>
+
+<main id="main">
+
+  <!-- vandaag -->
+  <section id="screen-today" class="screen" aria-labelledby="today-title">
+    <h1 id="today-title">Vandaag</h1>
+    <p id="today-date" class="date"></p>
+    <div id="today-list" class="list"></div>
+  </section>
+
+  <!-- alles -->
+  <section id="screen-records" class="screen" hidden aria-labelledby="records-title">
+    <h1 id="records-title">Alles wat je bewaarde</h1>
+    <label class="search">
+      <span class="label">Zoeken</span>
+      <input id="search" type="search" placeholder="naam, plaats of woord" autocomplete="off">
+    </label>
+    <div id="records-list" class="list"></div>
+  </section>
+
+  <!-- een kaart -->
+  <section id="screen-record" class="screen" hidden aria-labelledby="record-title">
+    <button class="back" type="button" data-go="#/records">Terug</button>
+    <h1 id="record-title">Kaart</h1>
+    <div id="record-detail"></div>
+  </section>
+
+  <!-- camera -->
+  <section id="screen-capture" class="screen" hidden aria-labelledby="capture-title">
+    <button class="back" type="button" data-go="#/today">Terug</button>
+    <h1 id="capture-title">Richt op de brief</h1>
+    <div class="camera-wrap">
+      <video id="video" playsinline muted></video>
+      <p id="camera-msg" class="camera-msg">De camera start op.</p>
+    </div>
+    <label class="zoom">
+      <span class="label">Groter maken</span>
+      <input id="zoom" type="range" min="100" max="400" step="10" value="150">
+    </label>
+    <div class="actions">
+      <button id="btn-shoot" class="big" type="button">Neem de foto</button>
+      <button id="btn-pick" class="big ghost" type="button">Kies een foto</button>
+      <input id="file" type="file" accept="image/*" capture="environment" hidden>
+    </div>
+  </section>
+
+  <!-- bewaren -->
+  <section id="screen-new" class="screen" hidden aria-labelledby="new-title">
+    <button class="back" type="button" data-go="#/today">Terug</button>
+    <h1 id="new-title">Wat bewaren we?</h1>
+    <img id="shot" class="shot" alt="De foto die je net nam">
+    <p id="ocr-state" class="ocr-state" hidden></p>
+    <form id="new-form" novalidate>
+      <fieldset class="kinds">
+        <legend>Wat is dit?</legend>
+        <label><input type="radio" name="kind" value="letter" checked> Een brief</label>
+        <label><input type="radio" name="kind" value="person"> Een persoon</label>
+        <label><input type="radio" name="kind" value="place"> Een plaats</label>
+      </fieldset>
+      <label class="field">
+        <span class="label">Naam van de kaart</span>
+        <input id="f-title" name="title" required>
+      </label>
+      <label class="field">
+        <span class="label">Wie</span>
+        <input id="f-people" name="people" placeholder="Marie, dokter Vermeulen">
+      </label>
+      <label class="field">
+        <span class="label">Waar</span>
+        <input id="f-place" name="place" placeholder="AZ Groeninge, Kortrijk">
+      </label>
+      <label class="field">
+        <span class="label">Wanneer</span>
+        <input id="f-when" name="when" type="datetime-local">
+      </label>
+      <label class="field">
+        <span class="label">Herinner mij</span>
+        <select id="f-remind" name="remind">
+          <option value="">niet herinneren</option>
+          <option value="day-before" selected>de dag ervoor</option>
+          <option value="daily">elke dag</option>
+          <option value="twice">twee keer per dag</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button class="big" type="submit">Bewaren</button>
+      </div>
+    </form>
+  </section>
+
+</main>
+
+<nav class="tabs" aria-label="Hoofdmenu">
+  <a href="#/today" class="tab" data-tab="today"><span class="tab-icon" aria-hidden="true">&#9678;</span>Vandaag</a>
+  <a href="#/capture" class="tab tab-main" data-tab="capture"><span class="tab-icon" aria-hidden="true">&#9635;</span>Camera</a>
+  <a href="#/records" class="tab" data-tab="records"><span class="tab-icon" aria-hidden="true">&#9776;</span>Alles</a>
+</nav>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<dialog id="help">
+  <h2>Hoe werkt Recall?</h2>
+  <ol>
+    <li>Druk op <b>Camera</b> en richt op een brief of een foto.</li>
+    <li>Recall maakt de letters groter en leest ze voor.</li>
+    <li>Druk op <b>Bewaren</b>. Recall houdt de datum bij en waarschuwt je.</li>
+  </ol>
+  <button class="big" type="button" id="help-close">Sluiten</button>
+</dialog>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

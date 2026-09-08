@@ -1,0 +1,19 @@
+{
+  "name": "Recall",
+  "short_name": "Recall",
+  "description": "Recall bewaart wat je niet wil vergeten. Richt de camera op een brief en Recall leest hem voor en bewaart hem.",
+  "lang": "nl-BE",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF7F0",
+  "theme_color": "#F0692B",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "icons/icon-256.png", "sizes": "256x256", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
