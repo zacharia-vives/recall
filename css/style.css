@@ -152,12 +152,14 @@ h1 {
   object-fit: cover;
 }
 .card .title {
+  display: block;
   font-size: 24px;
   font-weight: 700;
   color: var(--ink);
   margin: 0 0 4px;
 }
 .card .meta {
+  display: block;
   font-size: 18px;
   color: var(--mid);
   margin: 0;
@@ -308,6 +310,7 @@ fieldset.kinds input {
   border-radius: 14px;
   overflow: hidden;
   aspect-ratio: 3 / 4;
+  max-height: 62vh;
   margin-bottom: 16px;
 }
 #video {
@@ -351,7 +354,8 @@ fieldset.kinds input {
   bottom: 0;
   display: flex;
   background: var(--card);
-  border-top: 2px solid var(--rule);
+  border-top: 3px solid var(--ink);
+  box-shadow: 0 -6px 18px rgba(35, 23, 16, 0.08);
   z-index: 20;
 }
 .tab {
@@ -363,7 +367,7 @@ fieldset.kinds input {
   justify-content: center;
   gap: 4px;
   text-decoration: none;
-  color: var(--mid);
+  color: var(--ink);
   font-size: 18px;
   font-weight: 700;
   padding: 8px 4px;

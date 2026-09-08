@@ -9,6 +9,10 @@ export async function start(video, onMessage) {
     onMessage("Deze telefoon of browser laat de camera niet toe. Kies een foto.");
     return false;
   }
+  // The browser now asks for permission, which can sit there for a while. Say
+  // so, otherwise the user is looking at a black rectangle with no explanation.
+  onMessage("Geef toestemming voor de camera. Lukt dat niet? Kies dan een foto.");
+
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: {

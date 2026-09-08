@@ -35,23 +35,46 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
 
-  // The OCR library and its language data are big, so once they are here we
-  // keep them. Everything else: cache first, then the network.
-  event.respondWith(
-    caches.match(request).then((hit) => {
-      if (hit) return hit;
-      return fetch(request).then((response) => {
-        const url = new URL(request.url);
-        const worthKeeping =
-          url.origin === location.origin ||
-          url.hostname.endsWith("cdnjs.cloudflare.com") ||
-          url.hostname.endsWith("tessdata.projectnaptha.com");
-        if (worthKeeping && response.ok) {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(request, copy));
-        }
-        return response;
-      }).catch(() => hit);
-    })
-  );
+  const url = new URL(request.url);
+  const ourOwnFile = url.origin === location.origin;
+
+  // Our own files: network first, so a new version is picked up the next time
+  // the app is opened online. The cache is the fallback for when there is no
+  // network, which is the whole reason it exists.
+  if (ourOwnFile) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // The OCR library and its language data are big and never change, so once
+  // they are here we keep them and never ask again.
+  const bigAndStable =
+    url.hostname.endsWith("cdnjs.cloudflare.com") ||
+    url.hostname.endsWith("tessdata.projectnaptha.com") ||
+    url.hostname.endsWith("jsdelivr.net");
+
+  if (bigAndStable) {
+    event.respondWith(
+      caches.match(request).then((hit) => {
+        if (hit) return hit;
+        return fetch(request).then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        });
+      })
+    );
+  }
 });
