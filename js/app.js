@@ -475,6 +475,43 @@ async function route() {
 
 /* the capture and save flow */
 
+function cameraMessage(text) {
+  const msg = document.getElementById("camera-msg");
+  msg.textContent = text;
+  msg.hidden = text === "";
+}
+
+// R2.3. Point, hear it, and do not keep anything unless you want to. This is
+// the whole of module one, and it never leaves the camera screen.
+async function readTheFrame() {
+  if (speech.speaking()) {
+    speech.stop();
+    cameraMessage("");
+    return;
+  }
+
+  const blob = await camera.capture(video);
+  if (!blob) {
+    say("The camera is not ready yet.");
+    return;
+  }
+
+  cameraMessage("Recall is reading this. The first time takes a moment.");
+  try {
+    const text = await ocr.readText(blob, (percent) => {
+      cameraMessage("Recall is reading this. " + percent + " per cent.");
+    });
+    if (!text) {
+      cameraMessage("No words found. Hold the phone still, a little further away.");
+      return;
+    }
+    speech.speak(text.slice(0, 600), ocr.guessLang(text));
+    cameraMessage("Reading it out loud. Press again to stop.");
+  } catch (err) {
+    cameraMessage("Recall could not read this. Try the photo instead.");
+  }
+}
+
 async function usePhoto(blob) {
   pendingPhoto = blob;
   pendingText = "";
@@ -491,6 +528,10 @@ async function usePhoto(blob) {
   // OCR runs after the screen is up, so the user is never left waiting on a
   // blank page. Requirement S1: whatever we read is only ever a suggestion.
   const state = document.getElementById("ocr-state");
+  const found = document.getElementById("ocr-found");
+  const textBox = document.getElementById("ocr-text");
+  found.hidden = true;
+  textBox.textContent = "";
   state.hidden = false;
   state.textContent = "Recall is reading the letter. The first time takes a moment.";
 
@@ -512,7 +553,13 @@ async function usePhoto(blob) {
       ? "Recall read: " + readableDate(found.toISOString()) + ". Is that right?"
       : "Recall found no date. Fill one in yourself if you need it.";
 
-    if (text) speech.speak(text.slice(0, 400), ocr.guessLang(text));
+    // S1: never file silently. What was read is on the screen, and it can be
+    // heard again as often as they like.
+    if (text) {
+      textBox.textContent = text;
+      found.hidden = false;
+      speech.speak(text.slice(0, 600), ocr.guessLang(text));
+    }
   } catch (err) {
     state.textContent = "Recall could not read the text. You can still keep the card.";
   }
@@ -613,6 +660,17 @@ function wire() {
 
   document.getElementById("zoom").addEventListener("input", (e) => {
     camera.setZoom(video, Number(e.target.value));
+  });
+
+  document.getElementById("btn-read").addEventListener("click", readTheFrame);
+
+  document.getElementById("btn-read-again").addEventListener("click", () => {
+    const text = document.getElementById("ocr-text").textContent;
+    if (speech.speaking()) {
+      speech.stop();
+      return;
+    }
+    if (!speech.speak(text, ocr.guessLang(text))) say("This browser cannot read out loud.");
   });
 
   document.getElementById("btn-shoot").addEventListener("click", async () => {
