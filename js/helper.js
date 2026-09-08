@@ -302,6 +302,33 @@ async function saveCard(event) {
   }
 }
 
+// The same question box as the keeper app, minus the speaking, because this
+// side is read by somebody on their own phone. A browser confirm box blocks
+// everything else on the page while it is up, this does not.
+function ask(question, yesLabel) {
+  const box = document.getElementById("ask");
+  document.getElementById("ask-text").textContent = question;
+  const yes = document.getElementById("ask-yes");
+  const no = document.getElementById("ask-no");
+  yes.textContent = yesLabel || "Yes";
+
+  return new Promise((resolve) => {
+    const finish = (answer) => {
+      yes.removeEventListener("click", onYes);
+      no.removeEventListener("click", onNo);
+      box.removeEventListener("cancel", onNo);
+      box.close();
+      resolve(answer);
+    };
+    const onYes = () => finish(true);
+    const onNo = () => finish(false);
+    yes.addEventListener("click", onYes);
+    no.addEventListener("click", onNo);
+    box.addEventListener("cancel", onNo);
+    box.showModal();
+  });
+}
+
 /* -------------------------------------------------------------- household */
 
 async function renderHouse() {
@@ -590,7 +617,7 @@ function wire() {
     }
     if (t.dataset.bin) {
       const card = cards.find((c) => c.id === t.dataset.bin);
-      if (!window.confirm("Move " + card.title + " to the bin? It stays there for thirty days.")) return;
+      if (!await ask("Move " + card.title + " to the bin? It stays there for thirty days.", "Yes, to the bin")) return;
       await cloud.binRecord(household.id, card.id, card.title);
       await refresh();
       return;
@@ -604,7 +631,7 @@ function wire() {
     const drop = t.closest("[data-drop-hh]");
     if (drop) {
       const label = drop.dataset.dropName;
-      if (!window.confirm("Delete " + label + " and everything in it? This cannot be undone.")) return;
+      if (!await ask("Delete " + label + " and everything in it? This cannot be undone.", "Yes, delete it")) return;
       try {
         await cloud.deleteHousehold(drop.dataset.dropHh);
         say(label + " is gone.");
@@ -616,7 +643,7 @@ function wire() {
     }
 
     if (t.dataset.remove) {
-      if (!window.confirm("Remove " + t.dataset.name + "? She will see that this happened.")) return;
+      if (!await ask("Remove " + t.dataset.name + "? She will see that this happened.", "Yes, remove")) return;
       await cloud.removeMember(t.dataset.remove, household.id, t.dataset.name);
       await renderHouse();
       // The wizard shows its own copy of the list on the last step.

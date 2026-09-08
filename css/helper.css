@@ -258,6 +258,10 @@ body.helper input, body.helper select {
 #qr-holder { display: inline-block; }
 .qr .hint { font-size: 12px; word-break: break-all; max-width: 240px; }
 
+#ask { max-width: 26rem; border: 2px solid var(--ink); border-radius: 12px; padding: 18px; }
+#ask h2 { font-size: 19px; margin: 0 0 6px; border: none; padding: 0; }
+#ask p { font-size: 16px; }
+
 .wizard {
   border: 2px solid var(--ink);
   border-radius: 12px;

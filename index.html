@@ -10,7 +10,7 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css?v=12">
+<link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body>
 
@@ -208,6 +208,18 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+<!-- R8.5. Recall asks its own questions. A browser confirm box is in the
+     browser's language, at the browser's type size, and it cannot be read out
+     loud, none of which suits the person holding this phone. -->
+<dialog id="ask" aria-labelledby="ask-title">
+  <h2 id="ask-title">Are you sure?</h2>
+  <p id="ask-text"></p>
+  <div class="actions">
+    <button id="ask-yes" class="big danger" type="button">Yes</button>
+    <button id="ask-no" class="big ghost" type="button">No, keep it</button>
+  </div>
+</dialog>
+
 <dialog id="help">
   <h2>How does Recall work?</h2>
   <ol>
@@ -261,6 +273,6 @@
   </div>
 </dialog>
 
-<script type="module" src="js/app.js?v=12"></script>
+<script type="module" src="js/app.js?v=13"></script>
 </body>
 </html>

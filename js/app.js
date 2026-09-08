@@ -242,7 +242,11 @@ async function renderRecord(id) {
   });
 
   document.getElementById("btn-del").addEventListener("click", async () => {
-    if (!window.confirm("This card and its photo will be deleted. Continue?")) return;
+    const sure = await ask(
+      "This card and its photo will be deleted. Are you sure?",
+      "Yes, delete it"
+    );
+    if (!sure) return;
     await store.deleteRecord(record.id);
     records = await store.allRecords();
     say("The card is deleted.");
@@ -312,6 +316,35 @@ async function showWhoHasAccess() {
   } catch (err) {
     line.hidden = true;
   }
+}
+
+// R8.5. Recall's own question box. It reads the question out loud as well,
+// because the person answering it may not be able to read it.
+function ask(question, yesLabel) {
+  const box = document.getElementById("ask");
+  document.getElementById("ask-text").textContent = question;
+  const yes = document.getElementById("ask-yes");
+  const no = document.getElementById("ask-no");
+  yes.textContent = yesLabel || "Yes";
+
+  speech.speak(question);
+
+  return new Promise((resolve) => {
+    const finish = (answer) => {
+      speech.stop();
+      yes.removeEventListener("click", onYes);
+      no.removeEventListener("click", onNo);
+      box.removeEventListener("cancel", onNo);
+      box.close();
+      resolve(answer);
+    };
+    const onYes = () => finish(true);
+    const onNo = () => finish(false);
+    yes.addEventListener("click", onYes);
+    no.addEventListener("click", onNo);
+    box.addEventListener("cancel", onNo);
+    box.showModal();
+  });
 }
 
 /* the lock, R7.3 and R7.4 */

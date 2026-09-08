@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#231710">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=12">
-<link rel="stylesheet" href="css/helper.css?v=12">
+<link rel="stylesheet" href="css/style.css?v=13">
+<link rel="stylesheet" href="css/helper.css?v=13">
 </head>
 <body class="helper">
 
@@ -240,8 +240,17 @@
 
 </main>
 
+<dialog id="ask" aria-labelledby="ask-title">
+  <h2 id="ask-title">Are you sure?</h2>
+  <p id="ask-text"></p>
+  <div class="form-actions">
+    <button id="ask-yes" class="btn danger" type="button">Yes</button>
+    <button id="ask-no" class="btn ghost" type="button">Cancel</button>
+  </div>
+</dialog>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script type="module" src="js/helper.js?v=12"></script>
+<script type="module" src="js/helper.js?v=13"></script>
 </body>
 </html>

@@ -161,6 +161,7 @@ out.
 | R8.2 | Offer both ways out: try again after closing other tabs, and start fresh on this phone | Must |
 | R8.3 | Say plainly what starting fresh costs: family cards come back, cards that only ever lived on this phone do not | Must |
 | R8.4 | Recover the cards of an unlinked phone whose store is wedged | Won't, and this is the argument for linking |
+| R8.5 | Recall asks its own questions, never a browser confirm box: the browser's box is in the browser's language, at the browser's type size, cannot be read out loud, and blocks the whole page while it is up | Must |
 
 ## 4. Non-functional requirements
 

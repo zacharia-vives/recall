@@ -572,6 +572,11 @@ body.is-locked #main { display: none; }
 .lock-actions { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
 .hint-line { color: var(--mid); font-size: 19px; }
 
+/* Recall's own question box */
+#ask { max-width: 30rem; }
+#ask h2 { font-size: 26px; margin: 0 0 8px; color: var(--ink); }
+#ask p { font-size: 22px; margin: 0 0 8px; }
+
 /* add to home screen */
 .install {
   margin-top: 22px;
