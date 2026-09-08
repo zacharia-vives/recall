@@ -69,8 +69,14 @@ export function startFresh() {
     const req = indexedDB.deleteDatabase(DB_NAME);
     req.onsuccess = () => resolve(true);
     req.onerror = () => reject(req.error || new Error("The store would not go."));
-    req.onblocked = () => reject(new Error("Close Recall in your other tabs first."));
-    window.setTimeout(() => reject(new Error("The store would not go. Close Recall everywhere and try again.")), 8000);
+    req.onblocked = () => reject(new Error("Close Recall in your other tabs first, then try again."));
+    // Seen for real: the browser itself was still holding the old store open,
+    // and no tab of ours could make it let go. Closing the browser completely
+    // and opening it again is the thing that actually works, so say that.
+    window.setTimeout(() => reject(new Error(
+      "The store would not go. Close every Recall tab, then close the browser "
+      + "completely and open it again. Your family cards are safe."
+    )), 8000);
   });
 }
 
