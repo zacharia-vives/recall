@@ -409,7 +409,20 @@ security definer
 set search_path = public
 as $$
 begin
-  if new.role <> old.role and not public.is_helper(old.household_id) then
+  if new.role = old.role then
+    return new;
+  end if;
+
+  -- Every request through the API carries JWT claims, the anonymous ones
+  -- included. The SQL editor and a migration carry none, and those are us. If
+  -- the check did not look at this, the recovery statement at the bottom of
+  -- patch 001 would be refused by this very trigger, and so would any repair
+  -- by hand later on.
+  if coalesce(current_setting('request.jwt.claims', true), '') = '' then
+    return new;
+  end if;
+
+  if not public.is_helper(old.household_id) then
     raise exception 'only a helper can change a role in this household';
   end if;
   return new;

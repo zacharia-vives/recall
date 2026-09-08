@@ -68,17 +68,25 @@ security definer
 set search_path = public
 as $$
 begin
-  if new.role <> old.role and not public.is_helper(old.household_id) then
+  if new.role = old.role then
+    return new;
+  end if;
+
+  -- Every request through the API carries JWT claims, the anonymous ones
+  -- included. The SQL editor and a migration carry none, and those are us. If
+  -- the check did not look at this, the recovery statement at the bottom of
+  -- patch 001 would be refused by this very trigger, and so would any repair
+  -- by hand later on.
+  if coalesce(current_setting('request.jwt.claims', true), '') = '' then
+    return new;
+  end if;
+
+  if not public.is_helper(old.household_id) then
     raise exception 'only a helper can change a role in this household';
   end if;
   return new;
 end;
 $$;
-
-drop trigger if exists memberships_guard_role on public.memberships;
-create trigger memberships_guard_role
-  before update on public.memberships
-  for each row execute function public.guard_membership_role();
 
 -- --------------------------------------------------------------- 3. recovery
 -- Whoever created a household is its helper. If a demotion already happened,
@@ -90,3 +98,10 @@ from public.households h
 where m.household_id = h.id
   and m.user_id = h.created_by
   and m.role <> 'helper';
+
+-- ------------------------------------------- 4. and now the trigger itself
+
+drop trigger if exists memberships_guard_role on public.memberships;
+create trigger memberships_guard_role
+  before update on public.memberships
+  for each row execute function public.guard_membership_role();
