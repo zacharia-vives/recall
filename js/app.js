@@ -1,13 +1,13 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=19";
-import * as speech from "./speech.js?v=19";
-import * as camera from "./camera.js?v=19";
-import * as ocr from "./ocr.js?v=19";
-import { isConfigured } from "./config.js?v=19";
-import * as install from "./install.js?v=19";
-import * as lock from "./lock.js?v=19";
+import * as store from "./store.js?v=20";
+import * as speech from "./speech.js?v=20";
+import * as camera from "./camera.js?v=20";
+import * as ocr from "./ocr.js?v=20";
+import { isConfigured } from "./config.js?v=20";
+import * as install from "./install.js?v=20";
+import * as lock from "./lock.js?v=20";
 
 const HOUSEHOLD_KEY = "recall.householdId";
 
@@ -301,7 +301,7 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=19");
+    const cloud = await import("./cloud.js?v=20");
     const people = await cloud.members(id);
     const helpers = people.filter((m) => m.role === "helper").map((m) => m.display_name || "family");
     if (helpers.length === 0) {
@@ -440,7 +440,7 @@ async function rescueWithCode(event) {
   }
 
   try {
-    const cloud = await import("./cloud.js?v=19");
+    const cloud = await import("./cloud.js?v=20");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
@@ -548,7 +548,7 @@ async function linkThisPhone(event) {
   msg.hidden = false;
   msg.textContent = "One moment.";
   try {
-    const cloud = await import("./cloud.js?v=19");
+    const cloud = await import("./cloud.js?v=20");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     msg.textContent = "This phone is linked. Fetching the family cards.";
@@ -573,7 +573,7 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=19");
+    cloud = await import("./cloud.js?v=20");
   } catch (err) {
     if (loud) say("Could not reach the family cards.");
     return false;
@@ -1133,7 +1133,7 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=19");
+    const cloud = await import("./cloud.js?v=20");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     say("This phone is linked to the family.");

@@ -36,7 +36,7 @@ FILES = [
 ]
 
 VERSION_QUERY = re.compile(r"\?v=(\d+)")
-SW_CACHE = re.compile(r'const CACHE = "recall-v(\d+)";')
+SW_VERSION = re.compile(r"const VERSION = (\d+);")
 
 
 def read(name):
@@ -54,7 +54,7 @@ def versions():
     for name in FILES:
         text = read(name)
         numbers = sorted(set(VERSION_QUERY.findall(text)))
-        cache = SW_CACHE.findall(text)
+        cache = SW_VERSION.findall(text)
         if numbers or cache:
             found[name] = {"query": numbers, "cache": cache}
     return found
@@ -64,7 +64,7 @@ def bump(target):
     for name in FILES:
         text = read(name)
         new = VERSION_QUERY.sub("?v=" + str(target), text)
-        new = SW_CACHE.sub('const CACHE = "recall-v%d";' % target, new)
+        new = SW_VERSION.sub("const VERSION = %d;" % target, new)
         if new != text:
             write(name, new)
             print("set", name)
