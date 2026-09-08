@@ -5,6 +5,9 @@ import * as store from "./store.js";
 import * as speech from "./speech.js";
 import * as camera from "./camera.js";
 import * as ocr from "./ocr.js";
+import { isConfigured } from "./config.js";
+
+const HOUSEHOLD_KEY = "recall.householdId";
 
 const KINDS = {
   letter: { label: "Letter", badge: "L" },
@@ -190,6 +193,61 @@ async function renderRecord(id) {
   });
 }
 
+/* the household this phone belongs to, if a helper ever linked it */
+
+function linkedHousehold() {
+  try {
+    return window.localStorage.getItem(HOUSEHOLD_KEY);
+  } catch (err) {
+    return null;
+  }
+}
+
+// Requirement P12: the keeper reads the names of everyone who can see the cards,
+// on their own screen, in their own size. Never a count, never hidden away.
+async function showWhoHasAccess() {
+  const line = document.getElementById("access-line");
+  const id = linkedHousehold();
+  if (!isConfigured() || !id) {
+    line.hidden = true;
+    return;
+  }
+  try {
+    const cloud = await import("./cloud.js");
+    const people = await cloud.members(id);
+    const helpers = people.filter((m) => m.role === "helper").map((m) => m.display_name || "family");
+    if (helpers.length === 0) {
+      line.hidden = true;
+      return;
+    }
+    const names = helpers.length === 1
+      ? helpers[0]
+      : helpers.slice(0, -1).join(", ") + " and " + helpers[helpers.length - 1];
+    line.textContent = names + " can see your cards.";
+    line.hidden = false;
+  } catch (err) {
+    line.hidden = true;
+  }
+}
+
+// R6.3. The helper does this once, on this phone, with a code from their own.
+async function linkThisPhone(event) {
+  event.preventDefault();
+  const code = document.getElementById("link-code").value.trim();
+  const msg = document.getElementById("link-msg");
+  msg.hidden = false;
+  msg.textContent = "One moment.";
+  try {
+    const cloud = await import("./cloud.js");
+    const id = await cloud.claimDeviceLink(code);
+    window.localStorage.setItem(HOUSEHOLD_KEY, id);
+    msg.textContent = "This phone is linked. Family can add cards now.";
+    await showWhoHasAccess();
+  } catch (err) {
+    msg.textContent = "That code did not work: " + (err.message || err);
+  }
+}
+
 /* screens */
 
 function show(name) {
@@ -367,12 +425,18 @@ function wire() {
   const help = document.getElementById("help");
   document.getElementById("btn-help").addEventListener("click", () => help.showModal());
   document.getElementById("help-close").addEventListener("click", () => help.close());
+
+  if (isConfigured()) {
+    document.getElementById("link-wrap").hidden = false;
+    document.getElementById("form-link").addEventListener("submit", linkThisPhone);
+  }
 }
 
 async function init() {
   wire();
   records = await store.seedIfEmpty();
   await route();
+  showWhoHasAccess();
 
   if ("serviceWorker" in navigator) {
     // updateViaCache none plus an explicit update check, otherwise a browser can

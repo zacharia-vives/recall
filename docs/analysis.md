@@ -7,6 +7,12 @@ about it.
 The formatted version, with the full tables, is at
 <https://claude.ai/code/artifact/85430cce-66a3-45f6-b883-f49c5792106d>
 
+**Companion document.** After the pitch we added a second interface for the
+caretaker. The household model, the roles, the permissions, the line between
+helping and watching, and requirements R5, R6, P15 to P19 and S7 to S8 live in
+*Two interfaces, one household*:
+<https://claude.ai/code/artifact/a6b6aec6-b408-4d5a-9fe3-858225129e9e>
+
 ## 1. Scope
 
 The professor cut the original idea down to one module: **the card store, with
@@ -205,7 +211,10 @@ Two rules keep it simple:
 | 2 | Camera, R2.1, R2.2, R2.5. The demo is complete after this | 10 |
 | 3 | Text and dates, R2.3, R2.4 | 12 |
 | 4 | Reminders, R3.1 to R3.4 | 8 |
-| 5 | Supabase, R4.2 to R4.4 | 10 |
+| 5a | Supabase in Frankfurt, schema v2, RLS, magic link, households | 8 |
+| 5b | The helper interface: cards, add, edit, reminders, follow-up | 14 |
+| 5c | Device linking, and syncing keeper cards into the household | 8 |
+| 5d | Activity log, who has access, consent record | 6 |
 | 6 | Accessibility pass and testing with a real user | 8 |
 
 ## 10. Definition of done

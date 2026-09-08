@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recall for family</title>
+<meta name="description" content="The family side of Recall: add cards, set reminders and follow up.">
+<meta name="theme-color" content="#231710">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/helper.css">
+</head>
+<body class="helper">
+
+<header class="topbar">
+  <img src="icons/icon-192.png" alt="" class="logo" width="36" height="36">
+  <span class="brand">Recall <em>for family</em></span>
+  <span id="who" class="who"></span>
+  <button id="btn-out" class="text-btn" type="button" hidden>Sign out</button>
+</header>
+
+<main id="main">
+
+  <!-- the cloud is not set up yet -->
+  <section id="s-unconfigured" class="pane" hidden>
+    <h1>Not connected yet</h1>
+    <p>The family side needs a database. Someone has to put a Supabase project url
+      and its anon key into <code>js/config.js</code>, and run <code>db/schema.sql</code>
+      once in the SQL editor.</p>
+    <p>Until then the keeper app keeps working on its own, entirely on the phone,
+      which is how it is meant to be.</p>
+    <p><a class="link" href="index.html">Back to the keeper app</a></p>
+  </section>
+
+  <!-- sign in -->
+  <section id="s-signin" class="pane" hidden>
+    <h1>Sign in</h1>
+    <p>We send a link to your email. No password to remember, and nothing to install.</p>
+    <form id="form-signin">
+      <label class="field">
+        <span class="label">Your email</span>
+        <input id="email" type="email" required autocomplete="email" placeholder="marie@example.be">
+      </label>
+      <button class="btn" type="submit">Send me the link</button>
+    </form>
+    <p id="signin-msg" class="msg" hidden></p>
+  </section>
+
+  <!-- choose or create a household -->
+  <section id="s-households" class="pane" hidden>
+    <h1>Whose cards?</h1>
+    <div id="household-list" class="rows"></div>
+    <details class="new-household">
+      <summary>Set up a new household</summary>
+      <form id="form-household">
+        <label class="field">
+          <span class="label">Name it after the person</span>
+          <input id="hh-name" required placeholder="At my mother, Godelieve">
+        </label>
+        <label class="field">
+          <span class="label">Your own name, so she can see who helps</span>
+          <input id="hh-me" required placeholder="Marie">
+        </label>
+        <button class="btn" type="submit">Create it</button>
+      </form>
+    </details>
+  </section>
+
+  <!-- the household itself -->
+  <section id="s-app" class="pane" hidden>
+    <nav class="subtabs" aria-label="Sections">
+      <button class="subtab" data-view="follow" aria-current="page">Follow up</button>
+      <button class="subtab" data-view="cards">Cards</button>
+      <button class="subtab" data-view="house">Household</button>
+    </nav>
+
+    <div id="v-follow" class="view">
+      <h2>What is coming</h2>
+      <div id="follow-coming" class="rows"></div>
+      <h2>Missed</h2>
+      <div id="follow-missed" class="rows"></div>
+      <h2>Done</h2>
+      <div id="follow-done" class="rows"></div>
+    </div>
+
+    <div id="v-cards" class="view" hidden>
+      <div class="view-head">
+        <h2>Cards</h2>
+        <button id="btn-new-card" class="btn" type="button">Add a card</button>
+      </div>
+      <form id="form-card" class="card-form" hidden>
+        <input type="hidden" id="c-id">
+        <div class="two">
+          <label class="field">
+            <span class="label">What is it</span>
+            <select id="c-kind">
+              <option value="letter">A letter</option>
+              <option value="person">A person</option>
+              <option value="place">A place</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="label">Name of the card</span>
+            <input id="c-title" required placeholder="Cardiology, check-up">
+          </label>
+        </div>
+        <div class="two">
+          <label class="field">
+            <span class="label">Who</span>
+            <input id="c-people" placeholder="doctor Vermeulen, Marie">
+          </label>
+          <label class="field">
+            <span class="label">Where</span>
+            <input id="c-place" placeholder="AZ Groeninge, Kortrijk">
+          </label>
+        </div>
+        <div class="two">
+          <label class="field">
+            <span class="label">When</span>
+            <input id="c-when" type="datetime-local">
+          </label>
+          <label class="field">
+            <span class="label">Photo, optional</span>
+            <input id="c-photo" type="file" accept="image/*">
+          </label>
+        </div>
+        <label class="field">
+          <span class="label">What Recall should say out loud</span>
+          <input id="c-spoken" placeholder="Your appointment with the cardiologist is tomorrow at ten.">
+        </label>
+        <div class="two">
+          <label class="field">
+            <span class="label">Remind her</span>
+            <select id="c-repeat">
+              <option value="">no reminder</option>
+              <option value="none">once, the day before</option>
+              <option value="daily">every day</option>
+              <option value="twice_daily">twice a day</option>
+              <option value="weekly">every week</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="label">Reminder time</span>
+            <input id="c-remind-at" type="datetime-local">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn" type="submit">Save the card</button>
+          <button class="btn ghost" type="button" id="btn-cancel-card">Cancel</button>
+        </div>
+      </form>
+      <div id="cards-list" class="rows"></div>
+      <details id="bin-wrap" class="bin">
+        <summary>The bin</summary>
+        <p class="hint">Cards stay here for thirty days before they are gone for good.</p>
+        <div id="bin-list" class="rows"></div>
+      </details>
+    </div>
+
+    <div id="v-house" class="view" hidden>
+      <h2>Who has access</h2>
+      <div id="members-list" class="rows"></div>
+
+      <h2>Link her phone</h2>
+      <p class="hint">Open this page on her phone once, sign in as yourself, and type
+        the code below. That phone then opens the keeper app and never asks for a
+        login again.</p>
+      <div class="linkbox">
+        <button id="btn-link" class="btn" type="button">Make a code</button>
+        <output id="link-code" class="code"></output>
+      </div>
+
+      <h2>Invite another helper</h2>
+      <form id="form-invite" class="inline-form">
+        <label class="field">
+          <span class="label">Their email</span>
+          <input id="inv-email" type="email" required placeholder="tom@example.be">
+        </label>
+        <button class="btn" type="submit">Create an invitation</button>
+      </form>
+      <p id="invite-msg" class="msg" hidden></p>
+
+      <h2>What has happened</h2>
+      <p class="hint">She can read this list too. That is the point of it.</p>
+      <div id="activity-list" class="rows"></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="js/helper.js"></script>
+</body>
+</html>

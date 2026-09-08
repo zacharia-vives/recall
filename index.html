@@ -29,6 +29,7 @@
     <h1 id="today-title">Today</h1>
     <p id="today-date" class="date"></p>
     <div id="today-list" class="list"></div>
+    <p id="access-line" class="access" hidden></p>
   </section>
 
   <!-- everything -->
@@ -129,6 +130,23 @@
     <li>Press <b>Keep it</b>. Recall remembers the date and tells you in time.</li>
   </ol>
   <button class="big" type="button" id="help-close">Close</button>
+
+  <div class="family">
+    <h3>For family</h3>
+    <p>Family can add cards and set reminders at
+      <a href="helper.html">Recall for family</a>.</p>
+    <div id="link-wrap" hidden>
+      <p>Linking this phone? Type the six letter code from the family app.</p>
+      <form id="form-link">
+        <label class="field">
+          <span class="label">Code</span>
+          <input id="link-code" maxlength="6" autocapitalize="characters" autocomplete="off">
+        </label>
+        <button class="big" type="submit">Link this phone</button>
+      </form>
+      <p id="link-msg" class="link-msg" hidden></p>
+    </div>
+  </div>
 </dialog>
 
 <script type="module" src="js/app.js"></script>

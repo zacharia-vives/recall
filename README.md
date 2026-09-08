@@ -11,6 +11,18 @@ a reminder.
 
 Recall is not a medical device.
 
+## Two interfaces, one household
+
+| Who | Where | What they do |
+| --- | --- | --- |
+| The keeper | `index.html` | Never logs in. Today, camera, cards, read out loud. |
+| The helper | `helper.html` | Signs in with an emailed link. Adds cards, sets reminders, follows up. |
+
+A record belongs to a household, not to a person. People belong to a household
+with a role, either keeper or helper, and every rule about who may read or
+change what is enforced in Postgres, never in the browser. The design is written
+out in <https://claude.ai/code/artifact/a6b6aec6-b408-4d5a-9fe3-858225129e9e>
+
 ## What it already does
 
 - Cards with a photo, who, where, when and a reminder
@@ -31,15 +43,20 @@ Then open <http://localhost:8080>.
 
 ## Layout
 
-    index.html                the five screens
+    index.html                the keeper app, five screens
+    helper.html               the family app
     css/style.css             styling, nothing readable below 22px
-    js/app.js                 routing and screens
+    css/helper.css            the family app, at normal density
+    js/app.js                 routing and screens, keeper side
+    js/helper.js              the family app
     js/store.js               storage in IndexedDB, on the device
+    js/cloud.js               everything that talks to Supabase
+    js/config.js              the project url and anon key go here
     js/camera.js              camera and the magnifier
     js/ocr.js                 reading text, finding the date, redacting numbers
     js/speech.js              reading out loud
     sw.js                     working offline
-    db/schema.sql             the Supabase schema, for step 5
+    db/schema.sql             the database, households, roles and policies
     docs/analysis.md          the full analysis and the requirements
 
 ## Rules for this project
@@ -56,6 +73,26 @@ Then open <http://localhost:8080>.
    first.
 6. **Never summarise.** We read out what is written, we do not rewrite it.
 7. **No framework and no build step.** What is in the repo is what is online.
+
+## Connecting the database
+
+The keeper app needs none of this: with `js/config.js` empty it stores
+everything on the phone and loads no cloud code at all. The family app needs a
+database, and this is the whole setup.
+
+1. Make a Supabase project in the **Frankfurt (eu-central-1)** region.
+2. Run `db/schema.sql` once in the SQL editor.
+3. Authentication, Providers: switch on **anonymous sign-ins**. Only the keeper
+   phone uses it, so that it can have an identity without an email.
+4. Authentication, URL configuration: site url
+   `https://zacharia-vives.github.io/recall/` and redirect
+   `https://zacharia-vives.github.io/recall/helper.html`.
+5. Storage: check the `photos` bucket says private.
+6. Put the project url and the **anon** key in `js/config.js`. That key is meant
+   to be public. The `service_role` key is not, and this project never uses it.
+
+Then the family app works: sign in, create a household, and use "Link her phone"
+to turn any phone into the keeper phone with a six letter code.
 
 ## Language
 
