@@ -2,69 +2,76 @@
 
 **Live: <https://zacharia-vives.github.io/recall/>**
 
-Recall bewaart wat je niet wil vergeten.
+Recall keeps what you would hate to lose.
 
-Een webapp voor oudere mensen die hun papieren niet meer kunnen lezen en de draad
-kwijtraken. Je richt de camera op een brief, Recall maakt de letters groter, leest
-de brief voor en bewaart hem als een kaart met een datum en een herinnering.
+A web app for older people who can no longer read their own paperwork and who
+lose the thread of the day. You point the camera at a letter, Recall makes the
+print bigger, reads the letter out loud, and files it as a card with a date and
+a reminder.
 
-Recall is geen medisch hulpmiddel.
+Recall is not a medical device.
 
-## Wat het nu al doet
+## What it already does
 
-- Kaarten bewaren met foto, wie, waar, wanneer en een herinnering
-- Camera met een schuifknop om de tekst tot vier keer groter te maken
-- De brief voorlezen met de stem van de telefoon
-- De tekst van de brief lezen op het toestel zelf en de datum eruit halen
-- Werkt zonder account en zonder internet, alles blijft op de telefoon
-- Installeerbaar op het startscherm van een Android-telefoon
+- Cards with a photo, who, where, when and a reminder
+- A camera with a slider that makes the print up to four times bigger
+- Reads a card out loud with the voice built into the phone
+- Reads the text of a letter on the device itself and pulls the date out of it
+- Works with no account and no internet, everything stays on the phone
+- Installs on the home screen of an Android phone
 
-## Hoe je het lokaal opstart
+## Running it locally
 
-Er is geen build stap. Je hebt alleen een webserver nodig, want de camera en de
-service worker werken niet vanaf `file://`.
+There is no build step. You only need a web server, because the camera and the
+service worker do not work from `file://`.
 
     python -m http.server 8080
 
-Ga daarna naar <http://localhost:8080>.
+Then open <http://localhost:8080>.
 
-## Structuur
+## Layout
 
-    index.html                de vier schermen
-    css/style.css             styling, niets kleiner dan 22px
-    js/app.js                 navigatie en schermen
-    js/store.js               opslag in IndexedDB, op het toestel
-    js/camera.js              camera en de vergrootglasfunctie
-    js/ocr.js                 tekst lezen en de datum eruit halen
-    js/speech.js              voorlezen
-    sw.js                     offline werken
-    db/schema.sql             het Supabase schema, voor stap 5
-    docs/analysis.md          de volledige analyse en de vereisten
+    index.html                the five screens
+    css/style.css             styling, nothing readable below 22px
+    js/app.js                 routing and screens
+    js/store.js               storage in IndexedDB, on the device
+    js/camera.js              camera and the magnifier
+    js/ocr.js                 reading text, finding the date, redacting numbers
+    js/speech.js              reading out loud
+    sw.js                     working offline
+    db/schema.sql             the Supabase schema, for step 5
+    docs/analysis.md          the full analysis and the requirements
 
-## Afspraken in dit project
+## Rules for this project
 
-1. **Niets kleiner dan 22px** en elke knop minstens 56px hoog. Onze gebruiker
-   kan 7 punten niet lezen, dat is het hele punt van de app.
-2. **Alles blijft standaard op het toestel.** Er gaat pas iets naar een server
-   als iemand zich aanmeldt en daar uitdrukkelijk voor kiest.
-3. **De tekst van een brief wordt op het toestel gelezen**, nooit door een
-   externe dienst. Een brief van het ziekenhuis is medische data.
-4. **Het rijksregisternummer en rekeningnummers worden weggehaald** voor we tekst
-   bewaren. Zie `redact()` in `js/ocr.js`.
-5. **Nooit stil bewaren.** Wat we van een brief lezen wordt altijd eerst
-   getoond en bevestigd.
-6. **Nooit samenvatten.** We lezen voor wat er staat, we herschrijven niets.
-7. **Geen framework en geen build stap.** Wat in de repo staat is wat online
-   staat.
+1. **Nothing readable below 22px** and every button at least 56px high. Our user
+   cannot read 7 point, which is the entire reason the app exists.
+2. **Everything stays on the device by default.** Nothing goes to a server until
+   someone signs in and explicitly chooses to.
+3. **The text of a letter is read on the device**, never by an outside service. A
+   letter from a hospital is health data.
+4. **The national number and account numbers are stripped** before we store any
+   text. See `redact()` in `js/ocr.js`.
+5. **Never file silently.** Whatever we read off a letter is shown and confirmed
+   first.
+6. **Never summarise.** We read out what is written, we do not rewrite it.
+7. **No framework and no build step.** What is in the repo is what is online.
 
-## Stand van zaken
+## Language
 
-| Stap | Wat | Status |
+The interface is English. Two things stay deliberately Dutch-aware, because the
+letters our users photograph are Belgian: the OCR runs with `nld+eng`, and
+`guessLang()` in `js/ocr.js` picks a Dutch voice when the text it read looks
+Dutch. A Dutch interface is on the list for later.
+
+## Where we are
+
+| Step | What | Status |
 | --- | --- | --- |
-| 0 | Skelet online, icoon, offline werken | klaar |
-| 1 | Kaarten lokaal: maken, tonen, voorlezen, verwijderen | klaar |
-| 2 | Camera met vergrootglas en foto nemen | klaar |
-| 3 | Tekst lezen en datum herkennen | eerste versie |
-| 4 | Herinneringen, vandaag-scherm, afvinken | te doen |
-| 5 | Supabase: aanmelden met een e-maillink, synchroniseren | te doen |
-| 6 | Toegankelijkheidsronde en testen met een echte gebruiker | te doen |
+| 0 | Skeleton online, icon, offline shell | done |
+| 1 | Cards locally: create, list, read out loud, delete | done |
+| 2 | Camera with a magnifier and taking a photo | done |
+| 3 | Reading text and recognising the date | first version |
+| 4 | Reminders, today screen, marking as done | to do |
+| 5 | Supabase: sign in with an emailed link, sync | to do |
+| 6 | Accessibility pass and testing with a real user | to do |

@@ -1,8 +1,8 @@
 {
   "name": "Recall",
   "short_name": "Recall",
-  "description": "Recall bewaart wat je niet wil vergeten. Richt de camera op een brief en Recall leest hem voor en bewaart hem.",
-  "lang": "nl-BE",
+  "description": "Recall keeps what you would hate to lose. Point the camera at a letter and Recall reads it out loud and files it.",
+  "lang": "en",
   "dir": "ltr",
   "start_url": "./index.html",
   "scope": "./",

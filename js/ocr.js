@@ -15,7 +15,7 @@ function loadLibrary() {
     const tag = document.createElement("script");
     tag.src = TESSERACT_URL;
     tag.onload = () => resolve(window.Tesseract);
-    tag.onerror = () => reject(new Error("Tesseract kon niet laden"));
+    tag.onerror = () => reject(new Error("Tesseract could not load"));
     document.head.appendChild(tag);
   });
   return loading;
@@ -25,8 +25,8 @@ function loadLibrary() {
 // We do not need it for anything, so we never store it.
 export function redact(text) {
   let out = text;
-  out = out.replace(/\b\d{2}[.\-\s]?\d{2}[.\-\s]?\d{2}[-\s]?\d{3}[.\-\s]?\d{2}\b/g, "[rijksregisternummer verwijderd]");
-  out = out.replace(/\b[A-Z]{2}\d{2}[\sA-Z0-9]{8,26}\b/g, "[rekeningnummer verwijderd]");
+  out = out.replace(/\b\d{2}[.\-\s]?\d{2}[.\-\s]?\d{2}[-\s]?\d{3}[.\-\s]?\d{2}\b/g, "[national number removed]");
+  out = out.replace(/\b[A-Z]{2}\d{2}[\sA-Z0-9]{8,26}\b/g, "[account number removed]");
   return out;
 }
 
@@ -92,6 +92,19 @@ export function findDate(text) {
   }
 
   return null;
+}
+
+// Which voice should read this text back? A Belgian letter is usually Dutch even
+// though our interface is English, and reading Dutch with an English voice is
+// unpleasant to listen to. This is deliberately crude and good enough.
+export function guessLang(text) {
+  const words = text.toLowerCase().split(/[^a-z]+/);
+  const dutchHints = ["de", "het", "een", "uw", "van", "niet", "met", "voor", "bij", "wij"];
+  let hits = 0;
+  for (const w of words) {
+    if (dutchHints.includes(w)) hits += 1;
+  }
+  return hits >= 3 ? "nl-BE" : "en-GB";
 }
 
 // The first line that looks like a title, used to prefill the name of the card.

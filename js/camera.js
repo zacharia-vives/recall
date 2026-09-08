@@ -6,12 +6,12 @@ let stream = null;
 
 export async function start(video, onMessage) {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    onMessage("Deze telefoon of browser laat de camera niet toe. Kies een foto.");
+    onMessage("This phone or browser does not allow the camera. Choose a photo instead.");
     return false;
   }
   // The browser now asks for permission, which can sit there for a while. Say
   // so, otherwise the user is looking at a black rectangle with no explanation.
-  onMessage("Geef toestemming voor de camera. Lukt dat niet? Kies dan een foto.");
+  onMessage("Allow the camera. If that does not work, choose a photo instead.");
 
   try {
     stream = await navigator.mediaDevices.getUserMedia({
@@ -28,9 +28,9 @@ export async function start(video, onMessage) {
     return true;
   } catch (err) {
     if (err && err.name === "NotAllowedError") {
-      onMessage("Je gaf nog geen toestemming voor de camera. Kies een foto of geef toestemming.");
+      onMessage("The camera has no permission yet. Allow it, or choose a photo instead.");
     } else {
-      onMessage("De camera start niet. Kies een foto.");
+      onMessage("The camera will not start. Choose a photo instead.");
     }
     return false;
   }

@@ -7,9 +7,9 @@ import * as camera from "./camera.js";
 import * as ocr from "./ocr.js";
 
 const KINDS = {
-  letter: { label: "Brief", badge: "B" },
-  person: { label: "Persoon", badge: "P" },
-  place: { label: "Plaats", badge: "●" }
+  letter: { label: "Letter", badge: "L" },
+  person: { label: "Person", badge: "P" },
+  place: { label: "Place", badge: "●" }
 };
 
 const screens = {
@@ -43,13 +43,13 @@ function say(message) {
   window.setTimeout(() => toast.classList.remove("show"), 2600);
 }
 
-function dutchDate(iso) {
+function readableDate(iso) {
   if (!iso) return "";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("nl-BE", {
+  return d.toLocaleDateString("en-GB", {
     weekday: "long", day: "numeric", month: "long", year: "numeric"
-  }) + " om " + d.toLocaleTimeString("nl-BE", { hour: "2-digit", minute: "2-digit" });
+  }) + " at " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
 function isDueSoon(record) {
@@ -62,7 +62,7 @@ function isDueSoon(record) {
 function sentenceFor(record) {
   if (record.spokenText) return record.spokenText;
   const parts = [record.title];
-  if (record.happensAt) parts.push(dutchDate(record.happensAt));
+  if (record.happensAt) parts.push(readableDate(record.happensAt));
   if (record.place) parts.push(record.place);
   return parts.filter(Boolean).join(". ") + ".";
 }
@@ -72,7 +72,7 @@ function sentenceFor(record) {
 function cardHtml(record, extraClass) {
   const kind = KINDS[record.kind] || KINDS.letter;
   const bits = [];
-  if (record.happensAt) bits.push(dutchDate(record.happensAt));
+  if (record.happensAt) bits.push(readableDate(record.happensAt));
   if (record.place) bits.push(record.place);
   if (bits.length === 0 && record.people && record.people.length) bits.push(record.people.join(", "));
 
@@ -99,7 +99,7 @@ async function paintThumbs(container) {
 
 function renderToday() {
   const dateEl = document.getElementById("today-date");
-  dateEl.textContent = new Date().toLocaleDateString("nl-BE", {
+  dateEl.textContent = new Date().toLocaleDateString("en-GB", {
     weekday: "long", day: "numeric", month: "long"
   });
 
@@ -108,8 +108,8 @@ function renderToday() {
 
   if (due.length === 0) {
     list.innerHTML =
-      '<p class="empty">Er staat niets op de agenda voor vandaag of morgen.<br>' +
-      "Richt de camera op een brief om er iets aan toe te voegen.</p>";
+      '<p class="empty">Nothing is due today or tomorrow.<br>' +
+      "Point the camera at a letter to add something.</p>";
     return;
   }
   list.innerHTML = due.map((r) => cardHtml(r, "due")).join("");
@@ -127,7 +127,7 @@ function renderRecords(filter) {
     : records;
 
   if (rows.length === 0) {
-    list.innerHTML = '<p class="empty">Niets gevonden.</p>';
+    list.innerHTML = '<p class="empty">Nothing found.</p>';
     return;
   }
   list.innerHTML = rows.map((r) => cardHtml(r)).join("");
@@ -138,35 +138,35 @@ async function renderRecord(id) {
   const record = records.find((r) => r.id === id);
   const box = document.getElementById("record-detail");
   if (!record) {
-    box.innerHTML = '<p class="empty">Deze kaart bestaat niet meer.</p>';
+    box.innerHTML = '<p class="empty">This card does not exist any more.</p>';
     return;
   }
   document.getElementById("record-title").textContent = record.title;
 
   const rows = [
-    ["Soort", (KINDS[record.kind] || KINDS.letter).label],
-    ["Wie", (record.people || []).join(", ")],
-    ["Waar", record.place],
-    ["Wanneer", dutchDate(record.happensAt)],
-    ["Labels", (record.tags || []).join(", ")],
-    ["Herinnering", record.remind === "day-before" ? "de dag ervoor"
-      : record.remind === "daily" ? "elke dag"
-      : record.remind === "twice" ? "twee keer per dag" : "geen"]
+    ["Kind", (KINDS[record.kind] || KINDS.letter).label],
+    ["Who", (record.people || []).join(", ")],
+    ["Where", record.place],
+    ["When", readableDate(record.happensAt)],
+    ["Tags", (record.tags || []).join(", ")],
+    ["Reminder", record.remind === "day-before" ? "the day before"
+      : record.remind === "daily" ? "every day"
+      : record.remind === "twice" ? "twice a day" : "none"]
   ].filter((row) => row[1]);
 
   box.innerHTML =
-    (record.hasPhoto ? '<img class="detail-photo" id="detail-photo" alt="Foto van deze kaart">' : "") +
+    (record.hasPhoto ? '<img class="detail-photo" id="detail-photo" alt="Photo on this card">' : "") +
     '<div class="fields">' +
       rows.map((row) =>
         '<div class="row"><span class="k">' + esc(row[0]) + '</span><span class="v">' + esc(row[1]) + "</span></div>"
       ).join("") +
     "</div>" +
     '<div class="actions">' +
-      '<button class="big" type="button" id="btn-say">Lees voor</button>' +
-      '<button class="big danger" type="button" id="btn-del">Verwijder deze kaart</button>' +
+      '<button class="big" type="button" id="btn-say">Read it out loud</button>' +
+      '<button class="big danger" type="button" id="btn-del">Delete this card</button>' +
     "</div>" +
-    '<p class="disclaimer">Recall is geen medisch hulpmiddel. Bewaar de papieren brief, ' +
-    "en volg altijd wat je arts of apotheker zegt.</p>";
+    '<p class="disclaimer">Recall is not a medical device. Keep the paper letter, ' +
+    "and always follow what your doctor or pharmacist tells you.</p>";
 
   if (record.hasPhoto) {
     const url = await store.photoUrl(record.id);
@@ -178,14 +178,14 @@ async function renderRecord(id) {
       speech.stop();
       return;
     }
-    if (!speech.speak(sentenceFor(record))) say("Deze browser kan niet voorlezen.");
+    if (!speech.speak(sentenceFor(record))) say("This browser cannot read out loud.");
   });
 
   document.getElementById("btn-del").addEventListener("click", async () => {
-    if (!window.confirm("Deze kaart en de foto worden verwijderd. Doorgaan?")) return;
+    if (!window.confirm("This card and its photo will be deleted. Continue?")) return;
     await store.deleteRecord(record.id);
     records = await store.allRecords();
-    say("De kaart is verwijderd.");
+    say("The card is deleted.");
     go("#/records");
   });
 }
@@ -265,11 +265,11 @@ async function usePhoto(blob) {
   // blank page. Requirement S1: whatever we read is only ever a suggestion.
   const state = document.getElementById("ocr-state");
   state.hidden = false;
-  state.textContent = "Recall leest de brief. Dat duurt even de eerste keer.";
+  state.textContent = "Recall is reading the letter. The first time takes a moment.";
 
   try {
     const text = await ocr.readText(blob, (percent) => {
-      state.textContent = "Recall leest de brief. " + percent + " procent.";
+      state.textContent = "Recall is reading the letter. " + percent + " per cent.";
     });
     const found = ocr.findDate(text);
     const title = ocr.guessTitle(text);
@@ -282,12 +282,12 @@ async function usePhoto(blob) {
 
     pendingText = text;
     state.textContent = found
-      ? "Recall leest: " + dutchDate(found.toISOString()) + ". Klopt dat?"
-      : "Recall vond geen datum. Vul die zelf in als je die nodig hebt.";
+      ? "Recall read: " + readableDate(found.toISOString()) + ". Is that right?"
+      : "Recall found no date. Fill one in yourself if you need it.";
 
-    if (text) speech.speak(text.slice(0, 400));
+    if (text) speech.speak(text.slice(0, 400), ocr.guessLang(text));
   } catch (err) {
-    state.textContent = "Recall kon de tekst niet lezen. Je kan de kaart nog altijd bewaren.";
+    state.textContent = "Recall could not read the text. You can still keep the card.";
   }
 }
 
@@ -296,7 +296,7 @@ async function saveNew(event) {
   const form = event.target;
   const title = document.getElementById("f-title").value.trim();
   if (!title) {
-    say("Geef de kaart eerst een naam.");
+    say("Give the card a name first.");
     document.getElementById("f-title").focus();
     return;
   }
@@ -322,7 +322,7 @@ async function saveNew(event) {
   await store.saveRecord(record);
   records = await store.allRecords();
   pendingPhoto = null;
-  say("Bewaard.");
+  say("Kept.");
   go("#/record/" + id);
 }
 
@@ -349,7 +349,7 @@ function wire() {
   document.getElementById("btn-shoot").addEventListener("click", async () => {
     const blob = await camera.capture(video);
     if (!blob) {
-      say("De camera is nog niet klaar.");
+      say("The camera is not ready yet.");
       return;
     }
     await usePhoto(blob);

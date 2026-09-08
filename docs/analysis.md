@@ -1,218 +1,222 @@
-# Recall - analyse en vereisten
+# Recall - analysis and requirements
 
-Versie 1, 8 september 2026. Deze tekst is de bron voor wat we bouwen. Als code en
-deze tekst niet overeenkomen, is een van de twee fout en praten we erover.
+Version 1, 8 September 2026. This document is the source of truth for what we
+build. If the code and this document disagree, one of them is wrong and we talk
+about it.
+
+The formatted version, with the full tables, is at
+<https://claude.ai/code/artifact/85430cce-66a3-45f6-b883-f49c5792106d>
 
 ## 1. Scope
 
-De professor bracht het idee terug tot een module: **de kaartenbak, met de camera
-erin als de manier waarop er iets in komt.** De rest staat op de roadmap voor de
-eindpresentatie.
+The professor cut the original idea down to one module: **the card store, with
+the camera folded into it as the way things get in.** Everything else sits on a
+roadmap for the end presentation.
 
-In een zin: *een kaartenbak voor de gewone dingen die een vergeetachtig persoon
-kwijtraakt, gevuld door er een camera op te richten, en voorgelezen.*
+In one sentence: *a card store for the ordinary things a forgetful person loses
+track of, filled by pointing a camera at them, and read back out loud.*
 
-Wat we uitdrukkelijk **niet** bouwen: stappen tellen, beloningen, memory walks,
-familie die kaarten instuurt, WhatsApp of Instagram, gezichtsherkenning,
-medische uitspraken, en aanmelden met itsme.
+Explicitly **not** building: step counting, rewards, memory walks, family posting
+cards in, WhatsApp or Instagram, face recognition, medical claims, or signing in
+with itsme.
 
-## 2. Gebruikers
+## 2. Users
 
-| Rol | Wie | Wat dit betekent voor de UI |
+| Role | Who | What that means for the interface |
 | --- | --- | --- |
-| De bewaarder | 70 tot 90 jaar, milde vergeetachtigheid, slechte nabijzicht | Kan 7 punten niet lezen, beeft, houdt geen mappen bij, onthoudt geen wachtwoord |
-| De helper | Volwassen kind, meestal een dochter van veertig of vijftig | Installeert het, zet het op, is degene die zou betalen |
+| The keeper | 70 to 90, mild forgetting, poor near vision | Cannot read 7 point, hands shake, will not keep folders, will not remember a password |
+| The helper | An adult child, usually a daughter in her forties or fifties | Installs it, sets it up, and is the one who would pay |
 
-## 3. Functionele vereisten
+## 3. Functional requirements
 
-MoSCoW. Must is de demo en schuift niet.
+MoSCoW. Must is the demo and does not slip.
 
-### R1 Kaarten
+### R1 Cards
 
-| ID | Vereiste | Prio |
+| ID | Requirement | Priority |
 | --- | --- | --- |
-| R1.1 | Kaart maken met foto, naam en soort | Must |
-| R1.2 | Precies zes velden: media, wie, waar, wanneer, labels, herinnering | Must |
-| R1.3 | Lijst van kaarten, nieuwste eerst, grote kaarten met foto | Must |
-| R1.4 | Een kaart openen, alle velden op 22px of groter | Must |
-| R1.5 | Kaart voorlezen met een druk op de knop, in het Nederlands | Must |
-| R1.6 | Kaart aanpassen en verwijderen | Should |
-| R1.7 | Zoeken op naam, personen en labels | Should |
-| R1.8 | Een vraag stellen en het antwoord horen | Could |
-| R1.9 | Vrije tekst van willekeurige lengte | Won't |
+| R1.1 | Create a card with a photo, a name and a kind | Must |
+| R1.2 | Exactly six fields: media, who, where, when, tags, reminder | Must |
+| R1.3 | List of cards, newest first, large cards with the photo | Must |
+| R1.4 | Open one card, every field at 22px or larger | Must |
+| R1.5 | Read a card out loud in one tap | Must |
+| R1.6 | Edit and delete a card | Should |
+| R1.7 | Search across names, people and tags | Should |
+| R1.8 | Ask a question out loud and hear the answer | Could |
+| R1.9 | Free text of any length | Won't |
 
 ### R2 Camera
 
-| ID | Vereiste | Prio |
+| ID | Requirement | Priority |
 | --- | --- | --- |
-| R2.1 | Live camera met vergrootglas, 1x tot 4x | Must |
-| R2.2 | Foto nemen en bij de kaart bewaren | Must |
-| R2.3 | De gelezen tekst voorlezen | Must |
-| R2.4 | De datum in de tekst vinden en voorstellen | Must |
-| R2.5 | Bewaren in een stap, geen formulier om in te vullen | Must |
-| R2.6 | Een bestaande foto kiezen in plaats van de camera | Should |
-| R2.7 | Zaklamp en scherpstellen bij tikken | Could |
-| R2.8 | Een gezicht herkennen en de persoon benoemen | Won't |
+| R2.1 | Live camera with a magnifier, 1x to 4x | Must |
+| R2.2 | Take a photo and keep it on the card | Must |
+| R2.3 | Read the text it found out loud | Must |
+| R2.4 | Find the date in the text and offer it | Must |
+| R2.5 | File in one step, no form to fill in | Must |
+| R2.6 | Choose an existing photo instead of the camera | Should |
+| R2.7 | Torch and tap to focus | Could |
+| R2.8 | Recognise a face and name the person | Won't |
 
-### R3 Herinneringen
+### R3 Reminders
 
-| ID | Vereiste | Prio |
+| ID | Requirement | Priority |
 | --- | --- | --- |
-| R3.1 | Een herinnering hoort bij een kaart, staat nooit alleen | Must |
-| R3.2 | Vandaag-scherm: wat komt er, groot, voorgelezen bij tikken | Must |
-| R3.3 | Herhalen: elke dag, twee keer per dag, elke week | Should |
-| R3.4 | Afvinken, en zien dat het afgevinkt is | Should |
-| R3.5 | Melding terwijl de app dicht is | Could |
-| R3.6 | Herinneren via sms of telefoon | Won't |
+| R3.1 | A reminder belongs to a card, it never stands alone | Must |
+| R3.2 | Today screen: what is coming, large, read out loud on tap | Must |
+| R3.3 | Repeating: every day, twice a day, every week | Should |
+| R3.4 | Mark as done, and show that it was done | Should |
+| R3.5 | A notification while the app is closed | Could |
+| R3.6 | Reminders by text message or phone call | Won't |
 
-### R4 Account en synchroniseren
+### R4 Accounts and sync
 
-| ID | Vereiste | Prio |
+| ID | Requirement | Priority |
 | --- | --- | --- |
-| R4.1 | Werkt volledig zonder account, data op het toestel | Must |
-| R4.2 | Optioneel aanmelden met een e-maillink, geen wachtwoord | Should |
-| R4.3 | Wie aangemeld is, ziet enkel zijn eigen kaarten | Should |
-| R4.4 | Een kaart definitief verwijderen, foto inbegrepen | Should |
-| R4.5 | Alles exporteren als foto's plus een JSON bestand | Could |
-| R4.6 | Gedeelde huishoudaccounts | Could |
-| R4.7 | itsme of FranceConnect | Won't |
+| R4.1 | Works completely without an account, data on the device | Must |
+| R4.2 | Optional sign-in with an emailed link, no password | Should |
+| R4.3 | A signed-in user sees only their own cards | Should |
+| R4.4 | Delete a card permanently, photo included | Should |
+| R4.5 | Export everything as photos plus a JSON file | Could |
+| R4.6 | Shared household accounts | Could |
+| R4.7 | itsme or FranceConnect | Won't |
 
-## 4. Niet-functionele vereisten
+## 4. Non-functional requirements
 
-| ID | Vereiste |
+| ID | Requirement |
 | --- | --- |
-| N1 | Nooit tekst kleiner dan 22px, knoppen minstens 56px hoog |
-| N2 | Contrast minstens 4.5:1 voor tekst |
-| N3 | Alles bereikbaar met het toetsenbord, focus altijd zichtbaar |
-| N4 | WCAG 2.2 AA als doel, want de European Accessibility Act geldt hier |
-| N5 | Geen tijdslimieten, geen beweging die je niet kan uitzetten |
-| N6 | Eerste scherm bruikbaar in minder dan 3 seconden op een oude Android |
-| N7 | Werkt offline om te lezen en voor het vandaag-scherm |
-| N8 | Installeerbaar op het startscherm met het Recall icoon |
-| N9 | Kaarten en foto's zijn privé voor hun eigenaar |
-| N10 | Nederlands eerst, Engels daarna, Frans later |
+| N1 | Never text below 22px, buttons at least 56px high |
+| N2 | Contrast at least 4.5:1 for text |
+| N3 | Everything reachable by keyboard, focus always visible |
+| N4 | WCAG 2.2 AA as the target, because the European Accessibility Act applies here |
+| N5 | No timeouts, no motion that cannot be turned off |
+| N6 | First screen usable in under 3 seconds on an old Android |
+| N7 | Works offline for reading and for the today screen |
+| N8 | Installable on the home screen with the Recall icon |
+| N9 | Cards and photos are private to their owner |
+| N10 | Interface in English. Dutch and French come later, so interface text stays out of the logic |
 
-## 5. Gegevensbescherming
+## 5. Data protection
 
-Mensen zetten hier geen vakantiefoto's in. Ze zetten er **ziekenhuisbrieven,
-bankuittreksels, verzekeringspolissen en identiteitskaarten** in, want dat zijn
-precies de papieren die ze niet kunnen lezen en niet durven kwijtraken. Dat maakt
-dit een verwerking van bijzondere categorieën persoonsgegevens over een kwetsbaar
-persoon.
+People do not put holiday snaps in here. They put **hospital letters, bank
+statements, insurance policies and identity cards** in, because those are exactly
+the papers they cannot read and are afraid to lose. That makes this a processing
+of special categories of personal data about a vulnerable person.
 
-| Categorie | Voorbeeld | Gevolg |
+| Category | Example | Consequence |
 | --- | --- | --- |
-| Gezondheidsgegevens | Brief van cardiologie, medicatieschema | Artikel 9, uitdrukkelijke toestemming nodig |
-| Rijksregisternummer | Staat op bijna elke officiële brief | Eigen rechtsgrond nodig, dus wij bewaren het niet |
-| Financiële gegevens | Bankuittreksel, pensioenfiche | Geen artikel 9, wel veel schade bij een lek |
-| Gegevens van anderen | De dokter, de dochter, een kleinkind | Mensen die nooit iets toestemden |
-| Biometrie | Alleen als gezichtsherkenning ooit aan gaat | Artikel 9, daarom niet in v1 |
+| Health data | Letter from cardiology, medication schedule | Article 9, explicit consent needed |
+| National number | Printed on nearly every official Belgian letter | Needs its own legal ground, so we do not store it |
+| Financial data | Bank statement, pension slip | Not article 9, but high harm if it leaks |
+| Data about others | The doctor, the daughter, a grandchild | People who never agreed to anything |
+| Biometric data | Only if face matching is ever switched on | Article 9, which is why it is not in v1 |
 
-De huishoudelijke uitzondering van artikel 2(2)(c) dekt de gebruiker, niet ons.
-Zodra die documenten in ons Supabase project staan, zijn **wij**
-verwerkingsverantwoordelijke.
+The household exemption in article 2(2)(c) covers the user, not us. The moment
+those documents sit in our Supabase project, **we** are the controller.
 
-### Toestemming bij verminderde bekwaamheid
+### Consent where capacity may be reduced
 
-- Een tik op een knop is geen toestemming. Het eerste scherm is kort, in gewoon
-  Nederlands, op 22px, en **de app leest het voor**. Een privacyverklaring die je
-  niet kan lezen is geen transparantie onder artikel 12.
-- Er is een pad voor toestemming samen met de helper. Waar iemand onder
-  bescherming staat (vertrouwenspersoon of bewindvoerder), stemt die persoon toe.
-- Intrekken moet even makkelijk zijn als geven: één knop, zelfde grootte.
-- **Lokaal is de standaard.** Zonder account gaat er niets weg van de telefoon en
-  is er dus geen verwerking. Dat is artikel 25 en het is ook onze beste demo.
+- A tap is not consent. The first screen is short, in plain language, at 22px,
+  and **the app reads it out loud**. A privacy notice you cannot read is not
+  transparency under article 12.
+- There is a path for consent together with the helper. Where someone is under
+  legal protection, that person consents instead.
+- Withdrawing must be as easy as giving: one button, same size.
+- **Local is the default.** With no account nothing leaves the phone, so there is
+  no processing at all. That is article 25, and it is also our best demo.
 
-### P vereisten
+### P requirements
 
-| ID | Vereiste | Prio |
+| ID | Requirement | Priority |
 | --- | --- | --- |
-| P1 | Lokaal als standaard, uploaden alleen na aanmelden en kiezen | Must |
-| P2 | Tekst lezen gebeurt op het toestel, nooit bij een externe dienst | Must |
-| P3 | Rijksregisternummer en IBAN wegfilteren voor we tekst bewaren | Must |
-| P4 | Toestemmingsscherm dat wordt voorgelezen, voor er iets uploadt | Must |
-| P5 | Foto's in een privébucket, enkel via korte ondertekende links | Must |
-| P6 | Row level security op elke tabel, controle in de database | Must |
-| P7 | Geen service key en geen geheimen in de repo, enkel de anon key | Must |
-| P8 | Verwijderen is echt weg: rij, herinneringen en foto | Must |
-| P9 | Mijn account en alles erin verwijderen vanuit de app | Should |
-| P10 | Alles exporteren | Should |
-| P11 | Enkel de EU regio, en een verwerkersovereenkomst met Supabase | Should |
-| P12 | Zichtbare toegang: als een helper meekijkt, staat dat met naam op het scherm van de bewaarder | Should |
-| P13 | Geen analytics, geen trackers, geen externe fonts in de app | Should |
-| P14 | Optioneel slot op de app, pincode of vingerafdruk | Could |
+| P1 | Local by default, uploading only after signing in and choosing to | Must |
+| P2 | Text recognition runs on the device, never at an outside service | Must |
+| P3 | Strip the national number and IBANs before storing any text | Must |
+| P4 | A consent screen that is read out loud, before anything uploads | Must |
+| P5 | Photos in a private bucket, reachable only by short-lived signed links | Must |
+| P6 | Row level security on every table, checked in the database | Must |
+| P7 | No service key and no secrets in the repo, only the anon key | Must |
+| P8 | Delete means gone: the row, its reminders and its photo | Must |
+| P9 | Delete my account and everything in it, from inside the app | Should |
+| P10 | Export everything | Should |
+| P11 | EU region only, and a data processing agreement with Supabase | Should |
+| P12 | Visible access: if a helper can see the cards, the screen of the keeper says so, by name | Should |
+| P13 | No analytics, no trackers, no third-party fonts in the app | Should |
+| P14 | An optional lock on the app, a PIN or the device biometric | Could |
 
-### Papierwerk
+### Paperwork
 
-Een DPIA (artikel 35 geldt hier dubbel: artikel 9 gegevens en kwetsbare personen),
-een verwerkingsregister (artikel 30), een privacyverklaring in gewoon Nederlands,
-een procedure voor datalekken met de 72 uur naar de Gegevensbeschermingsautoriteit
-(artikel 33), en een lijst van subverwerkers: Supabase en GitHub, en dat is alles.
+A DPIA (article 35 applies twice here: article 9 data and vulnerable people), a
+record of processing (article 30), a privacy notice in plain language, a breach
+procedure with the 72 hours to the Belgian data protection authority
+(article 33), and a list of sub-processors: Supabase and GitHub, and that is all
+of it.
 
-## 6. Veiligheid
+## 6. Safety
 
-De andere helft van "juridische documenten" is niet privacy, het is fout zijn. Als
-Recall de verkeerde datum of de verkeerde dosis toont aan iemand die de app meer
-vertrouwt dan zijn eigen geheugen, doen we echte schade.
+The other half of "legal documents" is not privacy, it is being wrong. If Recall
+shows the wrong date or the wrong dose to someone who now trusts the app more
+than their own memory, we have done real harm.
 
-| ID | Vereiste | Prio |
+| ID | Requirement | Priority |
 | --- | --- | --- |
-| S1 | Nooit stil bewaren, elke datum wordt naast de foto getoond en bevestigd | Must |
-| S2 | Voorlezen wat er staat, nooit samenvatten of herschrijven | Must |
-| S3 | Geen advies, geen dosislogica, geen interpretatie | Must |
-| S4 | "Recall is geen medisch hulpmiddel" op het eerste scherm en bij info | Must |
-| S5 | Nooit de enige kopie, de app zegt de papieren brief te bewaren | Should |
-| S6 | Geen noodfuncties en niets dat lijkt op toezicht | Must |
+| S1 | Never file silently, every date is shown beside the photo and confirmed | Must |
+| S2 | Read out what is written, never summarise or rewrite it | Must |
+| S3 | No advice, no dosing logic, no interpretation | Must |
+| S4 | "Recall is not a medical device" on the first screen and in the about screen | Must |
+| S5 | Never the only copy, the app says to keep the paper letter | Should |
+| S6 | No emergency features and nothing that looks like monitoring | Must |
 
-## 7. Wat deze stack kan en niet kan
+## 7. What this stack can and cannot do
 
-| Mogelijkheid | Kan het? | Hoe of waarom niet |
+| Capability | Possible? | How, or why not |
 | --- | --- | --- |
-| Camera en vergrootglas | Ja | getUserMedia, https komt van GitHub Pages |
-| Voorlezen | Ja | Web Speech API, gratis en offline op de meeste toestellen |
-| Tekst lezen op het toestel | Ja | Tesseract.js, Nederlands model ongeveer 15 MB |
-| Spraakcommando's | Deels | Chrome en Safari wel, Firefox niet |
-| Foto's bewaren | Ja | Supabase Storage 1 GB gratis, lokaal IndexedDB |
-| Enkel je eigen data zien | Ja | Row level security in Postgres |
-| Aanmelden zonder wachtwoord | Ja | Supabase magic link |
-| Melding als de app dicht is | Deels | Web Push, maar iets moet die versturen: een geplande Supabase functie |
-| Melding lokaal plannen | Nee | Notification Triggers bestaat niet in browsers |
-| Stappen tellen in de achtergrond | Nee | Vereist Health Connect of HealthKit, dus een native app |
-| WhatsApp lezen | Nee | Er is geen API voor privéberichten |
+| Camera and magnifier | Yes | getUserMedia, and Pages gives us https |
+| Reading out loud | Yes | Web Speech API, free and offline on most devices |
+| Reading text on the device | Yes | Tesseract.js, the Dutch model is about 15 MB |
+| Voice commands | Partly | Chrome and Safari yes, Firefox no |
+| Storing photos | Yes | Supabase Storage 1 GB free, IndexedDB locally |
+| Seeing only your own data | Yes | Row level security in Postgres |
+| Signing in without a password | Yes | Supabase magic link |
+| A notification while the app is closed | Partly | Web Push, but something has to send it: a scheduled Supabase function |
+| Scheduling a notification locally | No | Notification Triggers does not exist in browsers |
+| Counting steps in the background | No | Needs Health Connect or HealthKit, so a native app |
+| Reading WhatsApp | No | There is no API for private messages |
 
-## 8. Architectuur
+## 8. Architecture
 
-Statische PWA op GitHub Pages, zonder build stap. Supabase voor database,
-aanmelden en foto's, rechtstreeks vanuit de browser. Alles wat rekent gebeurt in
-de browser of in de database.
+A static PWA on GitHub Pages with no build step. Supabase for the database,
+sign-in and photos, called straight from the browser. Everything that computes
+happens in the browser or in the database.
 
-Twee regels houden het simpel:
+Two rules keep it simple:
 
-1. De app werkt **zonder account en zonder netwerk**. Dezelfde vier functies in
-   `js/store.js` schrijven naar IndexedDB of naar Supabase.
-2. **Geen geheimen in de client.** De anon key is publiek bedoeld, alles wat telt
-   staat in de policies van de database.
+1. The app works **with no account and no network**. The same four functions in
+   `js/store.js` write to IndexedDB or to Supabase.
+2. **No secrets in the client.** The anon key is meant to be public, everything
+   that matters lives in the policies of the database.
 
-## 9. Bouwvolgorde
+## 9. Build order
 
-| Stap | Wat | Uren |
+| Step | What | Hours |
 | --- | --- | --- |
-| 0 | Skelet online: repo, Pages, icoon, offline | 4 |
-| 1 | Kaarten lokaal, R1.1 tot R1.5 | 10 |
-| 2 | Camera, R2.1, R2.2, R2.5. Hierna is de demo compleet | 10 |
-| 3 | Tekst en datums, R2.3, R2.4 | 12 |
-| 4 | Herinneringen, R3.1 tot R3.4 | 8 |
-| 5 | Supabase, R4.2 tot R4.4 | 10 |
-| 6 | Toegankelijkheidsronde en testen met een echte gebruiker | 8 |
+| 0 | Skeleton online: repo, Pages, icon, offline | 4 |
+| 1 | Cards locally, R1.1 to R1.5 | 10 |
+| 2 | Camera, R2.1, R2.2, R2.5. The demo is complete after this | 10 |
+| 3 | Text and dates, R2.3, R2.4 | 12 |
+| 4 | Reminders, R3.1 to R3.4 | 8 |
+| 5 | Supabase, R4.2 to R4.4 | 10 |
+| 6 | Accessibility pass and testing with a real user | 8 |
 
-## 10. Klaar is klaar
+## 10. Definition of done
 
-- Live op een publieke https url, installeerbaar op Android met het Recall icoon.
-- Elke Must is af en in twee minuten te tonen, offline.
-- Axe geeft nul fouten, Lighthouse toegankelijkheid 100, elke knop 56px of meer.
-- Twee accounts bewijzen dat ze elkaars kaarten niet zien.
-- Geen enkel geheim in de repo behalve de publieke anon key.
-- De redactietest slaagt: een brief met een rijksregisternummer levert geen
-  bewaard rijksregisternummer op.
-- Eén echte persoon boven de zeventig heeft het alleen gebruikt, en wat er
-  fout ging staat opgeschreven.
+- Live on a public https url, installable on Android with the Recall icon.
+- Every Must is finished and can be shown in two minutes, offline.
+- Axe reports zero violations, Lighthouse accessibility 100, every button 56px or
+  more.
+- Two accounts prove they cannot see each other cards.
+- No secret in the repo other than the public anon key.
+- The redaction test passes: a letter carrying an 11-digit national number
+  results in no stored national number.
+- One real person over seventy has used it unaided, and whatever went wrong is
+  written down.
