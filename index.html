@@ -10,7 +10,7 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css?v=8">
+<link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
 
@@ -47,6 +47,14 @@
     <p id="today-date" class="date"></p>
     <div id="today-list" class="list"></div>
     <p id="access-line" class="access" hidden></p>
+
+    <div id="install-box" class="install" hidden>
+      <p id="install-text">Keep Recall on your home screen, so it is one tap away.</p>
+      <div class="install-acts">
+        <button id="btn-install" class="big" type="button">Add to my home screen</button>
+        <button id="btn-install-no" class="big ghost" type="button">Not now</button>
+      </div>
+    </div>
   </section>
 
   <!-- everything -->
@@ -173,6 +181,6 @@
   </div>
 </dialog>
 
-<script type="module" src="js/app.js?v=8"></script>
+<script type="module" src="js/app.js?v=9"></script>
 </body>
 </html>

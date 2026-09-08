@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#231710">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=8">
-<link rel="stylesheet" href="css/helper.css?v=8">
+<link rel="stylesheet" href="css/style.css?v=9">
+<link rel="stylesheet" href="css/helper.css?v=9">
 </head>
 <body class="helper">
 
@@ -163,12 +163,17 @@
       <div id="members-list" class="rows"></div>
 
       <h2>Link her phone</h2>
-      <p class="hint">Open this page on her phone once, sign in as yourself, and type
-        the code below. That phone then opens the keeper app and never asks for a
-        login again.</p>
+      <p class="hint">Press the button, then let her phone camera look at the square.
+        It opens Recall on her phone and links it, and she never sees a login screen
+        again. If the camera will not cooperate, she can type the six letters instead.
+        The code is good for fifteen minutes.</p>
       <div class="linkbox">
         <button id="btn-link" class="btn" type="button">Make a code</button>
         <output id="link-code" class="code"></output>
+      </div>
+      <div id="qr-wrap" class="qr" hidden>
+        <div id="qr-holder"></div>
+        <p class="hint" id="qr-url"></p>
       </div>
 
       <h2>Invite another helper</h2>
@@ -191,6 +196,6 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script type="module" src="js/helper.js?v=8"></script>
+<script type="module" src="js/helper.js?v=9"></script>
 </body>
 </html>

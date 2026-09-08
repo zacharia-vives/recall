@@ -6,6 +6,7 @@ import * as speech from "./speech.js";
 import * as camera from "./camera.js";
 import * as ocr from "./ocr.js";
 import { isConfigured } from "./config.js";
+import * as install from "./install.js";
 
 const HOUSEHOLD_KEY = "recall.householdId";
 
@@ -311,6 +312,48 @@ async function showWhoHasAccess() {
   }
 }
 
+/* add to home screen, N8 */
+
+const INSTALL_KEY = "recall.installAsked";
+
+function askedAboutInstall() {
+  try {
+    return window.localStorage.getItem(INSTALL_KEY) === "yes";
+  } catch (err) {
+    return true;
+  }
+}
+
+function rememberInstallAsked() {
+  try {
+    window.localStorage.setItem(INSTALL_KEY, "yes");
+  } catch (err) {
+    // nothing to do
+  }
+}
+
+// Shown on the today screen, and pushed harder right after linking, because
+// that is the one moment somebody competent is holding the phone.
+function showInstallOffer(force) {
+  const box = document.getElementById("install-box");
+  const text = document.getElementById("install-text");
+  const button = document.getElementById("btn-install");
+  if (!install.worthAsking() || (askedAboutInstall() && !force)) {
+    box.hidden = true;
+    return;
+  }
+
+  if (install.canPrompt()) {
+    text.textContent = "Keep Recall on your home screen, so it is one tap away.";
+    button.hidden = false;
+  } else {
+    // iPhone, where there is no prompt to offer, only instructions.
+    text.textContent = "Keep Recall on the home screen. " + install.iphoneSteps();
+    button.hidden = true;
+  }
+  box.hidden = false;
+}
+
 // R6.3. The helper does this once, on this phone, with a code from their own.
 async function linkThisPhone(event) {
   event.preventDefault();
@@ -326,6 +369,7 @@ async function linkThisPhone(event) {
     await showWhoHasAccess();
     await syncHousehold({ loud: true });
     msg.textContent = "This phone is linked. Family can add cards now.";
+    showInstallOffer(true);
   } catch (err) {
     msg.textContent = "That code did not work: " + (err.message || err);
   }
@@ -773,6 +817,17 @@ function wire() {
   });
   document.getElementById("btn-welcome-start").addEventListener("click", finishWelcome);
 
+  document.getElementById("btn-install").addEventListener("click", async () => {
+    rememberInstallAsked();
+    const outcome = await install.prompt();
+    document.getElementById("install-box").hidden = true;
+    if (outcome === "accepted") say("Recall is on your home screen.");
+  });
+  document.getElementById("btn-install-no").addEventListener("click", () => {
+    rememberInstallAsked();
+    document.getElementById("install-box").hidden = true;
+  });
+
   const help = document.getElementById("help");
   document.getElementById("btn-help").addEventListener("click", () => help.showModal());
   document.getElementById("help-close").addEventListener("click", () => help.close());
@@ -785,6 +840,29 @@ function wire() {
       say("Looking for new cards.");
       await syncHousehold({ loud: true });
     });
+  }
+}
+
+// R6.3. Arriving from the square the family showed: same claim, no typing.
+async function claimFromLink() {
+  const code = new URLSearchParams(location.search).get("link");
+  if (!code) return false;
+
+  // Take it out of the address bar either way, so a shared link cannot be
+  // claimed twice by accident.
+  history.replaceState(null, "", location.pathname + location.hash);
+
+  if (!isConfigured()) return false;
+
+  try {
+    const cloud = await import("./cloud.js");
+    const id = await cloud.claimDeviceLink(code);
+    window.localStorage.setItem(HOUSEHOLD_KEY, id);
+    say("This phone is linked to the family.");
+    return true;
+  } catch (err) {
+    say("That link did not work: " + (err.message || err));
+    return false;
   }
 }
 
@@ -802,9 +880,11 @@ async function init() {
     say(err.message || "The storage on this phone did not open.");
   }
 
+  const linked = await claimFromLink();
   await route();
   showWhoHasAccess();
-  syncHousehold();
+  await syncHousehold({ loud: linked });
+  showInstallOffer(linked);
 
   if ("serviceWorker" in navigator) {
     // updateViaCache none plus an explicit update check, otherwise a browser can

@@ -329,11 +329,55 @@ async function renderHouse() {
     : '<p class="none">Nothing has happened yet.</p>';
 }
 
+// The keeper app lives one directory up from this page.
+function keeperUrl(code) {
+  const base = location.href.replace(/helper\.html.*$/, "");
+  return base + "?link=" + encodeURIComponent(code);
+}
+
+const QR_LIB = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+
+function loadQrLibrary() {
+  if (window.QRCode) return Promise.resolve(window.QRCode);
+  return new Promise((resolve, reject) => {
+    const tag = document.createElement("script");
+    tag.src = QR_LIB;
+    tag.onload = () => resolve(window.QRCode);
+    tag.onerror = () => reject(new Error("the square could not load"));
+    document.head.appendChild(tag);
+  });
+}
+
 async function makeLinkCode() {
+  const wrap = document.getElementById("qr-wrap");
+  const urlLine = document.getElementById("qr-url");
   try {
     const link = await cloud.createDeviceLink(household.id, household.name);
     document.getElementById("link-code").textContent = link.code;
-    say("The code works for fifteen minutes.");
+    say("Good for fifteen minutes.");
+
+    const url = keeperUrl(link.code);
+    urlLine.textContent = url;
+
+    // The square is a convenience. If the library will not load, the six
+    // letters still work, so this failing must not look like an error.
+    try {
+      const QRCode = await loadQrLibrary();
+      const holder = document.getElementById("qr-holder");
+      holder.innerHTML = "";
+      new QRCode(holder, {
+        text: url,
+        width: 220,
+        height: 220,
+        colorDark: "#231710",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      wrap.hidden = false;
+    } catch (err) {
+      wrap.hidden = true;
+      say("Let her type the six letters, the square did not load.");
+    }
   } catch (err) {
     say("Could not make a code: " + (err.message || err));
   }

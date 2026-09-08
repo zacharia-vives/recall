@@ -245,6 +245,19 @@ body.helper input, body.helper select {
   min-width: 180px;
   text-align: center;
 }
+.qr {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: #fff;
+  display: inline-block;
+  text-align: center;
+}
+.qr canvas, .qr img { display: block; margin: 0 auto 8px; }
+#qr-holder { display: inline-block; }
+.qr .hint { font-size: 12px; word-break: break-all; max-width: 240px; }
+
 .inline-form { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
 .inline-form .field { margin-bottom: 0; flex: 1 1 220px; }
 
