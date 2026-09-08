@@ -334,6 +334,95 @@ fieldset.kinds input {
   color: #fff;
   font-size: 18px;
 }
+/* Fitting the camera screen to the phone it runs on. She holds the device up
+   to a letter with one hand, so this is the one screen that must never ask her
+   to scroll. The height comes from JS, because the header and the tab bar are
+   not the same number of pixels on every phone. */
+body.on-camera { overflow: hidden; padding-bottom: 0; }
+body.on-camera #main { padding-bottom: 0; }
+
+body.on-camera #screen-capture {
+  display: flex;
+  flex-direction: column;
+  height: var(--fit, auto);
+}
+/* The tab bar already has Today on it, so the back button is only taking
+   away pixels the camera could use. */
+body.on-camera #screen-capture .back { display: none; }
+body.on-camera #screen-capture h1 {
+  flex: 0 0 auto;
+  font-size: 28px;
+  margin: 0 0 10px;
+}
+body.on-camera .camera-wrap {
+  flex: 1 1 auto;
+  min-height: 140px;
+  aspect-ratio: auto;
+  max-height: none;
+  margin-bottom: 12px;
+}
+body.on-camera #screen-capture .zoom {
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+}
+body.on-camera #screen-capture .zoom .label { margin-bottom: 0; }
+/* Reading out loud stays full width, the two photo buttons share a row. */
+body.on-camera #screen-capture .actions {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+body.on-camera #screen-capture #btn-read { grid-column: 1 / -1; }
+/* Without this the video refuses to shrink past its own natural size and
+   pushes the buttons off the bottom of the screen. */
+body.on-camera #video { min-height: 0; }
+body.on-camera #screen-capture .actions .big.ghost { font-size: 20px; }
+
+/* A small phone, or a phone held sideways. Everything gives up a little so
+   the picture keeps most of the screen. */
+@media (max-height: 620px) {
+  body.on-camera #screen-capture h1 { font-size: 22px; margin-bottom: 6px; }
+  body.on-camera #screen-capture .zoom .label { font-size: 16px; }
+  body.on-camera #screen-capture .big { min-height: 56px; font-size: 20px; }
+  body.on-camera #screen-capture input[type="range"] { height: 40px; }
+  body.on-camera .camera-wrap { min-height: 100px; }
+}
+
+/* Phone held sideways. There is no height left to stack things in, so the
+   picture takes the left half and the controls stand in a column beside it. */
+@media (max-height: 560px) and (orientation: landscape) {
+  body.on-camera #screen-capture {
+    display: grid;
+    grid-template-columns: 1fr 250px;
+    /* minmax keeps the row from refusing to go below the video min-content,
+       which is what pushed the buttons off the bottom. */
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: 14px;
+  }
+  body.on-camera #screen-capture h1 { grid-column: 1 / -1; }
+  body.on-camera .camera-wrap {
+    grid-column: 1;
+    grid-row: 2 / span 2;
+    margin-bottom: 0;
+    min-height: 0;
+  }
+  body.on-camera #screen-capture .zoom { grid-column: 2; grid-row: 2; }
+  body.on-camera #screen-capture .actions {
+    grid-column: 2;
+    grid-row: 3;
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The tab bar is generous on purpose, but on a short screen it is taking
+   room the camera needs more than it does. */
+@media (max-height: 560px) {
+  .tab { min-height: 64px; font-size: 16px; }
+  .tab-icon { font-size: 22px; }
+}
+
 .shot {
   width: 100%;
   border-radius: 14px;

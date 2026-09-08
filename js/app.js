@@ -522,10 +522,32 @@ async function syncHousehold(options) {
 
 /* screens */
 
+// N11. The camera screen is sized to the device instead of to a guess, so the
+// picture is as big as this phone allows and nothing falls below the fold.
+function fitCameraScreen() {
+  const screen = screens.capture;
+  if (!screen || screen.hidden) return;
+
+  const bar = document.querySelector(".topbar");
+  const tabs = document.querySelector(".tabs");
+  const main = document.getElementById("main");
+  const box = window.getComputedStyle(main);
+  const padding = parseFloat(box.paddingTop) || 0;
+
+  // visualViewport is the honest number on a phone, where the address bar
+  // slides in and out and innerHeight lies about it.
+  const tall = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  const left = tall - bar.offsetHeight - tabs.offsetHeight - padding - 12;
+
+  screen.style.setProperty("--fit", Math.max(240, Math.round(left)) + "px");
+}
+
 function show(name) {
   Object.keys(screens).forEach((key) => {
     screens[key].hidden = key !== name;
   });
+  document.body.classList.toggle("on-camera", name === "capture");
+  if (name === "capture") fitCameraScreen();
   document.querySelectorAll(".tab").forEach((tab) => {
     if (tab.dataset.tab === name) tab.setAttribute("aria-current", "page");
     else tab.removeAttribute("aria-current");
@@ -816,6 +838,14 @@ function wire() {
     else speech.speak(WELCOME_SPOKEN);
   });
   document.getElementById("btn-welcome-start").addEventListener("click", finishWelcome);
+
+  // Rotating the phone, or the address bar sliding away, both change how much
+  // room the camera has.
+  window.addEventListener("resize", fitCameraScreen);
+  window.addEventListener("orientationchange", fitCameraScreen);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", fitCameraScreen);
+  }
 
   document.getElementById("btn-install").addEventListener("click", async () => {
     rememberInstallAsked();

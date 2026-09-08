@@ -101,6 +101,7 @@ MoSCoW. Must is the demo and does not slip.
 | N8 | Installable on the home screen with the Recall icon |
 | N9 | Cards and photos are private to their owner |
 | N10 | Interface in English. Dutch and French come later, so interface text stays out of the logic |
+| N11 | The camera screen fits the device it is running on, so it never has to be scrolled while she is holding the phone up to a letter |
 
 ## 5. Data protection
 
