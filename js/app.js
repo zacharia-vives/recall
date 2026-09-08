@@ -375,9 +375,14 @@ async function init() {
   await route();
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(() => {
-      // no offline mode, the app still works
-    });
+    // updateViaCache none plus an explicit update check, otherwise a browser can
+    // sit on an old worker for a long time and keep serving the old app.
+    navigator.serviceWorker
+      .register("sw.js", { updateViaCache: "none" })
+      .then((reg) => reg.update())
+      .catch(() => {
+        // no offline mode, the app still works
+      });
   }
 }
 
