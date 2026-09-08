@@ -25,8 +25,11 @@ function loadLibrary() {
 // We do not need it for anything, so we never store it.
 export function redact(text) {
   let out = text;
-  out = out.replace(/\b\d{2}[.\-\s]?\d{2}[.\-\s]?\d{2}[-\s]?\d{3}[.\-\s]?\d{2}\b/g, "[national number removed]");
-  out = out.replace(/\b[A-Z]{2}\d{2}[\sA-Z0-9]{8,26}\b/g, "[account number removed]");
+  // Spaces, never \s: a class with \s in it also matches the line break after
+  // the number, so the marker swallowed it and the next sentence was glued on,
+  // which then gets read out loud as one run-on sentence.
+  out = out.replace(/\b\d{2}[.\- ]?\d{2}[.\- ]?\d{2}[- ]?\d{3}[.\- ]?\d{2}\b/g, "[national number removed]");
+  out = out.replace(/\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{2,4}){2,8}\b/g, "[account number removed]");
   return out;
 }
 

@@ -855,9 +855,13 @@ async function usePhoto(blob) {
   // OCR runs after the screen is up, so the user is never left waiting on a
   // blank page. Requirement S1: whatever we read is only ever a suggestion.
   const state = document.getElementById("ocr-state");
-  const found = document.getElementById("ocr-found");
+  // Not "found": the date below is called that, and a second const with the
+  // same name inside the try quietly took this element's place. The box then
+  // never appeared, and on a letter with no date in it the app said it could
+  // not read the letter at all.
+  const foundBox = document.getElementById("ocr-found");
   const textBox = document.getElementById("ocr-text");
-  found.hidden = true;
+  foundBox.hidden = true;
   textBox.textContent = "";
   state.hidden = false;
   state.textContent = "Recall is reading the letter. The first time takes a moment.";
@@ -866,25 +870,25 @@ async function usePhoto(blob) {
     const text = await ocr.readText(blob, (percent) => {
       state.textContent = "Recall is reading the letter. " + percent + " per cent.";
     });
-    const found = ocr.findDate(text);
+    const when = ocr.findDate(text);
     const title = ocr.guessTitle(text);
 
     if (title) document.getElementById("f-title").value = title;
-    if (found) {
-      const local = new Date(found.getTime() - found.getTimezoneOffset() * 60000);
+    if (when) {
+      const local = new Date(when.getTime() - when.getTimezoneOffset() * 60000);
       document.getElementById("f-when").value = local.toISOString().slice(0, 16);
     }
 
     pendingText = text;
-    state.textContent = found
-      ? "Recall read: " + readableDate(found.toISOString()) + ". Is that right?"
+    state.textContent = when
+      ? "Recall read: " + readableDate(when.toISOString()) + ". Is that right?"
       : "Recall found no date. Fill one in yourself if you need it.";
 
     // S1: never file silently. What was read is on the screen, and it can be
     // heard again as often as they like.
     if (text) {
       textBox.textContent = text;
-      found.hidden = false;
+      foundBox.hidden = false;
       speech.speak(text.slice(0, 600), ocr.guessLang(text));
     }
   } catch (err) {
