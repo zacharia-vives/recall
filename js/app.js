@@ -1,13 +1,13 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=24";
-import * as speech from "./speech.js?v=24";
-import * as camera from "./camera.js?v=24";
-import * as ocr from "./ocr.js?v=24";
-import { isConfigured, NOTICE_VERSION } from "./config.js?v=24";
-import * as install from "./install.js?v=24";
-import * as lock from "./lock.js?v=24";
+import * as store from "./store.js?v=25";
+import * as speech from "./speech.js?v=25";
+import * as camera from "./camera.js?v=25";
+import * as ocr from "./ocr.js?v=25";
+import { isConfigured, NOTICE_VERSION } from "./config.js?v=25";
+import * as install from "./install.js?v=25";
+import * as lock from "./lock.js?v=25";
 
 const HOUSEHOLD_KEY = "recall.householdId";
 
@@ -302,7 +302,7 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=24");
+    const cloud = await import("./cloud.js?v=25");
     const people = await cloud.members(id);
     const helpers = people.filter((m) => m.role === "helper").map((m) => m.display_name || "family");
     if (helpers.length === 0) {
@@ -371,7 +371,17 @@ function drawVoices() {
     (current && current.name === v.name ? " selected" : "") + ">" +
     esc(v.name + "  (" + v.lang + ")") + "</option>"
   ).join("");
-  msg.hidden = true;
+
+  // A letter here is usually Dutch. If the device has no Dutch voice it will be
+  // read with an English accent, which sounds broken and is not obvious why.
+  if (!dutch.length) {
+    msg.hidden = false;
+    msg.textContent = "This device has no Dutch voice, so a Dutch letter is read " +
+      "with an English accent. On Android: Settings, then Text to speech, then " +
+      "install Dutch. On Windows: Settings, Time and language, Speech.";
+  } else {
+    msg.hidden = true;
+  }
 }
 
 /* consent, P4 and P19 */
@@ -419,7 +429,7 @@ async function consentNeeded() {
   if (!isConfigured() || !linkedHousehold()) return false;
   if (consentRemembered()) return false;
   try {
-    const cloud = await import("./cloud.js?v=24");
+    const cloud = await import("./cloud.js?v=25");
     const latest = await cloud.latestConsent(linkedHousehold());
     if (latest && !latest.withdrawn_at) {
       rememberConsent(true);
@@ -446,7 +456,7 @@ async function consentYes() {
   msg.hidden = false;
   msg.textContent = "Thank you. Fetching the cards your family made.";
   try {
-    const cloud = await import("./cloud.js?v=24");
+    const cloud = await import("./cloud.js?v=25");
     const where = await cloud.recordConsent(linkedHousehold(), NOTICE_VERSION);
     window.console.info("Recall: consent recorded in the " + where + " table.");
     rememberConsent(true);
@@ -485,7 +495,7 @@ async function stopSharing() {
   msg.textContent = "Stopping.";
   const id = linkedHousehold();
   try {
-    const cloud = await import("./cloud.js?v=24");
+    const cloud = await import("./cloud.js?v=25");
     await cloud.withdrawConsent(id);
   } catch (err) {
     // Even if the note cannot be written, the sharing still stops here.
@@ -604,7 +614,7 @@ async function rescueWithCode(event) {
   }
 
   try {
-    const cloud = await import("./cloud.js?v=24");
+    const cloud = await import("./cloud.js?v=25");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
@@ -712,7 +722,7 @@ async function linkThisPhone(event) {
   msg.hidden = false;
   msg.textContent = "One moment.";
   try {
-    const cloud = await import("./cloud.js?v=24");
+    const cloud = await import("./cloud.js?v=25");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     msg.textContent = "This phone is linked. Fetching the family cards.";
@@ -737,7 +747,7 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=24");
+    cloud = await import("./cloud.js?v=25");
   } catch (err) {
     if (loud) say("Could not reach the family cards.");
     return false;
@@ -1316,7 +1326,7 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=24");
+    const cloud = await import("./cloud.js?v=25");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     say("This phone is linked to the family.");
