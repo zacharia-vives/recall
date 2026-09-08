@@ -351,8 +351,9 @@ async function syncHousehold(options) {
 
   // Down first. This is the half the user notices, so it must never be blocked
   // by a problem with something sitting on this phone.
+  let remote = null;
   try {
-    const remote = await cloud.listRecords(id, false);
+    remote = await cloud.listRecords(id, false);
     for (const row of remote) {
       if (records.some((r) => r.id === row.id)) continue;
       try {
@@ -390,6 +391,27 @@ async function syncHousehold(options) {
     }
   } catch (err) {
     problem = err;
+  }
+
+  // The download only ever added. A card the family moved to the bin stayed on
+  // the phone for ever, which is the opposite of what the bin is for. Only do
+  // this when the list actually arrived, otherwise a dropped connection would
+  // look like everything was deleted.
+  if (remote) {
+    const stillThere = {};
+    remote.forEach((row) => {
+      stillThere[row.id] = true;
+    });
+    for (const local of records) {
+      if (!local.cloudAt || local.example) continue;
+      if (stillThere[local.id]) continue;
+      try {
+        await store.deleteRecord(local.id);
+        changed = true;
+      } catch (err) {
+        problem = err;
+      }
+    }
   }
 
   try {
