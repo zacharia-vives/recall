@@ -322,8 +322,10 @@ async function linkThisPhone(event) {
     const cloud = await import("./cloud.js");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
-    msg.textContent = "This phone is linked. Family can add cards now.";
+    msg.textContent = "This phone is linked. Fetching the family cards.";
     await showWhoHasAccess();
+    await syncHousehold({ loud: true });
+    msg.textContent = "This phone is linked. Family can add cards now.";
   } catch (err) {
     msg.textContent = "That code did not work: " + (err.message || err);
   }
@@ -331,85 +333,125 @@ async function linkThisPhone(event) {
 
 /* syncing with the household, once a helper has linked this phone (step 5c) */
 
-async function syncHousehold() {
+async function syncHousehold(options) {
   const id = linkedHousehold();
-  if (!isConfigured() || !id) return;
+  if (!isConfigured() || !id) return false;
+
+  const loud = Boolean(options && options.loud);
+  let changed = false;
+  let problem = null;
+
+  let cloud;
+  try {
+    cloud = await import("./cloud.js");
+  } catch (err) {
+    if (loud) say("Could not reach the family cards.");
+    return false;
+  }
+
+  // Down first. This is the half the user notices, so it must never be blocked
+  // by a problem with something sitting on this phone.
+  try {
+    const remote = await cloud.listRecords(id, false);
+    for (const row of remote) {
+      if (records.some((r) => r.id === row.id)) continue;
+      try {
+        await store.saveRecord({
+          id: row.id,
+          kind: row.kind,
+          title: row.title,
+          people: row.people || [],
+          place: row.place || "",
+          happensAt: row.happens_at || "",
+          tags: row.tags || [],
+          spokenText: row.spoken_text || "",
+          ocrText: row.ocr_text || "",
+          hasPhoto: Boolean(row.photo_path),
+          createdAt: row.created_at,
+          cloudAt: new Date().toISOString()
+        });
+        changed = true;
+      } catch (err) {
+        problem = err;
+        continue;
+      }
+      // A photo that will not download must not cost us the card itself.
+      if (row.photo_path) {
+        try {
+          const link = await cloud.photoLink(row.photo_path);
+          if (link) {
+            const blob = await fetch(link).then((r) => r.blob());
+            await store.savePhoto(row.id, blob);
+          }
+        } catch (err) {
+          problem = err;
+        }
+      }
+    }
+  } catch (err) {
+    problem = err;
+  }
 
   try {
-    const cloud = await import("./cloud.js");
+    const remoteReminders = await cloud.listReminders(id);
+    for (const row of remoteReminders) {
+      if (reminders.some((r) => r.id === row.id)) continue;
+      try {
+        await store.saveReminder({
+          id: row.id,
+          recordId: row.record_id,
+          dueAt: row.due_at,
+          repeat: row.repeat,
+          spokenText: row.spoken_text || "",
+          lastDoneAt: row.done_at || null
+        });
+        changed = true;
+      } catch (err) {
+        problem = err;
+      }
+    }
+  } catch (err) {
+    problem = err;
+  }
 
-    // up: anything made on this phone that the family has not seen yet
-    for (const record of records) {
-      if (record.cloudAt) continue;
-      const saved = await cloud.addRecord(id, {
-        id: record.id,
-        kind: record.kind,
-        title: record.title,
-        people: record.people,
-        place: record.place,
-        happensAt: record.happensAt || null,
-        tags: record.tags,
-        ocrText: record.ocrText,
-        spokenText: record.spokenText
-      });
+  // Up second, one card at a time, and never the example cards: they are ours,
+  // not the household's, and nobody wants three fake cards in the family app.
+  for (const record of records) {
+    if (record.cloudAt || record.example) continue;
+    try {
+      await cloud.pushRecord(id, record);
       if (record.hasPhoto) {
         const url = await store.photoUrl(record.id);
         if (url) {
           const blob = await fetch(url).then((r) => r.blob());
           const path = await cloud.uploadPhoto(id, record.id, blob);
-          await cloud.updateRecord(id, saved.id, { photo_path: path }, "the photo was added");
+          await cloud.updateRecord(id, record.id, { photo_path: path }, "the photo was added");
         }
       }
       record.cloudAt = new Date().toISOString();
       await store.saveRecord(record);
+      changed = true;
+    } catch (err) {
+      problem = err;
     }
-
-    // down: cards and reminders the family added
-    const remote = await cloud.listRecords(id, false);
-    for (const row of remote) {
-      if (records.some((r) => r.id === row.id)) continue;
-      await store.saveRecord({
-        id: row.id,
-        kind: row.kind,
-        title: row.title,
-        people: row.people || [],
-        place: row.place || "",
-        happensAt: row.happens_at || "",
-        tags: row.tags || [],
-        spokenText: row.spoken_text || "",
-        ocrText: row.ocr_text || "",
-        hasPhoto: Boolean(row.photo_path),
-        createdAt: row.created_at,
-        cloudAt: new Date().toISOString()
-      });
-      if (row.photo_path) {
-        const link = await cloud.photoLink(row.photo_path);
-        if (link) {
-          const blob = await fetch(link).then((r) => r.blob());
-          await store.savePhoto(row.id, blob);
-        }
-      }
-    }
-
-    const remoteReminders = await cloud.listReminders(id);
-    for (const row of remoteReminders) {
-      if (reminders.some((r) => r.id === row.id)) continue;
-      await store.saveReminder({
-        id: row.id,
-        recordId: row.record_id,
-        dueAt: row.due_at,
-        repeat: row.repeat,
-        spokenText: row.spoken_text || "",
-        lastDoneAt: row.done_at || null
-      });
-    }
-
-    records = await store.allRecords();
-    reminders = await store.allReminders();
-  } catch (err) {
-    // No network, a paused project, or not linked properly. The app carries on
-    // with what is on the phone, which is the whole point of P1.
   }
+
+  records = await store.allRecords();
+  reminders = await store.allReminders();
+
+  // The old version fetched the cards and then never redrew the screen, so
+  // they only appeared the next time the app was opened.
+  const hash = location.hash || "#/today";
+  const busyScreen = hash === "#/capture" || hash === "#/new";
+  if (changed && !busyScreen) await route();
+
+  if (problem) {
+    window.console.error("Recall sync problem:", problem);
+    if (loud) say("Something did not sync: " + (problem.message || problem));
+  } else if (loud) {
+    say(changed ? "Up to date, new cards arrived." : "Up to date, nothing new.");
+  }
+  return changed;
 }
 
 /* screens */
@@ -704,6 +746,11 @@ function wire() {
   if (isConfigured()) {
     document.getElementById("link-wrap").hidden = false;
     document.getElementById("form-link").addEventListener("submit", linkThisPhone);
+    document.getElementById("btn-refresh").hidden = false;
+    document.getElementById("btn-refresh").addEventListener("click", async () => {
+      say("Looking for new cards.");
+      await syncHousehold({ loud: true });
+    });
   }
 }
 

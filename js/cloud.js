@@ -210,6 +210,34 @@ export async function addRecord(householdId, record) {
   return data;
 }
 
+// Used by the keeper phone to push its own captures up. Upsert rather than
+// insert: the phone retries, and a retry must not die on a duplicate id, which
+// is exactly what used to break the whole sync.
+export async function pushRecord(householdId, record) {
+  const db = await getClient();
+  const user = await currentUser();
+  const row = {
+    id: record.id,
+    household_id: householdId,
+    created_by: user.id,
+    kind: record.kind,
+    title: record.title,
+    people: record.people || [],
+    place: record.place || "",
+    happens_at: record.happensAt || null,
+    tags: record.tags || [],
+    ocr_text: record.ocrText || "",
+    spoken_text: record.spokenText || ""
+  };
+  const { data, error } = await db
+    .from("records")
+    .upsert(row, { onConflict: "id" })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function updateRecord(householdId, id, changes, what) {
   const db = await getClient();
   const { data, error } = await db
