@@ -6,6 +6,12 @@
 const DB_NAME = "recall";
 const DB_VERSION = 1;
 
+// Bump this when the example cards change. Anyone who already used the app then
+// loses the old examples and gets the new ones, while their own cards are left
+// alone.
+const SEED_VERSION = 2;
+const SEED_KEY = "recall.seedVersion";
+
 let db = null;
 
 function open() {
@@ -86,7 +92,30 @@ export async function photoUrl(id) {
 
 // A few example cards on first run, so the app is never an empty screen.
 export async function seedIfEmpty() {
-  const rows = await allRecords();
+  let rows = await allRecords();
+
+  let seeded = null;
+  try {
+    seeded = window.localStorage.getItem(SEED_KEY);
+  } catch (err) {
+    seeded = null;
+  }
+
+  if (seeded === String(SEED_VERSION)) return rows;
+
+  // Old examples go, whatever language they were in. Cards the user made
+  // themselves are never touched.
+  for (const r of rows) {
+    if (r.example) await deleteRecord(r.id);
+  }
+  rows = await allRecords();
+
+  try {
+    window.localStorage.setItem(SEED_KEY, String(SEED_VERSION));
+  } catch (err) {
+    // private mode, no problem, the examples just come back next time
+  }
+
   if (rows.length > 0) return rows;
 
   const now = new Date();
