@@ -40,6 +40,19 @@ out in <https://claude.ai/code/artifact/a6b6aec6-b408-4d5a-9fe3-858225129e9e>
   ID or a fingerprint on top where the phone has them. Family can always
   unlock the phone again with a fresh phone code, so nobody is locked out
 
+## Data protection
+
+`docs/dpia.md` is the article 35 assessment: who is who, what is processed and
+what is refused, the lawful basis and how consent is taken out loud, the article
+5 principles, security, breach steps, transfers, the people's rights with the
+gaps named, and a section on every EU instrument this touches, from the GDPR and
+the Belgian national register law to the Accessibility Act, the Medical Devices
+Regulation, the AI Act and the European Health Data Space.
+
+Two findings in it are open on purpose: no processor paperwork is signed, and
+the OCR library is loaded from a CDN, which tells a third country her IP
+address. Both are named rather than glossed.
+
 ## Testing
 
 `docs/test-plan.md` is the plan and the results: every screen of both apps, the

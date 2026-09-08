@@ -5,7 +5,7 @@
 // Two roles live here: a helper signs in with an emailed link, a keeper phone
 // signs in anonymously once and is claimed into a household with a code.
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from "./config.js?v=22";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from "./config.js?v=23";
 
 const LIB = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
@@ -422,6 +422,22 @@ export async function recordConsent(householdId, noticeVersion) {
     explained_by: user.id
   });
   if (error) throw error;
+}
+
+// Article 7(3): withdrawing has to be as easy as giving. The row is never
+// deleted, it is marked, because an audit needs to see that it happened.
+export async function withdrawConsent(householdId) {
+  const db = await getClient();
+  const latest = await latestConsent(householdId);
+  if (!latest) return null;
+  const { error } = await db
+    .from("consents")
+    .update({ withdrawn_at: new Date().toISOString() })
+    .eq("id", latest.id);
+  if (error) throw error;
+  await logActivity(householdId, "unlinked", null,
+    "she stopped sharing new cards with the family");
+  return latest.id;
 }
 
 export async function latestConsent(householdId) {

@@ -1,8 +1,8 @@
 // The family side. Everything here needs a signed in helper and a household, so
 // unlike the keeper app this one does nothing until the cloud is configured.
 
-import * as cloud from "./cloud.js?v=22";
-import { NOTICE_VERSION } from "./config.js?v=22";
+import * as cloud from "./cloud.js?v=23";
+import { NOTICE_VERSION } from "./config.js?v=23";
 
 const panes = {
   unconfigured: document.getElementById("s-unconfigured"),

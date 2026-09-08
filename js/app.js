@@ -1,13 +1,13 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=22";
-import * as speech from "./speech.js?v=22";
-import * as camera from "./camera.js?v=22";
-import * as ocr from "./ocr.js?v=22";
-import { isConfigured } from "./config.js?v=22";
-import * as install from "./install.js?v=22";
-import * as lock from "./lock.js?v=22";
+import * as store from "./store.js?v=23";
+import * as speech from "./speech.js?v=23";
+import * as camera from "./camera.js?v=23";
+import * as ocr from "./ocr.js?v=23";
+import { isConfigured, NOTICE_VERSION } from "./config.js?v=23";
+import * as install from "./install.js?v=23";
+import * as lock from "./lock.js?v=23";
 
 const HOUSEHOLD_KEY = "recall.householdId";
 
@@ -19,6 +19,7 @@ const KINDS = {
 
 const screens = {
   stuck: document.getElementById("screen-stuck"),
+  consent: document.getElementById("screen-consent"),
   welcome: document.getElementById("screen-welcome"),
   today: document.getElementById("screen-today"),
   records: document.getElementById("screen-records"),
@@ -301,7 +302,7 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=22");
+    const cloud = await import("./cloud.js?v=23");
     const people = await cloud.members(id);
     const helpers = people.filter((m) => m.role === "helper").map((m) => m.display_name || "family");
     if (helpers.length === 0) {
@@ -345,6 +346,142 @@ function ask(question, yesLabel) {
     box.addEventListener("cancel", onNo);
     box.showModal();
   });
+}
+
+/* consent, P4 and P19 */
+
+const CONSENT_KEY = "recall.consent";
+
+// The same words as the screen, in the order they are read. Whenever either
+// changes, NOTICE_VERSION in config.js changes with it, so a recorded consent
+// always points at the text that was actually read out.
+const NOTICE_SPOKEN =
+  "Your family would like to help. That means the cards you keep, their photos, " +
+  "what Recall reads off your letters and whether a reminder was done would be " +
+  "kept for your family as well, on a computer in Germany, not only on this phone. " +
+  "Only the people your family has let in can see them, you can see their names, " +
+  "and everything they do is written down where you can read it. " +
+  "Letters from a doctor say things about your health, and papers from a lawyer or " +
+  "a bank say things about your money. The law treats those as needing your clear " +
+  "yes, and that is what this is. " +
+  "You can say no, and Recall keeps working on this phone on its own. " +
+  "You can stop later, in the help screen, and nothing new is shared after that. " +
+  "Recall is not a medical device. Keep your papers, and always follow what your " +
+  "doctor or pharmacist tells you.";
+
+function consentRemembered() {
+  try {
+    return window.localStorage.getItem(CONSENT_KEY) === NOTICE_VERSION;
+  } catch (err) {
+    return false;
+  }
+}
+
+function rememberConsent(value) {
+  try {
+    if (value) window.localStorage.setItem(CONSENT_KEY, NOTICE_VERSION);
+    else window.localStorage.removeItem(CONSENT_KEY);
+  } catch (err) {
+    // nothing to do
+  }
+}
+
+// True when this phone is linked to a household but nobody has said yes yet.
+// The database is the record that counts; the local note is what makes this
+// work with no network, which is most of the time in a kitchen.
+async function consentNeeded() {
+  if (!isConfigured() || !linkedHousehold()) return false;
+  if (consentRemembered()) return false;
+  try {
+    const cloud = await import("./cloud.js?v=23");
+    const latest = await cloud.latestConsent(linkedHousehold());
+    if (latest && !latest.withdrawn_at) {
+      rememberConsent(true);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    // Cannot ask, so do not assume a yes.
+    return true;
+  }
+}
+
+function readNotice() {
+  if (speech.speaking()) {
+    speech.stop();
+    return;
+  }
+  speech.speak(NOTICE_SPOKEN);
+}
+
+async function consentYes() {
+  const msg = document.getElementById("consent-msg");
+  speech.stop();
+  msg.hidden = false;
+  msg.textContent = "Thank you. Fetching the cards your family made.";
+  try {
+    const cloud = await import("./cloud.js?v=23");
+    await cloud.recordConsent(linkedHousehold(), NOTICE_VERSION);
+    rememberConsent(true);
+    await route();
+    await showWhoHasAccess();
+    await syncHousehold({ loud: true });
+    showInstallOffer(true);
+  } catch (err) {
+    msg.textContent = "That did not save: " + (err.message || err) +
+      ". Nothing has been shared.";
+  }
+}
+
+// A no is a real no: the link goes, so this phone has nothing to share with and
+// nothing is sent. The family can offer again, which is one code away.
+async function consentNo() {
+  speech.stop();
+  window.localStorage.removeItem(HOUSEHOLD_KEY);
+  rememberConsent(false);
+  say("Nothing is shared. Recall stays on this phone.");
+  await route();
+  await showWhoHasAccess();
+}
+
+// Article 7(3): as easy to take back as to give.
+async function stopSharing() {
+  const msg = document.getElementById("sharing-msg");
+  const sure = await ask(
+    "Stop sharing new cards with your family? What they already have stays with " +
+    "them until they delete it.",
+    "Yes, stop sharing"
+  );
+  if (!sure) return;
+
+  msg.hidden = false;
+  msg.textContent = "Stopping.";
+  const id = linkedHousehold();
+  try {
+    const cloud = await import("./cloud.js?v=23");
+    await cloud.withdrawConsent(id);
+  } catch (err) {
+    // Even if the note cannot be written, the sharing still stops here.
+  }
+  window.localStorage.removeItem(HOUSEHOLD_KEY);
+  rememberConsent(false);
+  msg.textContent = "Stopped. Nothing new is shared. Your cards stay on this phone.";
+  await drawSharingState();
+  await route();
+  await showWhoHasAccess();
+}
+
+async function drawSharingState() {
+  const wrap = document.getElementById("sharing-wrap");
+  const state = document.getElementById("sharing-state");
+  const id = linkedHousehold();
+  if (!isConfigured() || !id) {
+    wrap.hidden = true;
+    return;
+  }
+  wrap.hidden = false;
+  state.textContent = "Your cards are shared with your family. They can add cards " +
+    "and set reminders, and you can see everything they do.";
 }
 
 /* the lock, R7.3 and R7.4 */
@@ -440,7 +577,7 @@ async function rescueWithCode(event) {
   }
 
   try {
-    const cloud = await import("./cloud.js?v=22");
+    const cloud = await import("./cloud.js?v=23");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
@@ -548,7 +685,7 @@ async function linkThisPhone(event) {
   msg.hidden = false;
   msg.textContent = "One moment.";
   try {
-    const cloud = await import("./cloud.js?v=22");
+    const cloud = await import("./cloud.js?v=23");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     msg.textContent = "This phone is linked. Fetching the family cards.";
@@ -573,7 +710,7 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=22");
+    cloud = await import("./cloud.js?v=23");
   } catch (err) {
     if (loud) say("Could not reach the family cards.");
     return false;
@@ -1058,6 +1195,11 @@ function wire() {
   document.getElementById("btn-face").addEventListener("click", unlockWithFace);
   document.getElementById("form-rescue").addEventListener("submit", rescueWithCode);
 
+  document.getElementById("btn-consent-read").addEventListener("click", readNotice);
+  document.getElementById("btn-consent-yes").addEventListener("click", consentYes);
+  document.getElementById("btn-consent-no").addEventListener("click", consentNo);
+  document.getElementById("btn-stop-sharing").addEventListener("click", stopSharing);
+
   document.getElementById("form-setcode").addEventListener("submit", saveCode);
   document.getElementById("btn-lock-off").addEventListener("click", async () => {
     lock.clearLock();
@@ -1106,6 +1248,7 @@ function wire() {
   const help = document.getElementById("help");
   document.getElementById("btn-help").addEventListener("click", async () => {
     await drawLockSettings();
+    await drawSharingState();
     help.showModal();
   });
   document.getElementById("help-close").addEventListener("click", () => help.close());
@@ -1133,7 +1276,7 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=22");
+    const cloud = await import("./cloud.js?v=23");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     say("This phone is linked to the family.");
@@ -1168,6 +1311,16 @@ async function init() {
   }
 
   const linked = await claimFromLink();
+
+  // P4. Nothing is sent anywhere until she has been asked, out loud, on this
+  // phone. The sync below is the first thing that would send anything, so the
+  // question comes before it and not after.
+  if (await consentNeeded()) {
+    show("consent");
+    speech.speak(NOTICE_SPOKEN);
+    return;
+  }
+
   await route();
   showWhoHasAccess();
   await syncHousehold({ loud: linked });

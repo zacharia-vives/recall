@@ -184,6 +184,10 @@ out.
 
 ## 5. Data protection
 
+The full assessment, including every EU instrument this touches and where the
+project stands against each, is `docs/dpia.md`. What follows is the part that
+shapes the code.
+
 People do not put holiday snaps in here. They put **hospital letters, bank
 statements, insurance policies and identity cards** in, because those are exactly
 the papers they cannot read and are afraid to lose. That makes this a processing
@@ -219,6 +223,10 @@ those documents sit in our Supabase project, **we** are the controller.
 | P2 | Text recognition runs on the device, never at an outside service | Must |
 | P3 | Strip the national number and IBANs before storing any text | Must |
 | P4 | A consent screen that is read out loud, before anything uploads | Must |
+| P15 | A real no: refusing keeps the app working, and the household link is removed so there is nothing to share with | Must |
+| P16 | Withdrawal as easy as giving, in the help screen, and it says plainly that what family already has stays with them | Must |
+| P17 | The recorded consent names the version of the notice that was actually read, so the wording and the record cannot drift apart | Must |
+| P18 | No card leaves the device before the answer, so the question comes before the first sync and not after it | Must |
 | P5 | Photos in a private bucket, reachable only by short-lived signed links | Must |
 | P6 | Row level security on every table, checked in the database | Must |
 | P7 | No service key and no secrets in the repo, only the anon key | Must |

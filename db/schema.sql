@@ -390,9 +390,12 @@ drop policy if exists "members read consent" on public.consents;
 create policy "members read consent" on public.consents
   for select using (public.is_member(household_id));
 
+-- She answers the consent screen on her own phone, so her own device has to be
+-- able to write the row. Patch 002 changed this from helpers to members.
 drop policy if exists "helpers record consent" on public.consents;
-create policy "helpers record consent" on public.consents
-  for insert with check (public.is_helper(household_id));
+drop policy if exists "members record consent" on public.consents;
+create policy "members record consent" on public.consents
+  for insert with check (public.is_member(household_id));
 
 drop policy if exists "members withdraw consent" on public.consents;
 create policy "members withdraw consent" on public.consents
