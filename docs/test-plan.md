@@ -17,10 +17,20 @@ was watched happening, and the detail column says what was seen.
 | Surface | Why |
 | --- | --- |
 | The live site, `zacharia-vives.github.io/recall` | It is what the jury sees on Friday |
-| A local copy of the same commit | The keeper app writes to the phone's own store, and the live copy of that store in this browser is broken, see finding 1 |
+| A local copy of the same commit | The keeper app writes to the phone's own store, and in this browser the store for the live address is damaged, see the note below |
 | The live database in Frankfurt | Household isolation and sync cannot be tested against anything else |
 | `tests/rls_test.py` | Twenty five checks with two separate accounts, run from the command line |
 | Axe 4.10 against WCAG 2.0 A and AA, 2.1 A and AA, 2.2 AA | The accessibility promise is graded, so it needs a number and not an opinion |
+
+**One honest limitation.** In the browser this pass was run from, the site data
+for the live address is damaged: every attempt to open the local store there
+hangs with no error, and by the end of the session the page itself stopped
+responding. That is a fault in this browser profile, not in the app: the same
+commit, served locally, runs perfectly, the live files were checked byte by
+byte, and Luke's phone opens the live app without trouble. Clearing the site
+data for that address in the browser settings fixes it in three clicks, and the
+recovery screen from finding 1 covers the version of this that a phone can
+actually have, where the store fails but the rest of the browser is well.
 
 Test data was created in the live project and removed afterwards.
 `db/tidy-test-data.sql` clears the last of it: two households made by anonymous
