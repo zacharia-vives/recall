@@ -421,7 +421,8 @@ async function consentYes() {
   msg.textContent = "Thank you. Fetching the cards your family made.";
   try {
     const cloud = await import("./cloud.js?v=23");
-    await cloud.recordConsent(linkedHousehold(), NOTICE_VERSION);
+    const where = await cloud.recordConsent(linkedHousehold(), NOTICE_VERSION);
+    window.console.info("Recall: consent recorded in the " + where + " table.");
     rememberConsent(true);
     await route();
     await showWhoHasAccess();

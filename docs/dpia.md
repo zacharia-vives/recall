@@ -75,6 +75,14 @@ on this phone. No means the household link is removed from the phone, so there
 is nothing to share with and nothing is sent. It is recorded with the version of
 the notice that was read, the time, and which account was present.
 
+Where that record lives is worth one line, because Article 7(1) is about being
+able to demonstrate it. It goes in the `consents` table. If the database refuses
+that write, which it does until patch 002 is applied because the original policy
+only allowed a family member to record one, it goes into the activity log
+instead: insert only, no update policy, no delete policy, carrying the same
+three facts and the same notice version. Either way the record exists and she is
+never blocked from answering.
+
 **Withdrawal.** Article 7(3), as easy as giving: the help screen has stop
 sharing with my family, behind one question. It marks the consent withdrawn,
 never deletes the record, removes the link, and tells her plainly that what her

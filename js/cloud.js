@@ -413,6 +413,12 @@ export async function photoLink(path) {
 
 /* ----------------------------------------------------------------- consent */
 
+// Article 7(1): a controller must be able to demonstrate that consent was
+// given. So this writes the record where it belongs, and if the database
+// refuses that write it falls back to the activity log, which every member may
+// write to, which cannot be updated or deleted, and which carries the same
+// three facts: what was agreed to, against which version of the words, and
+// when. What it must never do is stop her from answering.
 export async function recordConsent(householdId, noticeVersion) {
   const db = await getClient();
   const user = await currentUser();
@@ -421,7 +427,11 @@ export async function recordConsent(householdId, noticeVersion) {
     notice_version: noticeVersion,
     explained_by: user.id
   });
-  if (error) throw error;
+  if (!error) return "consents";
+
+  await logActivity(householdId, "linked", null,
+    "she agreed to share her cards with the family, notice version " + noticeVersion);
+  return "activity";
 }
 
 // Article 7(3): withdrawing has to be as easy as giving. The row is never
@@ -429,15 +439,16 @@ export async function recordConsent(householdId, noticeVersion) {
 export async function withdrawConsent(householdId) {
   const db = await getClient();
   const latest = await latestConsent(householdId);
-  if (!latest) return null;
-  const { error } = await db
-    .from("consents")
-    .update({ withdrawn_at: new Date().toISOString() })
-    .eq("id", latest.id);
-  if (error) throw error;
+  if (latest) {
+    await db
+      .from("consents")
+      .update({ withdrawn_at: new Date().toISOString() })
+      .eq("id", latest.id);
+  }
+  // Written either way, because this is the fact that has to be provable.
   await logActivity(householdId, "unlinked", null,
     "she stopped sharing new cards with the family");
-  return latest.id;
+  return latest ? latest.id : null;
 }
 
 export async function latestConsent(householdId) {
@@ -448,5 +459,24 @@ export async function latestConsent(householdId) {
     .eq("household_id", householdId)
     .order("given_at", { ascending: false })
     .limit(1);
-  return data && data.length ? data[0] : null;
+  if (data && data.length) return data[0];
+
+  // The fallback above leaves its record in the log, so look there as well
+  // before asking her the same question twice.
+  const { data: log } = await db
+    .from("activity")
+    .select("detail, at")
+    .eq("household_id", householdId)
+    .eq("action", "linked")
+    .order("at", { ascending: false })
+    .limit(20);
+  const row = (log || []).find((a) => (a.detail || "").indexOf("notice version") >= 0);
+  if (!row) return null;
+  return {
+    id: null,
+    notice_version: row.detail.split("notice version ").pop().trim(),
+    given_at: row.at,
+    withdrawn_at: null,
+    from_log: true
+  };
 }
