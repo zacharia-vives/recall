@@ -539,6 +539,16 @@ async function route() {
 
 /* the capture and save flow */
 
+// What the user can see right now: the slider value, and the shape of the box
+// the video is displayed in.
+function viewNow() {
+  const zoom = Number(document.getElementById("zoom").value) || 100;
+  const wrap = document.querySelector(".camera-wrap");
+  const rect = wrap ? wrap.getBoundingClientRect() : null;
+  const shape = rect && rect.height ? rect.width / rect.height : 0;
+  return { zoom: zoom, shape: shape };
+}
+
 function cameraMessage(text) {
   const msg = document.getElementById("camera-msg");
   msg.textContent = text;
@@ -554,16 +564,17 @@ async function readTheFrame() {
     return;
   }
 
-  const blob = await camera.capture(video);
+  const view = viewNow();
+  const blob = await camera.capture(video, view.zoom, view.shape);
   if (!blob) {
     say("The camera is not ready yet.");
     return;
   }
 
-  cameraMessage("Recall is reading this. The first time takes a moment.");
+  cameraMessage("Recall is reading what you see. The first time takes a moment.");
   try {
     const text = await ocr.readText(blob, (percent) => {
-      cameraMessage("Recall is reading this. " + percent + " per cent.");
+      cameraMessage("Recall is reading what you see. " + percent + " per cent.");
     });
     if (!text) {
       cameraMessage("No words found. Hold the phone still, a little further away.");
@@ -738,7 +749,8 @@ function wire() {
   });
 
   document.getElementById("btn-shoot").addEventListener("click", async () => {
-    const blob = await camera.capture(video);
+    const view = viewNow();
+    const blob = await camera.capture(video, view.zoom, view.shape);
     if (!blob) {
       say("The camera is not ready yet.");
       return;

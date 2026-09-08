@@ -48,21 +48,45 @@ export function setZoom(video, percent) {
   video.style.transform = "scale(" + percent / 100 + ")";
 }
 
-// Grabs the current frame. We keep the long side at 1600px, which is plenty for
-// OCR and keeps the photos small enough for the free storage tier.
-export function capture(video) {
-  const w = video.videoWidth;
-  const h = video.videoHeight;
-  if (!w || !h) return Promise.resolve(null);
+// Grabs what the user can actually see, not the whole sensor frame. The zoom is
+// a CSS transform, so a zoomed in view used to be read in full, which is not
+// what anybody pointing a magnifier expects.
+//
+// Two crops, in order: object-fit cover trims the frame to the shape of the box
+// on screen, then the zoom keeps the middle 1/zoom of what is left.
+export function capture(video, zoomPercent, boxAspect) {
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  if (!vw || !vh) return Promise.resolve(null);
 
+  const zoom = Math.max(1, (Number(zoomPercent) || 100) / 100);
+  const shape = Number(boxAspect) > 0 ? Number(boxAspect) : vw / vh;
+
+  let cropW = vw;
+  let cropH = vh;
+  if (vw / vh > shape) {
+    cropW = vh * shape;
+  } else {
+    cropH = vw / shape;
+  }
+
+  cropW = cropW / zoom;
+  cropH = cropH / zoom;
+  const sx = (vw - cropW) / 2;
+  const sy = (vh - cropH) / 2;
+
+  // Keep the long side around 1600 px, which is plenty for reading text, and
+  // never enlarge a small crop by more than double.
   const max = 1600;
-  const scale = Math.min(1, max / Math.max(w, h));
+  const scale = Math.min(max / Math.max(cropW, cropH), 2);
   const canvas = document.createElement("canvas");
-  canvas.width = Math.round(w * scale);
-  canvas.height = Math.round(h * scale);
-  canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.width = Math.max(1, Math.round(cropW * scale));
+  canvas.height = Math.max(1, Math.round(cropH * scale));
+  canvas
+    .getContext("2d")
+    .drawImage(video, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
 
   return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.85);
+    canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.9);
   });
 }
