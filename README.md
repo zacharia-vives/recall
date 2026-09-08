@@ -26,6 +26,9 @@ out in <https://claude.ai/code/artifact/a6b6aec6-b408-4d5a-9fe3-858225129e9e>
 ## What it already does
 
 - Cards with a photo, who, where, when and a reminder
+- Reminders that wait on the Today screen and are read out loud when she
+  opens the app. Recall does not ring a closed phone. Web push needs
+  something on a server to send it, so it sits on the roadmap
 - A camera with a slider that makes the print up to four times bigger
 - Reads a card out loud with the voice built into the phone
 - Reads the text of a letter on the device itself and pulls the date out of it

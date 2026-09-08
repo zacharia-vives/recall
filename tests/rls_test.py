@@ -133,6 +133,22 @@ check("the keeper cannot edit a card", unchanged, after)
 status, out = call("POST", "/rest/v1/rpc/claim_keeper_device", b_token, {"link_code": "testab"})
 check("a used code cannot be claimed twice", status >= 400, out)
 
+print("\n=== a helper must not be demoted by claiming a code ===")
+status, out = call("POST", "/rest/v1/device_links", a_token,
+                   {"code": "TESTCD", "household_id": hh, "created_by": a_uid,
+                    "display_name": "a second phone",
+                    "expires_at": "2030-01-01T00:00:00Z"})
+check("A makes a second code", status in (200, 201), out)
+
+# The bug Luke found: claiming a code in a browser that was already signed in
+# as family turned that family member into the keeper, so they lost the family
+# app. Fixed in db/patch-001-roles.sql, which still has to be run by hand, so
+# until it is run this is the one check that fails.
+call("POST", "/rest/v1/rpc/claim_keeper_device", a_token, {"link_code": "testcd"})
+status, rows = call("GET", "/rest/v1/memberships?select=role&user_id=eq." + str(a_uid), a_token)
+role = rows[0]["role"] if status == 200 and rows else "?"
+check("A is still the helper afterwards", role == "helper", role)
+
 print("\n=== clean up ===")
 call("DELETE", "/storage/v1/object/photos/%s/%s.jpg" % (hh, rec_id), a_token)
 status, out = call("DELETE", "/rest/v1/households?id=eq." + hh, a_token)

@@ -72,7 +72,7 @@ MoSCoW. Must is the demo and does not slip.
 | R3.2 | Today screen: what is coming, large, read out loud on tap | Must |
 | R3.3 | Repeating: every day, twice a day, every week | Should |
 | R3.4 | Mark as done, and show that it was done | Should |
-| R3.5 | A notification while the app is closed | Could |
+| R3.5 | A notification while the app is closed. Not built, and not claimed anywhere in the app, because web push needs a scheduled job on a server | Could |
 | R3.6 | Reminders by text message or phone call | Won't |
 
 ### R4 Accounts and sync
