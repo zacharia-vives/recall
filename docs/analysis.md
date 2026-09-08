@@ -181,6 +181,8 @@ out.
 | N10 | Interface in English. Dutch and French come later, so interface text stays out of the logic |
 | N11 | The camera screen fits the device it is running on, so it never has to be scrolled while she is holding the phone up to a letter |
 | N12 | Every file the browser can cache is asked for with the same version on it, so a phone can never run a new page against modules from an older release |
+| N13 | The voice is the best one that speaks on the device itself. A voice that sends the text away to be read is refused, by name and by the localService flag, however much better it sounds |
+| N14 | Text is shaped into speech before it is spoken: dates as words, times as times, abbreviations expanded, redaction markers read as a sentence, one utterance per sentence so there is a breath between them. Nothing is added and nothing is left out, which is S2 |
 
 ## 5. Data protection
 

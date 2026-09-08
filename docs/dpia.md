@@ -250,6 +250,7 @@ what happens if nobody ever links the phone.
 | A phone is lost or picked up in a waiting room | The keeper | Medium | An optional code and Face ID, and the family can move Recall to a new phone and remove the old one in three steps | Medium, and honest about it: a screen lock, not encryption |
 | The national register number ends up stored | The keeper | Medium | Stripped before storage, with a test that reads a letter carrying one and checks the stored text | Low |
 | A hospital letter reaches a third party | The keeper | High | The reading runs on the device. Cloud OCR was rejected for this reason | Low, except for the IP address leak in section 8 |
+| The letter is sent away to be read out loud in a nicer voice | The keeper | Medium | The best sounding voices on Windows and Android are online ones, and those post the text to a server. Refused, by name and by the localService flag. Only voices that speak on the device are offered, and the help screen says so where family picks one | Low |
 | Her local store breaks and she thinks her cards are lost | The keeper | Medium | A screen of its own that says what happened and what to do, rather than an empty Today screen | Low |
 | No processor paperwork | Everyone | High for a real deployment | Nothing yet. Section 8 | High, and the first thing to fix before a real household |
 | She cannot get her data out in a portable form | The keeper | Medium | Nothing yet. Section 9 | Medium, first thing to build after Friday |

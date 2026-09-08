@@ -10,7 +10,7 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css?v=23">
+<link rel="stylesheet" href="css/style.css?v=24">
 </head>
 <body>
 
@@ -280,6 +280,19 @@
       <p id="link-msg" class="link-msg" hidden></p>
     </div>
 
+    <h3>The voice</h3>
+    <p class="hint-line">Phones come with several. Try them and leave the one she
+      likes: it is the voice she will hear every day. Only voices that speak on
+      the phone itself are offered, so a letter is never sent away to be read.</p>
+    <label class="field">
+      <span class="label">Voice</span>
+      <select id="voice-pick"></select>
+    </label>
+    <div class="lock-actions">
+      <button id="btn-voice-try" class="big ghost" type="button">Try this voice</button>
+    </div>
+    <p id="voice-msg" class="link-msg" hidden></p>
+
     <div id="sharing-wrap" hidden>
       <h3>Sharing with your family</h3>
       <p id="sharing-state" class="hint-line"></p>
@@ -314,6 +327,6 @@
   </div>
 </dialog>
 
-<script type="module" src="js/app.js?v=23"></script>
+<script type="module" src="js/app.js?v=24"></script>
 </body>
 </html>

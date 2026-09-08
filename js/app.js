@@ -1,13 +1,13 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=23";
-import * as speech from "./speech.js?v=23";
-import * as camera from "./camera.js?v=23";
-import * as ocr from "./ocr.js?v=23";
-import { isConfigured, NOTICE_VERSION } from "./config.js?v=23";
-import * as install from "./install.js?v=23";
-import * as lock from "./lock.js?v=23";
+import * as store from "./store.js?v=24";
+import * as speech from "./speech.js?v=24";
+import * as camera from "./camera.js?v=24";
+import * as ocr from "./ocr.js?v=24";
+import { isConfigured, NOTICE_VERSION } from "./config.js?v=24";
+import * as install from "./install.js?v=24";
+import * as lock from "./lock.js?v=24";
 
 const HOUSEHOLD_KEY = "recall.householdId";
 
@@ -302,7 +302,7 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=23");
+    const cloud = await import("./cloud.js?v=24");
     const people = await cloud.members(id);
     const helpers = people.filter((m) => m.role === "helper").map((m) => m.display_name || "family");
     if (helpers.length === 0) {
@@ -346,6 +346,32 @@ function ask(question, yesLabel) {
     box.addEventListener("cancel", onNo);
     box.showModal();
   });
+}
+
+/* the voice, N13. Family picks it, she lives with it */
+
+function drawVoices() {
+  const pick = document.getElementById("voice-pick");
+  const msg = document.getElementById("voice-msg");
+  // Both languages, because her letters are Dutch and the app speaks English.
+  const dutch = speech.voicesFor("nl");
+  const english = speech.voicesFor("en");
+  const all = dutch.concat(english.filter((v) => !dutch.some((d) => d.name === v.name)));
+
+  if (!all.length) {
+    pick.innerHTML = '<option value="">this phone has only one voice</option>';
+    msg.hidden = false;
+    msg.textContent = "Nothing to choose here, so Recall uses the voice the phone has.";
+    return;
+  }
+
+  const current = speech.pickVoice("nl-BE");
+  pick.innerHTML = all.map((v) =>
+    '<option value="' + esc(v.name) + '"' +
+    (current && current.name === v.name ? " selected" : "") + ">" +
+    esc(v.name + "  (" + v.lang + ")") + "</option>"
+  ).join("");
+  msg.hidden = true;
 }
 
 /* consent, P4 and P19 */
@@ -393,7 +419,7 @@ async function consentNeeded() {
   if (!isConfigured() || !linkedHousehold()) return false;
   if (consentRemembered()) return false;
   try {
-    const cloud = await import("./cloud.js?v=23");
+    const cloud = await import("./cloud.js?v=24");
     const latest = await cloud.latestConsent(linkedHousehold());
     if (latest && !latest.withdrawn_at) {
       rememberConsent(true);
@@ -420,7 +446,7 @@ async function consentYes() {
   msg.hidden = false;
   msg.textContent = "Thank you. Fetching the cards your family made.";
   try {
-    const cloud = await import("./cloud.js?v=23");
+    const cloud = await import("./cloud.js?v=24");
     const where = await cloud.recordConsent(linkedHousehold(), NOTICE_VERSION);
     window.console.info("Recall: consent recorded in the " + where + " table.");
     rememberConsent(true);
@@ -459,7 +485,7 @@ async function stopSharing() {
   msg.textContent = "Stopping.";
   const id = linkedHousehold();
   try {
-    const cloud = await import("./cloud.js?v=23");
+    const cloud = await import("./cloud.js?v=24");
     await cloud.withdrawConsent(id);
   } catch (err) {
     // Even if the note cannot be written, the sharing still stops here.
@@ -578,7 +604,7 @@ async function rescueWithCode(event) {
   }
 
   try {
-    const cloud = await import("./cloud.js?v=23");
+    const cloud = await import("./cloud.js?v=24");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
@@ -686,7 +712,7 @@ async function linkThisPhone(event) {
   msg.hidden = false;
   msg.textContent = "One moment.";
   try {
-    const cloud = await import("./cloud.js?v=23");
+    const cloud = await import("./cloud.js?v=24");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     msg.textContent = "This phone is linked. Fetching the family cards.";
@@ -711,7 +737,7 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=23");
+    cloud = await import("./cloud.js?v=24");
   } catch (err) {
     if (loud) say("Could not reach the family cards.");
     return false;
@@ -1196,6 +1222,18 @@ function wire() {
   document.getElementById("btn-face").addEventListener("click", unlockWithFace);
   document.getElementById("form-rescue").addEventListener("submit", rescueWithCode);
 
+  document.getElementById("voice-pick").addEventListener("change", (event) => {
+    speech.chooseVoice(event.target.value);
+    const msg = document.getElementById("voice-msg");
+    msg.hidden = false;
+    msg.textContent = "Saved. Press try to hear it.";
+  });
+  document.getElementById("btn-voice-try").addEventListener("click", () => {
+    const name = document.getElementById("voice-pick").value;
+    const nl = /nl|dutch|belg/i.test(name);
+    speech.sample(name, nl ? "nl-BE" : "en-GB");
+  });
+
   document.getElementById("btn-consent-read").addEventListener("click", readNotice);
   document.getElementById("btn-consent-yes").addEventListener("click", consentYes);
   document.getElementById("btn-consent-no").addEventListener("click", consentNo);
@@ -1250,6 +1288,7 @@ function wire() {
   document.getElementById("btn-help").addEventListener("click", async () => {
     await drawLockSettings();
     await drawSharingState();
+    drawVoices();
     help.showModal();
   });
   document.getElementById("help-close").addEventListener("click", () => help.close());
@@ -1277,7 +1316,7 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=23");
+    const cloud = await import("./cloud.js?v=24");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     say("This phone is linked to the family.");
@@ -1290,6 +1329,15 @@ async function claimFromLink() {
 
 async function init() {
   wire();
+
+  // Chrome and Safari hand over the voice list a moment after the page loads,
+  // so anything asking which voices exist has to wait for this.
+  if (speech.canSpeak() && window.speechSynthesis.addEventListener) {
+    window.speechSynthesis.addEventListener("voiceschanged", () => {
+      const pick = document.getElementById("voice-pick");
+      if (pick && document.getElementById("help").open) drawVoices();
+    });
+  }
 
   // Before anything is drawn, so a locked phone never shows a card in passing.
   if (lock.locked()) showLock();

@@ -1,7 +1,7 @@
 // Service worker. Keeps the app shell available with no network, which matters
 // because the today screen has to work in a kitchen with bad wifi.
 
-const VERSION = 23;
+const VERSION = 24;
 const CACHE = "recall-v" + VERSION;
 
 const SHELL = [

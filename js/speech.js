@@ -1,37 +1,210 @@
-// Reading out loud, with the Web Speech API. Free, and it works offline on most
-// devices. Requirement S2: we speak the text as it is, we never shorten or
-// rewrite what a letter says.
+// Reading out loud, with the Web Speech API. Free, and on the voices we allow
+// it also works with no network. Requirement S2: we speak the text as it is, we
+// never shorten or rewrite what a letter says.
 //
 // The interface is English, but a Belgian letter is usually Dutch, so speak()
 // takes the language of the text it is given.
+//
+// Two things make a voice sound like a machine, and only one of them is the
+// voice. The other is what you hand it. A wall of text with no sentence breaks,
+// a date written 14/10/2026, an abbreviation like dr., a marker like
+// [national number removed]: read literally, all of that sounds like a robot
+// reading a form, because that is exactly what it is. So the text is turned
+// into something a person would say before a single word is spoken.
+//
+// On the voice itself: the best sounding voices on Windows and Android are the
+// online ones, and those send the text to a server. This app promises that a
+// hospital letter never leaves the device, so those are refused, by name and by
+// the localService flag, and we pick the best voice that runs on the phone.
+// That is a real cost in warmth and it is the right way round.
 
 const DEFAULT_LANG = "en-GB";
+const VOICE_KEY = "recall.voice";
 
-function pickVoice(lang) {
-  const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-  const short = lang.slice(0, 2);
-  return (
-    voices.find((v) => v.lang === lang) ||
-    voices.find((v) => v.lang && v.lang.replace("_", "-").startsWith(short)) ||
-    null
-  );
+// Names that mean the phone is not doing the speaking.
+const CLOUD = /online|cloud|remote|server|azure|neural.*online/i;
+
+// Names that mean the maker put effort into this one. iOS calls its good ones
+// Premium and Enhanced, Android ships neural Google voices, Windows names its
+// on-device neural ones Natural.
+const GOOD = /premium|enhanced|siri|natural|neural|wavenet|google/i;
+
+function allVoices() {
+  return window.speechSynthesis ? window.speechSynthesis.getVoices() || [] : [];
+}
+
+// Everything that can speak this language without telling anybody about it.
+export function voicesFor(lang) {
+  const short = (lang || DEFAULT_LANG).slice(0, 2).toLowerCase();
+  return allVoices()
+    .filter((v) => v.localService !== false)
+    .filter((v) => !CLOUD.test(v.name))
+    .filter((v) => (v.lang || "").replace("_", "-").toLowerCase().startsWith(short));
+}
+
+function score(voice, lang) {
+  let n = 0;
+  if (GOOD.test(voice.name)) n += 10;
+  if ((voice.lang || "").replace("_", "-").toLowerCase() === lang.toLowerCase()) n += 4;
+  if (voice.default) n += 1;
+  // Compact is the small, tinny iOS variant of a voice that also exists in a
+  // better version, so it goes last.
+  if (/compact/i.test(voice.name)) n -= 8;
+  return n;
+}
+
+function chosenName() {
+  try {
+    return window.localStorage.getItem(VOICE_KEY) || "";
+  } catch (err) {
+    return "";
+  }
+}
+
+export function chooseVoice(name) {
+  try {
+    if (name) window.localStorage.setItem(VOICE_KEY, name);
+    else window.localStorage.removeItem(VOICE_KEY);
+  } catch (err) {
+    // nothing to do
+  }
+}
+
+export function pickVoice(lang) {
+  const useLang = lang || DEFAULT_LANG;
+  const mine = chosenName();
+  const local = voicesFor(useLang);
+  if (mine) {
+    const picked = local.find((v) => v.name === mine) || allVoices().find((v) => v.name === mine);
+    if (picked) return picked;
+  }
+  if (local.length) {
+    return local.slice().sort((a, b) => score(b, useLang) - score(a, useLang))[0];
+  }
+  // Nothing local for this language: rather the wrong accent than no voice.
+  const any = allVoices().filter((v) => !CLOUD.test(v.name));
+  return any.length ? any[0] : null;
+}
+
+/* turning stored text into something a person would say */
+
+const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July",
+  "August", "September", "October", "November", "December"];
+const MONTHS_NL = ["januari", "februari", "maart", "april", "mei", "juni", "juli",
+  "augustus", "september", "oktober", "november", "december"];
+
+function sayDate(day, month, year, dutch) {
+  const names = dutch ? MONTHS_NL : MONTHS_EN;
+  const name = names[Math.max(0, Math.min(11, month - 1))];
+  return dutch
+    ? day + " " + name + " " + year
+    : "the " + day + ordinal(day) + " of " + name + " " + year;
+}
+
+function ordinal(day) {
+  const n = Number(day);
+  if (n === 1 || n === 21 || n === 31) return "st";
+  if (n === 2 || n === 22) return "nd";
+  if (n === 3 || n === 23) return "rd";
+  return "th";
+}
+
+// S2 still holds: nothing is added, nothing is left out, nothing is summarised.
+// The same words come out, in the shape a person would say them.
+export function humanise(text, lang) {
+  const dutch = String(lang || "").toLowerCase().startsWith("nl");
+  let out = String(text || "");
+
+  // What the redaction left behind. Read as a sentence, not as brackets.
+  out = out.replace(/\[national number removed\]/gi,
+    dutch ? "een nummer dat wij niet bewaren" : "a number Recall does not keep");
+  out = out.replace(/\[account number removed\]/gi,
+    dutch ? "een rekeningnummer dat wij niet bewaren" : "an account number Recall does not keep");
+  out = out.replace(/\[[^\]]*removed[^\]]*\]/gi,
+    dutch ? "iets dat wij niet bewaren" : "something Recall does not keep");
+
+  // Dates, the way they are written on Belgian post.
+  out = out.replace(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})\b/g,
+    (m, d, mo, y) => sayDate(Number(d), Number(mo), y, dutch));
+
+  // Times. 10:30 read as ten thirty, and on the hour said as such.
+  out = out.replace(/\b(\d{1,2}):(\d{2})\b/g, (m, h, min) => {
+    const hour = Number(h);
+    if (min === "00") return dutch ? hour + " uur" : hour + " o'clock";
+    return dutch ? hour + " uur " + Number(min) : hour + " " + min;
+  });
+
+  // Abbreviations nobody says out loud.
+  const short = dutch
+    ? [[/\bdr\.\s*/gi, "dokter "], [/\bnr\.\s*/gi, "nummer "], [/\bt\.a\.v\.\s*/gi, "ter attentie van "],
+       [/\bbv\.\s*/gi, "bijvoorbeeld "], [/\bevt\.\s*/gi, "eventueel "], [/\ba\.u\.b\.\s*/gi, "alstublieft "]]
+    : [[/\bdr\.\s*/gi, "doctor "], [/\bmr\.\s*/gi, "mister "], [/\bmrs\.\s*/gi, "missus "],
+       [/\bno\.\s*/gi, "number "], [/\be\.g\.\s*/gi, "for example "], [/\betc\.\s*/gi, "and so on "]];
+  short.forEach(([pattern, word]) => { out = out.replace(pattern, word); });
+
+  // A line of a letter is usually a sentence even when it has no full stop, and
+  // OCR loses the punctuation anyway. A line break becomes a real pause.
+  out = out.replace(/\r/g, "");
+  out = out.replace(/[ \t]+\n/g, "\n");
+  out = out.replace(/\n{2,}/g, ".\n");
+  out = out.replace(/([^.!?:,])\n/g, "$1.\n");
+
+  // Things that have no sound: bullets, rules, page furniture.
+  out = out.replace(/^[\s*\-_=•·]{2,}$/gm, "");
+  out = out.replace(/[|_]{2,}/g, " ");
+  out = out.replace(/\s{2,}/g, " ");
+
+  return out.trim();
+}
+
+// One utterance per sentence. The gap between two utterances is what a person
+// hears as taking a breath, and it is the single biggest difference between
+// this and a machine reading a form.
+function sentences(text) {
+  return text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((s) => s.trim())
+    .filter((s) => s.replace(/[^\p{L}\p{N}]/gu, "").length > 0);
 }
 
 export function canSpeak() {
   return "speechSynthesis" in window;
 }
 
-export function speak(text, lang) {
+export function speak(text, lang, options) {
   if (!canSpeak() || !text) return false;
   stop();
+
   const useLang = lang || DEFAULT_LANG;
-  const u = new SpeechSynthesisUtterance(text);
+  const plain = (options && options.raw) ? String(text) : humanise(text, useLang);
+  const parts = sentences(plain);
+  if (!parts.length) return false;
+
   const voice = pickVoice(useLang);
-  if (voice) u.voice = voice;
-  u.lang = useLang;
-  u.rate = 0.9; // a bit slower than default, this is the whole point
-  window.speechSynthesis.speak(u);
+  parts.forEach((part, i) => {
+    const u = new SpeechSynthesisUtterance(part);
+    if (voice) u.voice = voice;
+    u.lang = (voice && voice.lang) || useLang;
+    // Slower than default, which is the whole point of this app, and a shade
+    // slower again at the start of a long read so she can settle into it.
+    u.rate = (options && options.rate) || (i === 0 ? 0.88 : 0.92);
+    u.pitch = (options && options.pitch) || 1;
+    u.volume = 1;
+    window.speechSynthesis.speak(u);
+  });
   return true;
+}
+
+// For the voice chooser: one short line in the voice being tried.
+export function sample(voiceName, lang) {
+  const dutch = String(lang || "").toLowerCase().startsWith("nl");
+  chooseVoice(voiceName);
+  return speak(
+    dutch
+      ? "Goedemiddag. Uw afspraak bij de cardioloog is morgen om tien uur."
+      : "Good afternoon. Your appointment with the cardiologist is tomorrow at ten o'clock.",
+    dutch ? "nl-BE" : "en-GB"
+  );
 }
 
 export function stop() {
@@ -39,5 +212,5 @@ export function stop() {
 }
 
 export function speaking() {
-  return canSpeak() && window.speechSynthesis.speaking;
+  return canSpeak() && (window.speechSynthesis.speaking || window.speechSynthesis.pending);
 }
