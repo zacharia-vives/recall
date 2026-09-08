@@ -179,6 +179,7 @@ out.
 | N9 | Cards and photos are private to their owner |
 | N10 | Interface in English. Dutch and French come later, so interface text stays out of the logic |
 | N11 | The camera screen fits the device it is running on, so it never has to be scrolled while she is holding the phone up to a letter |
+| N12 | Every file the browser can cache is asked for with the same version on it, so a phone can never run a new page against modules from an older release |
 
 ## 5. Data protection
 

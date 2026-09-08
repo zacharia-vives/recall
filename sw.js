@@ -1,15 +1,17 @@
 // Service worker. Keeps the app shell available with no network, which matters
 // because the today screen has to work in a kitchen with bad wifi.
 
-const CACHE = "recall-v16";
+const VERSION = 17;
+const CACHE = "recall-v" + VERSION;
 
 const SHELL = [
   "./",
   "index.html",
   "helper.html",
-  "css/style.css?v=15",
-  "css/helper.css?v=15",
-  "js/app.js?v=15",
+  "css/style.css",
+  "css/helper.css",
+  "js/app.js",
+  "js/helper.js",
   "js/store.js",
   "js/speech.js",
   "js/camera.js",
@@ -18,11 +20,12 @@ const SHELL = [
   "js/install.js",
   "js/lock.js",
   "js/cloud.js",
-  "js/helper.js?v=15",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png"
-];
+// Anything the browser could hold on to is asked for with the version on it,
+// exactly as the pages and the modules ask for it, so the cache keys line up.
+].map((path) => (/\.(js|css)$/.test(path) ? path + "?v=" + VERSION : path));
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
