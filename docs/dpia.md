@@ -23,6 +23,7 @@ is the only way to find out whether it could.
 | **Data subject** | The keeper, the older person whose papers these are. Also, incidentally, the people named on her cards: her daughter, her cardiologist | The people the data is about |
 | **Household members** | The family who help. They see and add cards | Not controllers of our processing. Their own use of the app for their own family is the household exemption, Article 2(2)(c). Ours is not: we provide the means |
 | **Processor: Supabase** | Postgres, authentication and file storage. Project in Frankfurt, `eu-central-1` | Article 28 processor. A data processing agreement and the standard contractual clauses are needed before this is real, and today they are not signed. See section 8 |
+| **Partner organisation with an API key** | A care organisation whose scheduling software puts cards in one household, through the API added on 9 September | Controller of their own scheduling data, and our joint concern for the part that lands in Recall. Article 28 again: a written agreement before any real organisation gets a key, which is why the API is licensed and not open to sign up. `docs/api.md` |
 | **Processor: GitHub Pages** | Serves the two pages and the scripts | Sees IP addresses in its request logs. Same paperwork gap |
 | **Third country recipient: Cloudflare** | `cdnjs.cloudflare.com` serves the OCR library, and the language data comes from a second host | The browser's request carries her IP address to a US company. This is a real transfer and a real finding. See section 8 |
 
@@ -253,8 +254,13 @@ what happens if nobody ever links the phone.
 | A hospital letter reaches a third party | The keeper | High | The reading runs on the device. Cloud OCR was rejected for this reason | Low, except for the IP address leak in section 8 |
 | The letter is sent away to be read out loud in a nicer voice | The keeper | Medium | The best sounding voices on Windows and Android are online ones, and those post the text to a server. Refused, by name and by the localService flag. Only voices that speak on the device are offered, and the help screen says so where family picks one | Low |
 | Her local store breaks and she thinks her cards are lost | The keeper | Medium | A screen of its own that says what happened and what to do, rather than an empty Today screen | Low |
-| No processor paperwork | Everyone | High for a real deployment | Nothing yet. Section 8 | High, and the first thing to fix before a real household |
-| She cannot get her data out in a portable form | The keeper | Medium | Nothing yet. Section 9 | Medium, first thing to build after Friday |
+| No processor paperwork | Everyone | High for a real deployment | Nothing yet. Section 8, and now also for any care organisation holding an API key | High, and the first thing to fix before a real household |
+| She cannot get her data out in a portable form | The keeper | Medium | Built on 9 September. One press on the help screen writes a file with every card, reminder, checklist item, phone number and the text of every photo. Article 20 is answered by the product | Low |
+| A partner's software reaches a household it was not given | The keeper, and every other household | High if the API were built naively | A key is tied to one household in the database, not in the caller's request, and a card belonging to somebody else is refused one level down as well. Forty clients means forty keys, because a key that sees everything is the key that eventually leaks. Forty three automated checks against the live database, including a key trying to reach next door | Low |
+| A partner keeps writing after she has stopped sharing | The keeper | High | Withdrawal is checked on every write through the API, not only in our own app, so stopping sharing stops everybody. Reading what is already there still works, because it is already there. Article 7(3) | Low |
+| Her hospital letters are readable by an integration | The keeper | High | The API cannot read a card's contents at all. It returns titles, times and done or not. Done by leaving the columns out of the query rather than by promising not to look, Article 5(1)(c) | Low |
+| An integration does things behind her back | The keeper | Medium | Every API call that changes anything writes into the same activity log she reads, as "a connected system". Machines get no privacy she does not get | Low |
+| A leaked database hands somebody working API keys | Every household with an integration | High | Only the sha256 of a key is stored, plus its first eleven characters so it can be recognised in a list. The key itself is shown once and never again | Low |
 
 ## 12. Conclusion
 
@@ -265,9 +271,13 @@ those two states, in order:
 
 1. The processor paperwork with Supabase and GitHub, and self-hosting the OCR
    library so no third country sees her IP address.
-2. Export, so Article 20 is answered by the product and not by a promise.
-3. Encryption at rest with a family held recovery key, so a lost phone is a
+2. Encryption at rest with a family held recovery key, so a lost phone is a
    lost phone and not a lost life story.
+3. A signed Article 28 agreement with the first care organisation that asks for
+   an API key. The API refuses everything it should refuse, but a technical
+   gate is not a legal basis and a jury will ask which one we are relying on.
+
+Export was the second of these until 9 September and is now built.
 
 None of the three is hard. All three are on the roadmap, and this document is
 the reason they are in that order.

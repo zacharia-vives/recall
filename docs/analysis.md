@@ -195,6 +195,11 @@ out.
 | R6.4 | A reminder counts as missed an hour after it was due, not twelve, because a morning appointment reading as coming all day defeats the follow up screen | Must |
 | F14 | Any card with an address offers the way there: one big button for the map app the phone actually has, with the other two smaller behind it. Ordinary https links, so the app opens when it is installed and the website when it is not | Should |
 | R4.6 | The three kinds are switches on Everything, all on to begin with, and the state is shown by a tick and a frame rather than by colour alone | Should |
+| A1 | A care organisation's software can put a card in one household and set a reminder on it, with a key that reaches that household and no other. Forty clients means forty keys | Must, for the licence half of the business plan |
+| A2 | Everything a partner's software does is written into the same activity log the keeper reads, as a connected system, at the time it happened | Must |
+| A3 | Withdrawal of consent blocks every write through the API, not only in our own app. Reading what is already there still works | Must |
+| A4 | The API cannot read a card's contents, its photos or its documents. Titles, times and done or not, and nothing else | Must |
+| A5 | A key is shown once. What is stored is its hash plus the first eleven characters, so a leaked database leaks no working key, and any helper can revoke it | Must |
 | N15 | Where the device has no voice for the language of a letter, say so and say where to install one, rather than reading Dutch with an English accent and leaving family to wonder |
 | N14 | Text is shaped into speech before it is spoken: dates as words, times as times, abbreviations expanded, redaction markers read as a sentence, one utterance per sentence so there is a breath between them. Nothing is added and nothing is left out, which is S2 |
 
