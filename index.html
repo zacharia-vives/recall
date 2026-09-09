@@ -10,7 +10,27 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css?v=38">
+<link rel="stylesheet" href="css/style.css?v=40">
+<link rel="stylesheet" href="css/fonts.css?v=40">
+<link rel="stylesheet" href="css/skins.css?v=40">
+
+<!-- N18. Before the first paint, deliberately not in a module: a module is
+     deferred, and a deferred script means the default palette is painted and
+     then replaced, which on a dark skin is a white flash in a dark room. Kept
+     to what it has to do and nothing else, and it falls back to the default
+     if anything at all goes wrong. -->
+<script>
+  (function () {
+    try {
+      var saved = window.localStorage.getItem("recall.skin");
+      if (!saved || !/^[a-z0-9-]{2,30}$/.test(saved)) return;
+      document.documentElement.setAttribute("data-skin", saved);
+    } catch (err) {
+      // No storage, so the default look. Nothing to do about it and nothing
+      // worth telling anybody.
+    }
+  }());
+</script>
 </head>
 <body>
 
@@ -327,6 +347,19 @@
       <select id="lang-pick"></select>
     </label>
 
+    <!-- N18. How it looks. Twenty four skins, grouped by when and by whose
+         eyes, every one measured before it was offered. -->
+    <h3 data-t="look.heading">How Recall looks</h3>
+    <p class="hint-line" data-t="look.hint">Twenty four ways to show the same cards. Every one of them was checked so the words stay easy to read, so pick whichever is easiest on your eyes.</p>
+    <label class="field">
+      <span class="label" data-t="look.label">The look</span>
+      <select id="skin-pick"></select>
+    </label>
+    <p id="skin-note" class="hint-line" hidden></p>
+    <div class="lock-actions">
+      <button id="skin-reset" class="big ghost" type="button" data-t="look.reset">Back to the ordinary look</button>
+    </div>
+
     <!-- N16. The better voice. Off until somebody turns it on, because it is
          a sixty megabyte download, and everything about it falls back to the
          phone's own voice. -->
@@ -443,6 +476,6 @@
   }
 }
 </script>
-<script type="module" src="js/app.js?v=38"></script>
+<script type="module" src="js/app.js?v=40"></script>
 </body>
 </html>

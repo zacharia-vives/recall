@@ -1,15 +1,16 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=38";
-import * as speech from "./speech.js?v=38";
-import * as camera from "./camera.js?v=38";
-import * as ocr from "./ocr.js?v=38";
-import { isConfigured, NOTICE_VERSION } from "./config.js?v=38";
-import * as install from "./install.js?v=38";
-import * as lock from "./lock.js?v=38";
-import * as i18n from "./i18n.js?v=38";
-import * as docs from "./docs.js?v=38";
+import * as store from "./store.js?v=40";
+import * as speech from "./speech.js?v=40";
+import * as camera from "./camera.js?v=40";
+import * as ocr from "./ocr.js?v=40";
+import { isConfigured, NOTICE_VERSION } from "./config.js?v=40";
+import * as install from "./install.js?v=40";
+import * as lock from "./lock.js?v=40";
+import * as i18n from "./i18n.js?v=40";
+import * as docs from "./docs.js?v=40";
+import * as skins from "./skins.js?v=40";
 
 // Short, because it is used on nearly every line that says something.
 const t = i18n.t;
@@ -62,6 +63,15 @@ function say(message) {
   toast.textContent = message;
   toast.classList.add("show");
   window.setTimeout(() => toast.classList.remove("show"), 2600);
+}
+
+// Just the clock time, for the layouts that put it in a column of its own.
+// Empty when there is no time, so a layout never shows a dangling colon.
+function clockTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString(i18n.spokenLang(), { hour: "2-digit", minute: "2-digit" });
 }
 
 function readableDate(iso) {
@@ -144,7 +154,13 @@ function todayItemHtml(reminder, record) {
   return '<div class="today-item ' + (status === "missed" ? "missed" : "") + '">' +
     '<button class="today-main" data-open="' + esc(record.id) + '">' +
       '<span class="thumb" data-thumb="' + esc(record.id) + '">' + kind.badge + "</span>" +
+      // One row, eight layouts. Every part is always emitted and the skin
+      // decides what to show and where: the ticket and the gutter want the
+      // time on its own, the notice wants the state first, the tiles want
+      // neither. A layout that had to be given different markup would mean
+      // eight code paths to keep correct instead of one.
       "<span>" +
+        '<span class="when">' + esc(clockTime(reminder.dueAt)) + "</span>" +
         '<span class="title">' + esc(record.title) + "</span>" +
         '<span class="meta">' + esc(readableDate(reminder.dueAt)) + "</span>" +
         (status === "missed" ? '<span class="status">' + t("run.passed") + "</span>" : "") +
@@ -191,6 +207,30 @@ async function renderToday() {
   }
   list.innerHTML = rows.join("");
   paintThumbs(list);
+  showTheRest(list, rows.length);
+}
+
+/* The one thing layout shows the next card only, so it is the only layout
+   that changes what is on the screen rather than how it looks. That makes it
+   the only one that needs a rule about honesty: the count is always visible
+   and one press shows everything. An app for somebody who forgets must never
+   quietly drop a reminder. */
+function showTheRest(list, total) {
+  const old = document.getElementById("btn-rest");
+  if (old) old.remove();
+  if (skins.layout() !== "one" || total < 2) return;
+  if (list.hasAttribute("data-open-all")) return;
+
+  const button = document.createElement("button");
+  button.id = "btn-rest";
+  button.className = "big ghost rest-btn";
+  button.type = "button";
+  button.textContent = t("look.rest", { n: total - 1 });
+  button.addEventListener("click", () => {
+    list.setAttribute("data-open-all", "yes");
+    button.remove();
+  });
+  list.parentNode.insertBefore(button, list.nextSibling);
 }
 
 // Which of the three kinds are switched on. All three to begin with, because
@@ -430,7 +470,7 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=38");
+    const cloud = await import("./cloud.js?v=40");
     const people = await cloud.members(id);
     const helpers = people
       .filter((m) => m.role === "helper")
@@ -516,7 +556,7 @@ async function drawVoices() {
   const mine = speech.voicesFor(i18n.lang());
   let neuralCovers = false;
   try {
-    const voices = await import("./voices.js?v=38");
+    const voices = await import("./voices.js?v=40");
     neuralCovers = voices.wanted() && (await voices.isReady(i18n.lang()));
   } catch (err) {
     neuralCovers = false;
@@ -794,6 +834,7 @@ function drawLanguages() {
 // markup carrying data-t is refreshed by the module itself.
 async function redrawEverything() {
   drawLanguages();
+  drawSkins();
   await drawVoices();
   // A different language needs a different voice, so ask for that one too.
   getVoiceQuietly();
@@ -804,6 +845,44 @@ async function redrawEverything() {
   await drawBetterVoice();
   await route();
   await showWhoHasAccess();
+}
+
+/* how it looks, N18
+
+   Twenty four skins, grouped the way somebody would actually choose: by when
+   and by whose eyes. Every one was measured before it was offered, so there
+   is nothing in this list she can pick that makes her own app unreadable. */
+
+function drawSkins() {
+  const pick = document.getElementById("skin-pick");
+  if (!pick) return;
+
+  const now = skins.chosen();
+  const groups = ["daylight", "night", "lowvision"];
+  pick.innerHTML = groups.map((group) => {
+    const inGroup = skins.all().filter((s) => s.group === group);
+    return '<optgroup label="' + esc(t("lookgroup." + group)) + '">' +
+      inGroup.map((s) =>
+        '<option value="' + esc(s.key) + '"' + (s.key === now ? " selected" : "") + ">" +
+        esc(t("skin." + s.key)) + "</option>"
+      ).join("") + "</optgroup>";
+  }).join("");
+
+  const note = document.getElementById("skin-note");
+  if (note) {
+    const skin = skins.get(now);
+    note.textContent = skin.base > 22 ? t("look.bigger") : "";
+    note.hidden = !(skin.base > 22);
+  }
+}
+
+async function useSkin(key) {
+  skins.set(key);
+  drawSkins();
+  // The layout can change what is drawn, so the screens that draw themselves
+  // have to be drawn again.
+  await route();
+  say(t("look.now", { name: t("skin." + skins.chosen()) }));
 }
 
 /* the better voice, N16
@@ -822,7 +901,7 @@ async function redrawEverything() {
 async function readAloud(text, lang) {
   let slow = false;
   try {
-    const voices = await import("./voices.js?v=38");
+    const voices = await import("./voices.js?v=40");
     // Asked about the language of the words, the same one speech will use, so
     // the message does not appear for a letter that is about to be read by the
     // phone's own voice anyway.
@@ -839,7 +918,7 @@ async function drawBetterVoice() {
   const onBtn = document.getElementById("better-on");
   if (!onBtn) return;
 
-  const voices = await import("./voices.js?v=38");
+  const voices = await import("./voices.js?v=40");
   const hint = document.getElementById("better-hint");
   const getBtn = document.getElementById("better-get");
   const tryBtn = document.getElementById("better-try");
@@ -890,7 +969,7 @@ async function drawBetterVoice() {
 }
 
 async function getBetterVoice() {
-  const voices = await import("./voices.js?v=38");
+  const voices = await import("./voices.js?v=40");
   const getBtn = document.getElementById("better-get");
   const bar = document.getElementById("better-bar");
   const fill = bar.querySelector("i");
@@ -986,7 +1065,7 @@ async function drawSeen() {
     // Loaded here rather than at the top, the way every other cloud call in
     // this app does it, so a phone that is only ever used offline never
     // downloads the library at all.
-    const cloud = await import("./cloud.js?v=38");
+    const cloud = await import("./cloud.js?v=40");
     rows = await cloud.listActivity(household, 40);
   } catch (err) {
     // Offline, or the request failed. Say which, rather than showing an empty
@@ -1101,7 +1180,7 @@ async function consentNeeded() {
   if (!isConfigured() || !linkedHousehold()) return false;
   if (consentRemembered()) return false;
   try {
-    const cloud = await import("./cloud.js?v=38");
+    const cloud = await import("./cloud.js?v=40");
     const latest = await cloud.latestConsent(linkedHousehold());
     if (latest && !latest.withdrawn_at) {
       rememberConsent(true);
@@ -1128,7 +1207,7 @@ async function consentYes() {
   msg.hidden = false;
   msg.textContent = t("consent.thanks");
   try {
-    const cloud = await import("./cloud.js?v=38");
+    const cloud = await import("./cloud.js?v=40");
     const where = await cloud.recordConsent(linkedHousehold(), noticeVersion());
     window.console.info("Recall: consent recorded in the " + where + " table.");
     rememberConsent(true);
@@ -1162,7 +1241,7 @@ async function stopSharing() {
   msg.textContent = t("share.stopping");
   const id = linkedHousehold();
   try {
-    const cloud = await import("./cloud.js?v=38");
+    const cloud = await import("./cloud.js?v=40");
     await cloud.withdrawConsent(id);
   } catch (err) {
     // Even if the note cannot be written, the sharing still stops here.
@@ -1280,7 +1359,7 @@ async function rescueWithCode(event) {
   }
 
   try {
-    const cloud = await import("./cloud.js?v=38");
+    const cloud = await import("./cloud.js?v=40");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
@@ -1393,7 +1472,7 @@ async function linkThisPhone(event) {
   msg.hidden = false;
   msg.textContent = t("run.onemoment");
   try {
-    const cloud = await import("./cloud.js?v=38");
+    const cloud = await import("./cloud.js?v=40");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     msg.textContent = t("run.linkedfetch");
@@ -1418,7 +1497,7 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=38");
+    cloud = await import("./cloud.js?v=40");
   } catch (err) {
     if (loud) say(t("run.unreachable"));
     return false;
@@ -1988,8 +2067,16 @@ function wire() {
     // The new language deserves a voice that speaks it.
     speech.chooseVoice("");
   });
+  document.getElementById("skin-pick").addEventListener("change", (event) => {
+    useSkin(event.target.value);
+  });
+
+  document.getElementById("skin-reset").addEventListener("click", () => {
+    useSkin(skins.DEFAULT);
+  });
+
   document.getElementById("better-on").addEventListener("click", async (event) => {
-    const voices = await import("./voices.js?v=38");
+    const voices = await import("./voices.js?v=40");
     const now = event.currentTarget.getAttribute("aria-pressed") !== "true";
     voices.setWanted(now);
     speech.stop();
@@ -2010,7 +2097,7 @@ function wire() {
   });
 
   document.getElementById("better-remove").addEventListener("click", async () => {
-    const voices = await import("./voices.js?v=38");
+    const voices = await import("./voices.js?v=40");
     speech.stop();
     await voices.remove(i18n.lang());
     voices.setWanted(false);
@@ -2107,6 +2194,7 @@ function wire() {
     await drawKnows();
     await drawSeen();
     await drawBetterVoice();
+    drawSkins();
     help.showModal();
   });
   document.getElementById("help-close").addEventListener("click", () => help.close());
@@ -2134,7 +2222,7 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=38");
+    const cloud = await import("./cloud.js?v=40");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     say(t("run.linkedfamily"));
@@ -2146,6 +2234,11 @@ async function claimFromLink() {
 }
 
 async function init() {
+  // The palette is already on from the early script in the markup. This adds
+  // the layout and asks for the face, which cannot happen before the module
+  // loads and does not need to.
+  skins.apply(skins.chosen());
+
   // Before anything is drawn or read out, so nothing is ever shown in the
   // wrong language even for a moment.
   i18n.apply();
@@ -2226,7 +2319,7 @@ async function init() {
    there is nothing for her to do about it. */
 async function getVoiceQuietly() {
   try {
-    const voices = await import("./voices.js?v=38");
+    const voices = await import("./voices.js?v=40");
     const what = await voices.fetchIfSensible(i18n.lang(), () => {
       // The bar only exists while the help screen is open.
       const bar = document.getElementById("better-bar");

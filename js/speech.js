@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=38";
+import * as i18n from "./i18n.js?v=40";
 
 // Reading out loud, with the Web Speech API. Free, and on the voices we allow
 // it also works with no network. Requirement S2: we speak the text as it is, we
@@ -274,7 +274,7 @@ export async function read(text, lang, options) {
   if (!plain.trim()) return false;
 
   try {
-    const voices = await import("./voices.js?v=38");
+    const voices = await import("./voices.js?v=40");
     // The language of the words, not the language of the screen. Reading a
     // French letter with the Dutch voice would be worse than reading it with
     // the phone's own French voice, and reading German with either is wrong.

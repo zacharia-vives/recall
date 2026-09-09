@@ -1,7 +1,7 @@
 // Service worker. Keeps the app shell available with no network, which matters
 // because the today screen has to work in a kitchen with bad wifi.
 
-const VERSION = 38;
+const VERSION = 40;
 const CACHE = "recall-v" + VERSION;
 
 const SHELL = [
@@ -10,6 +10,13 @@ const SHELL = [
   "helper.html",
   "privacy.html",
   "css/style.css",
+  "css/skins.css",
+  /* fonts.css is here because it is small and every page needs it. The 1.4 MB
+     of woff2 it points at is deliberately NOT: a browser fetches a face only
+     when a skin uses it, and caching type nobody has chosen would be a poor
+     way to spend an install. They are same origin, so the ordinary rule keeps
+     each one after its first use. */
+  "css/fonts.css",
   "css/helper.css",
   "css/privacy.css",
   "js/app.js",
@@ -17,6 +24,7 @@ const SHELL = [
   "js/store.js",
   "js/speech.js",
   "js/voices.js",
+  "js/skins.js",
   "js/camera.js",
   "js/ocr.js",
   "js/config.js",

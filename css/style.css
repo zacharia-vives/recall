@@ -13,7 +13,17 @@
   --card: #FFFFFF;
   --rule: #E7D8CA;
   --ok: #2F6B4F;
+  /* The label on a filled orange or green button. White on the light skins,
+     near black on the dark ones, so it is a token rather than a literal. */
+  --on-accent: #FFFFFF;
   --tap: 56px;
+
+  /* A skin also carries a face, a shape and a size. Declared here so the rest
+     of the file can use them, and overridden per skin in skins.css. */
+  --face: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --radius: 12px;
+  --edge: 1px;
+  --base: 22px;
 }
 
 * { box-sizing: border-box; }
@@ -27,8 +37,8 @@ html, body {
   padding: 0;
   background: var(--paper);
   color: var(--body);
-  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
-  font-size: 22px;
+  font-family: var(--face);
+  font-size: var(--base);
   line-height: 1.45;
 }
 
@@ -45,7 +55,7 @@ body {
   top: 12px;
   z-index: 50;
   background: var(--ink);
-  color: #fff;
+  color: var(--paper);
   padding: 12px 18px;
 }
 
@@ -61,7 +71,7 @@ body {
   gap: 12px;
   padding: 12px 18px;
   background: var(--ink);
-  color: #fff;
+  color: var(--paper);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -80,6 +90,8 @@ body {
   width: 48px;
   height: 48px;
   border-radius: 50%;
+  /* Stays white on purpose: this ring sits over the camera picture, not over
+     any surface a skin controls. */
   border: 2px solid #fff;
   background: transparent;
   color: #fff;
@@ -130,7 +142,7 @@ h1 {
   text-align: left;
   background: var(--card);
   border: 2px solid var(--rule);
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 16px;
   min-height: 96px;
   font: inherit;
@@ -179,7 +191,7 @@ h1 {
 }
 .empty {
   border: 2px dashed var(--rule);
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 24px;
   color: var(--mid);
   text-align: center;
@@ -188,14 +200,14 @@ h1 {
 /* record detail */
 .detail-photo {
   width: 100%;
-  border-radius: 14px;
+  border-radius: var(--radius);
   border: 2px solid var(--rule);
   margin-bottom: 18px;
   display: block;
 }
 .fields {
   border: 2px solid var(--rule);
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--card);
   overflow: hidden;
   margin-bottom: 20px;
@@ -205,7 +217,7 @@ h1 {
   grid-template-columns: 120px 1fr;
   gap: 12px;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: var(--edge) solid var(--rule);
 }
 .fields .row:last-child { border-bottom: none; }
 .fields .k {
@@ -237,9 +249,9 @@ h1 {
 .big {
   min-height: 68px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--orange);
-  color: #fff;
+  color: var(--on-accent);
   font: inherit;
   font-size: 24px;
   font-weight: 700;
@@ -316,7 +328,7 @@ fieldset.kinds input {
 .camera-wrap {
   position: relative;
   background: var(--ink);
-  border-radius: 14px;
+  border-radius: var(--radius);
   overflow: hidden;
   aspect-ratio: 3 / 4;
   max-height: 62vh;
@@ -335,6 +347,7 @@ fieldset.kinds input {
   bottom: 0;
   margin: 0;
   padding: 12px 16px;
+  /* Also over the camera picture, so it keeps its own scrim and white. */
   background: rgba(35, 23, 16, 0.8);
   color: #fff;
   font-size: 18px;
@@ -430,7 +443,7 @@ body.on-camera #screen-capture .actions .big.ghost { font-size: 20px; }
 
 .shot {
   width: 100%;
-  border-radius: 14px;
+  border-radius: var(--radius);
   border: 2px solid var(--rule);
   margin-bottom: 12px;
   display: block;
@@ -446,7 +459,7 @@ body.on-camera #screen-capture .actions .big.ghost { font-size: 20px; }
 
 /* the text Recall read off a letter */
 .ocr-text {
-  background: #fff;
+  background: var(--card);
   border: 2px solid var(--rule);
   border-radius: 10px;
   padding: 14px 16px;
@@ -463,7 +476,7 @@ body.on-camera #screen-capture .actions .big.ghost { font-size: 20px; }
 /* today items, which carry their own buttons */
 .today-item {
   border: 3px solid var(--orange);
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--orange-soft);
   overflow: hidden;
 }
@@ -500,7 +513,7 @@ body.on-camera #screen-capture .actions .big.ghost { font-size: 20px; }
 /* first run */
 .welcome {
   border: 2px solid var(--rule);
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--card);
   padding: 18px 20px;
 }
@@ -528,7 +541,7 @@ body.is-locked { overflow: hidden; }
 body.is-locked .topbar,
 body.is-locked .tabs,
 body.is-locked #main { display: none; }
-.lock-logo { border-radius: 14px; margin: 8px auto 4px; display: block; }
+.lock-logo { border-radius: var(--radius); margin: 8px auto 4px; display: block; }
 .lockscreen h1 { font-size: 30px; margin: 0 0 4px; }
 .lock-say { color: var(--mid); margin: 0 0 10px; min-height: 32px; }
 .dots {
@@ -582,7 +595,7 @@ body.is-locked #main { display: none; }
 .install {
   margin-top: 22px;
   border: 3px solid var(--ink);
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--card);
   padding: 18px;
 }
@@ -657,7 +670,7 @@ body.is-locked #main { display: none; }
   bottom: 110px;
   transform: translateX(-50%);
   background: var(--ink);
-  color: #fff;
+  color: var(--paper);
   padding: 14px 20px;
   border-radius: 10px;
   font-size: 20px;
@@ -672,7 +685,7 @@ body.is-locked #main { display: none; }
 /* help dialog */
 dialog {
   border: 3px solid var(--ink);
-  border-radius: 14px;
+  border-radius: var(--radius);
   max-width: 520px;
   padding: 24px;
   color: var(--body);
@@ -700,7 +713,7 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
   align-items: baseline;
   gap: 1rem;
   padding: 0.55rem 0;
-  border-bottom: 1px solid var(--rule, #e5ddd3);
+  border-bottom: var(--edge) solid var(--rule);
   font-size: 1.125rem;
 }
 
@@ -723,13 +736,13 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
   flex-direction: column;
   gap: 0.15rem;
   padding: 0.55rem 0;
-  border-bottom: 1px solid var(--rule, #e5ddd3);
+  border-bottom: var(--edge) solid var(--rule);
   font-size: 1.125rem;
 }
 
 .seen .s {
   font-size: 1rem;
-  color: var(--muted, #6b6257);
+  color: var(--mid);
 }
 
 /* The three switches on Everything. Big enough to hit, and the state is a tick
@@ -756,15 +769,15 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
   font: inherit;
   font-size: 1.125rem;
   border-radius: 2rem;
-  border: 2px solid var(--ink, #231710);
-  background: var(--card, #fff);
-  color: var(--ink, #231710);
+  border: 2px solid var(--ink);
+  background: var(--card);
+  color: var(--ink);
   cursor: pointer;
 }
 
 .chip[aria-pressed="true"] {
-  background: var(--ink, #231710);
-  color: #fff;
+  background: var(--ink);
+  color: var(--paper);
   border-width: 3px;
 }
 
@@ -782,7 +795,7 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
 }
 
 .chip:focus-visible {
-  outline: 3px solid var(--accent, #f0692b);
+  outline: 3px solid var(--orange);
   outline-offset: 2px;
 }
 
@@ -791,7 +804,7 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
 .doc-add {
   margin: 1rem 0 1.5rem;
   padding: 1rem;
-  border: 2px dashed var(--rule, #e5ddd3);
+  border: 2px dashed var(--rule);
   border-radius: 12px;
 }
 
@@ -817,9 +830,9 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
   max-height: 14rem;
   overflow: hidden;
   padding: 0.85rem 1rem;
-  border: 1px solid var(--rule, #e5ddd3);
+  border: var(--edge) solid var(--rule);
   border-radius: 10px;
-  background: var(--card, #fff);
+  background: var(--card);
   color: inherit;
   white-space: pre-wrap;
   cursor: pointer;
@@ -833,15 +846,15 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
   right: 0;
   bottom: 0;
   height: 3rem;
-  background: linear-gradient(transparent, var(--card, #fff));
+  background: linear-gradient(transparent, var(--card));
 }
 
 .doc-pdf {
   width: 100%;
   height: 26rem;
-  border: 1px solid var(--rule, #e5ddd3);
-  border-radius: 10px;
-  background: #fff;
+  border: var(--edge) solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
 }
 
 /* ------------------------------------------- looking at something closely */
@@ -877,7 +890,8 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
 }
 
 /* The point of enlarging words is that they are bigger, so they are properly
-   bigger and not politely bigger. */
+   bigger and not politely bigger. The enlarge view is always a dark backdrop,
+   which is why this one is white in every skin. */
 .big-words {
   color: #fff;
   font-size: 1.6rem;
@@ -945,9 +959,9 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
   font: inherit;
   font-size: 1.125rem;
   text-align: left;
-  border: 2px solid var(--ink, #231710);
+  border: 2px solid var(--ink);
   border-radius: 12px;
-  background: var(--card, #fff);
+  background: var(--card);
   color: inherit;
   cursor: pointer;
 }
@@ -960,19 +974,19 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
   text-align: center;
   font-size: 1.35rem;
   font-weight: 700;
-  border: 2px solid var(--ink, #231710);
+  border: 2px solid var(--ink);
   border-radius: 6px;
 }
 
 /* Done is shown by the tick, the frame and the line through the words, so it
    does not rely on colour alone. R4.6. */
 .tickbox[aria-pressed="true"] {
-  background: var(--ink, #231710);
-  color: #fff;
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .tickbox[aria-pressed="true"] .mark {
-  border-color: #fff;
+  border-color: var(--paper);
 }
 
 .tickbox[aria-pressed="true"] .what {
@@ -985,9 +999,9 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
   width: 3.25rem;
   font-size: 1.5rem;
   line-height: 1;
-  border: 2px solid var(--rule, #e5ddd3);
+  border: 2px solid var(--rule);
   border-radius: 12px;
-  background: var(--card, #fff);
+  background: var(--card);
   color: var(--mid, #6b5b4d);
   cursor: pointer;
 }
@@ -1019,20 +1033,20 @@ a.big.call {
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  background: #1d6b3f;
-  color: #fff;
-  border-color: #1d6b3f;
+  background: var(--ok);
+  color: var(--on-accent);
+  border-color: var(--ok);
 }
 
 a.big.call:focus-visible {
-  outline: 3px solid var(--accent, #f0692b);
+  outline: 3px solid var(--orange);
   outline-offset: 2px;
 }
 
 .warn-line {
   font-size: 1.0625rem;
   padding: 0.6rem 0.85rem;
-  border-left: 4px solid var(--accent, #f0692b);
+  border-left: 4px solid var(--orange);
   background: rgba(240, 105, 43, 0.09);
   margin: 0 0 1rem;
 }
@@ -1052,9 +1066,9 @@ textarea {
   font-size: 1.125rem;
   width: 100%;
   padding: 0.65rem 0.75rem;
-  border: 2px solid var(--rule, #e5ddd3);
+  border: 2px solid var(--rule);
   border-radius: 10px;
-  background: var(--card, #fff);
+  background: var(--card);
   color: inherit;
 }
 
@@ -1074,7 +1088,7 @@ a.big.map {
 }
 
 a.big.map:focus-visible {
-  outline: 3px solid var(--accent, #f0692b);
+  outline: 3px solid var(--orange);
   outline-offset: 2px;
 }
 
@@ -1100,17 +1114,17 @@ a.big.map:focus-visible {
 .voice-bar {
   height: 0.75rem;
   margin: 0.5rem 0 0.25rem;
-  border: 2px solid var(--ink, #231710);
+  border: 2px solid var(--ink);
   border-radius: 1rem;
   overflow: hidden;
-  background: var(--card, #fff);
+  background: var(--card);
 }
 
 .voice-bar i {
   display: block;
   height: 100%;
   width: 0;
-  background: var(--accent, #f0692b);
+  background: var(--orange);
   transition: width 0.2s linear;
 }
 
@@ -1122,12 +1136,12 @@ button.link {
   border: 0;
   background: none;
   padding: 0;
-  color: var(--ink, #231710);
+  color: var(--ink);
   text-decoration: underline;
   cursor: pointer;
 }
 
 button.link:focus-visible {
-  outline: 3px solid var(--accent, #f0692b);
+  outline: 3px solid var(--orange);
   outline-offset: 2px;
 }
