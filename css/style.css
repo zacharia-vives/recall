@@ -43,9 +43,9 @@ html, body {
 }
 
 body {
-  /* Room for the floating pill, plus its gap from the bottom edge, plus
-     whatever the phone reserves for its own gesture bar. */
-  padding-bottom: calc(122px + env(safe-area-inset-bottom, 0px));
+  /* Room for the floating pill: its own height, its gap, and half the phone's
+     reserved strip, which is what the pill now uses. */
+  padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px) / 2);
 }
 
 .skip {
@@ -313,6 +313,14 @@ input[type="text"], input[type="search"], input[type="datetime-local"], select, 
 input[type="range"] {
   width: 100%;
   height: 48px;
+  /* Without this the track is whatever blue the browser likes, which on a
+     photograph of the camera screen was the one element ignoring the skin
+     entirely. R4.8. */
+  accent-color: var(--orange);
+}
+input[type="range"]:focus-visible {
+  outline: 4px solid var(--orange);
+  outline-offset: 3px;
 }
 fieldset.kinds {
   border: 2px solid var(--rule);
@@ -411,7 +419,15 @@ body.on-camera #screen-capture #btn-read { grid-column: 1 / -1; }
 /* Without this the video refuses to shrink past its own natural size and
    pushes the buttons off the bottom of the screen. */
 body.on-camera #video { min-height: 0; }
-body.on-camera #screen-capture .actions .big.ghost { font-size: 20px; }
+body.on-camera #screen-capture .actions .big.ghost {
+  font-size: 19px;
+  /* Three wrapped lines was most of the height these two took. Tighter
+     leading and a little less padding buys back the room the picture wants,
+     without going under the 56px the whole app holds to. */
+  line-height: 1.2;
+  padding: 10px 8px;
+  min-height: 62px;
+}
 
 /* A small phone, or a phone held sideways. Everything gives up a little so
    the picture keeps most of the screen. */
@@ -668,7 +684,11 @@ body.is-locked #main { display: none; }
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: max(14px, env(safe-area-inset-bottom, 0px));
+  /* Low, and still off the very edge. The safe area on an iPhone is about
+     34px, and lifting the whole pill by that much left it floating oddly high
+     in the middle of the screen. Half of it keeps the labels clear of the home
+     indicator while the pill sits where a thumb expects it. */
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px) / 2);
   width: calc(100% - 24px);
   max-width: 34rem;
   display: flex;

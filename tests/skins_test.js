@@ -229,7 +229,7 @@ check("no card is wider than the list holding it", /\.card \{\s*max-width: 100%;
 /* The three ways in, as one pill. */
 check("the tab bar is a floating pill, not a slab welded to the edge",
   /\.tabs \{[^}]*border-radius: 999px;/.test(style) &&
-  /\.tabs \{[^}]*bottom: max\(14px/.test(style));
+  /\.tabs \{[^}]*bottom: calc\(8px/.test(style));
 check("it keeps clear of the phone's own gesture bar",
   /env\(safe-area-inset-bottom/.test(style));
 check("its border follows the skin, so it belongs to whichever is on",
@@ -241,7 +241,33 @@ check("the current one is not shown by colour alone",
 check("a long tab label wraps instead of widening the pill",
   /\.tab \{[^}]*overflow-wrap: anywhere;/.test(style));
 check("the page leaves room for the pill to float over",
-  /padding-bottom: calc\(122px \+ env\(safe-area-inset-bottom/.test(style));
+  /padding-bottom: calc\(104px \+ env\(safe-area-inset-bottom/.test(style));
+
+/* --------------------------------------------- the camera screen is one page
+
+   A photograph from an iPhone showed the two photo buttons sitting underneath
+   the pill, cut off. The fit calculation subtracted the pill's HEIGHT, which
+   was right when it was welded to the bottom edge and wrong once it floated:
+   its real footprint is its height plus its gap plus whatever the phone
+   reserves. Measuring to its top edge knows all three. R2.10. */
+check("the camera fit measures to the top of the pill, not its height",
+  /pill\.top > 0 \? pill\.top :/.test(app) && /tabs\.getBoundingClientRect\(\)/.test(app));
+check("and it still has a floor, so a tiny screen does not collapse the picture",
+  /Math\.max\(240,/.test(app));
+check("it is recalculated when the viewport changes",
+  /visualViewport\.addEventListener\("resize", fitCameraScreen\)/.test(app));
+
+/* The pill sits low without standing on the home indicator. */
+check("the pill sits low, using half the reserved strip rather than all of it",
+  /bottom: calc\(8px \+ env\(safe-area-inset-bottom, 0px\) \/ 2\)/.test(style));
+check("and the page reserves the matching room",
+  /padding-bottom: calc\(104px \+ env\(safe-area-inset-bottom, 0px\) \/ 2\)/.test(style));
+
+/* The one control that was ignoring the skin entirely. */
+check("the zoom slider takes its colour from the skin",
+  /input\[type="range"\] \{[^}]*accent-color: var\(--orange\);/.test(style));
+check("and it has a visible focus ring",
+  /input\[type="range"\]:focus-visible/.test(style));
 
 /* ---------------------------------------------------------------- the markup */
 const index = read("index.html");
