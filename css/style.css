@@ -692,7 +692,10 @@ body.is-locked #main { display: none; }
   max-width: 34rem;
   display: flex;
   gap: 4px;
-  padding: 5px;
+  /* One number, used here and by the lozenge below, so the gap around it is
+     the same on all four sides by construction rather than by coincidence. */
+  --pill-pad: 5px;
+  padding: var(--pill-pad);
   background: var(--card);
   border: var(--edge) solid var(--ink);
   border-radius: 999px;
@@ -725,12 +728,16 @@ body.is-locked #main { display: none; }
    different widths. */
 .tab-thumb {
   position: absolute;
-  /* Zero, not the pill's 5px padding: an absolutely positioned child is
-     placed against the padding box, which is exactly where the flex tabs
-     start too. So the lozenge matches the tab it is marking rather than
-     sitting 5px smaller inside it. */
-  top: 0;
-  bottom: 0;
+  /* The pill's own padding, not zero.
+
+     An absolutely positioned child is laid against the ancestor's padding
+     box, and a padding box INCLUDES the padding, so top 0 put the lozenge
+     flush against the border with no gap at all. Horizontally it was fine,
+     because a flex item is laid out inside the content box and so the first
+     tab's offsetLeft is already the padding. The result was 5px of gap at the
+     ends and none above or below, which is exactly what it looked like. */
+  top: var(--pill-pad);
+  bottom: var(--pill-pad);
   left: 0;
   width: 0;
   border-radius: 999px;

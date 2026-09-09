@@ -265,6 +265,16 @@ check("and the page reserves the matching room",
 const markup = read("index.html");
 check("the lozenge is its own element, because a background cannot travel",
   /class="tab-thumb"/.test(markup) && /\.tab-thumb \{/.test(style));
+/* The gap around the lozenge has to be the same on all four sides. It was not:
+   an absolutely positioned child sits against the padding BOX, which includes
+   the padding, so top 0 meant no gap above or below while the ends kept the
+   5px a flex item gets from the content box. One variable now feeds both. */
+check("the pill names its inset once", /--pill-pad: 5px;/.test(style));
+check("and uses it for its own padding", /padding: var\(--pill-pad\);/.test(style));
+check("the lozenge is inset by that same number, not by zero",
+  /top: var\(--pill-pad\);\s*bottom: var\(--pill-pad\);/.test(style));
+check("so the gap cannot differ between the axes",
+  !/\.tab-thumb \{[^}]*top: 0;/.test(style));
 check("it slides rather than jumping",
   /\.tab-thumb \{[^}]*transition: transform/.test(style));
 check("it is measured from the current tab's own box, not assumed thirds",
