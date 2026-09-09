@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=44";
+import * as i18n from "./i18n.js?v=46";
 
 // Camera with a magnifier. The zoom is a CSS transform on the video element,
 // which works on every phone, instead of the track zoom setting that only some

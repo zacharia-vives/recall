@@ -43,9 +43,9 @@ html, body {
 }
 
 body {
-  /* Room for the floating pill: its own height, its gap, and half the phone's
-     reserved strip, which is what the pill now uses. */
-  padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px) / 2);
+  /* Room for the floating pill: its own height, its gap, and the quarter of
+     the phone's reserved strip that the pill now uses. */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px) / 4);
 }
 
 .skip {
@@ -684,11 +684,10 @@ body.is-locked #main { display: none; }
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  /* Low, and still off the very edge. The safe area on an iPhone is about
-     34px, and lifting the whole pill by that much left it floating oddly high
-     in the middle of the screen. Half of it keeps the labels clear of the home
-     indicator while the pill sits where a thumb expects it. */
-  bottom: calc(8px + env(safe-area-inset-bottom, 0px) / 2);
+  /* Low. Lifting the pill by the whole safe area, or half of it, still left
+     it sitting higher than a thumb expects. A quarter keeps it off the very
+     edge without floating it in the middle of nothing. */
+  bottom: calc(4px + env(safe-area-inset-bottom, 0px) / 4);
   width: calc(100% - 24px);
   max-width: 34rem;
   display: flex;
@@ -721,12 +720,46 @@ body.is-locked #main { display: none; }
   hyphens: auto;
 }
 .tab-icon { font-size: 26px; line-height: 1; }
-/* The current tab is a filled lozenge inside the pill. Never colour alone:
-   it is also the only one with a solid background and a heavier frame. */
-.tab[aria-current="page"] {
-  color: var(--on-soft);
+/* The lozenge that travels. It is positioned by script from the current tab's
+   own box, so it does not care about the gap, the padding, or three labels of
+   different widths. */
+.tab-thumb {
+  position: absolute;
+  /* Zero, not the pill's 5px padding: an absolutely positioned child is
+     placed against the padding box, which is exactly where the flex tabs
+     start too. So the lozenge matches the tab it is marking rather than
+     sitting 5px smaller inside it. */
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  border-radius: 999px;
   background: var(--orange-soft);
   box-shadow: inset 0 0 0 3px var(--orange);
+  transform: translateX(0);
+  transition: transform 0.26s cubic-bezier(0.22, 0.61, 0.36, 1),
+              width 0.26s cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+/* Until it has been measured it stays invisible, and the plain background
+   below carries the state instead. So a phone where the script never runs
+   still shows which tab it is on. */
+.tabs:not(.thumbed) .tab-thumb { opacity: 0; }
+.tab { position: relative; z-index: 1; }
+
+/* The current tab. Never colour alone: it is also the one wearing the
+   lozenge, which is a shape and a heavier frame. */
+.tab[aria-current="page"] { color: var(--on-soft); }
+.tabs:not(.thumbed) .tab[aria-current="page"] {
+  background: var(--orange-soft);
+  box-shadow: inset 0 0 0 3px var(--orange);
+}
+
+/* Somebody who has asked for less movement gets the lozenge without the
+   travel: it appears where it belongs rather than sliding there. */
+@media (prefers-reduced-motion: reduce) {
+  .tab-thumb { transition: none; }
 }
 .tab-main { color: var(--ink); }
 

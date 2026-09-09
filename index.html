@@ -10,9 +10,9 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css?v=44">
-<link rel="stylesheet" href="css/fonts.css?v=44">
-<link rel="stylesheet" href="css/skins.css?v=44">
+<link rel="stylesheet" href="css/style.css?v=46">
+<link rel="stylesheet" href="css/fonts.css?v=46">
+<link rel="stylesheet" href="css/skins.css?v=46">
 
 <!-- N18. Before the first paint, deliberately not in a module: a module is
      deferred, and a deferred script means the default palette is painted and
@@ -302,6 +302,12 @@
 </main>
 
 <nav class="tabs" aria-label="Main menu" data-t-aria="tabs.menu">
+  <!-- The lozenge that slides between the three. Its own element rather than a
+       background on the current tab, because a background cannot travel. It is
+       decorative: which tab is current is carried by aria-current and by the
+       text, and if the script never positions it the plain background below
+       still shows the state. -->
+  <span class="tab-thumb" aria-hidden="true"></span>
   <a href="#/today" class="tab" data-tab="today"><span class="tab-icon" aria-hidden="true">&#9678;</span><span data-t="tabs.today">Today</span></a>
   <a href="#/capture" class="tab tab-main" data-tab="capture"><span class="tab-icon" aria-hidden="true">&#9635;</span><span data-t="tabs.camera">Camera</span></a>
   <a href="#/records" class="tab" data-tab="records"><span class="tab-icon" aria-hidden="true">&#9776;</span><span data-t="tabs.records">Everything</span></a>
@@ -476,6 +482,6 @@
   }
 }
 </script>
-<script type="module" src="js/app.js?v=44"></script>
+<script type="module" src="js/app.js?v=46"></script>
 </body>
 </html>

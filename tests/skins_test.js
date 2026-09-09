@@ -229,7 +229,7 @@ check("no card is wider than the list holding it", /\.card \{\s*max-width: 100%;
 /* The three ways in, as one pill. */
 check("the tab bar is a floating pill, not a slab welded to the edge",
   /\.tabs \{[^}]*border-radius: 999px;/.test(style) &&
-  /\.tabs \{[^}]*bottom: calc\(8px/.test(style));
+  /\.tabs \{[^}]*bottom: calc\(4px/.test(style));
 check("it keeps clear of the phone's own gesture bar",
   /env\(safe-area-inset-bottom/.test(style));
 check("its border follows the skin, so it belongs to whichever is on",
@@ -241,7 +241,7 @@ check("the current one is not shown by colour alone",
 check("a long tab label wraps instead of widening the pill",
   /\.tab \{[^}]*overflow-wrap: anywhere;/.test(style));
 check("the page leaves room for the pill to float over",
-  /padding-bottom: calc\(104px \+ env\(safe-area-inset-bottom/.test(style));
+  /padding-bottom: calc\(96px \+ env\(safe-area-inset-bottom/.test(style));
 
 /* --------------------------------------------- the camera screen is one page
 
@@ -258,10 +258,30 @@ check("it is recalculated when the viewport changes",
   /visualViewport\.addEventListener\("resize", fitCameraScreen\)/.test(app));
 
 /* The pill sits low without standing on the home indicator. */
-check("the pill sits low, using half the reserved strip rather than all of it",
-  /bottom: calc\(8px \+ env\(safe-area-inset-bottom, 0px\) \/ 2\)/.test(style));
 check("and the page reserves the matching room",
-  /padding-bottom: calc\(104px \+ env\(safe-area-inset-bottom, 0px\) \/ 2\)/.test(style));
+  /padding-bottom: calc\(96px \+ env\(safe-area-inset-bottom, 0px\) \/ 4\)/.test(style));
+
+/* The lozenge that slides between the three. */
+const markup = read("index.html");
+check("the lozenge is its own element, because a background cannot travel",
+  /class="tab-thumb"/.test(markup) && /\.tab-thumb \{/.test(style));
+check("it slides rather than jumping",
+  /\.tab-thumb \{[^}]*transition: transform/.test(style));
+check("it is measured from the current tab's own box, not assumed thirds",
+  /here\.offsetWidth/.test(app) && /here\.offsetLeft/.test(app));
+check("it moves whenever the screen changes", /moveTabThumb\(\);/.test(app));
+check("and is measured again when the phone turns or the labels change",
+  /"orientationchange", moveTabThumb/.test(app) && /"resize", moveTabThumb/.test(app));
+check("it is hidden from anything that reads the page aloud",
+  /class="tab-thumb" aria-hidden="true"/.test(markup));
+check("until it is measured the plain background shows the state instead",
+  /\.tabs:not\(\.thumbed\) \.tab\[aria-current="page"\] \{/.test(style));
+check("so the current tab is never carried by the animation alone",
+  /\.tabs:not\(\.thumbed\) \.tab-thumb \{ opacity: 0; \}/.test(style));
+check("somebody who asked for less movement gets no travel",
+  /prefers-reduced-motion: reduce\) \{\s*\.tab-thumb \{ transition: none; \}/.test(style));
+check("the pill sits lower still, on a quarter of the reserved strip",
+  /bottom: calc\(4px \+ env\(safe-area-inset-bottom, 0px\) \/ 4\)/.test(style));
 
 /* The one control that was ignoring the skin entirely. */
 check("the zoom slider takes its colour from the skin",

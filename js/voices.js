@@ -35,7 +35,7 @@
    for is Flemish. nl_BE is a real Piper voice, recorded in Belgium, so Dutch
    gets a proper voice rather than a fallback. */
 
-import * as i18n from "./i18n.js?v=44";
+import * as i18n from "./i18n.js?v=46";
 
 // Resolved by the import map in the two pages: the library imports the ONNX
 // runtime by bare name, which normally only a bundler can resolve, and its own
