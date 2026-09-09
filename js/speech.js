@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=27";
+import * as i18n from "./i18n.js?v=28";
 
 // Reading out loud, with the Web Speech API. Free, and on the voices we allow
 // it also works with no network. Requirement S2: we speak the text as it is, we

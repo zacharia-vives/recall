@@ -89,3 +89,27 @@
   padding: 0.35rem 0.5rem;
   min-height: 2.75rem;
 }
+
+/* At phone width the picker was pushing the page wider than the screen, which
+   cut the text off on the right. The bar wraps, the word Language goes away
+   where there is no room for it, and the select is allowed to shrink. */
+.policy .topbar {
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
+}
+
+.lang-bar select {
+  min-width: 0;
+  max-width: 11rem;
+}
+
+@media (max-width: 30rem) {
+  .lang-bar .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

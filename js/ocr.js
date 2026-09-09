@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=27";
+import * as i18n from "./i18n.js?v=28";
 
 // OCR and date reading.
 // Requirement P2: this runs on the device. A hospital letter never leaves the
