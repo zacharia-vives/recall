@@ -294,6 +294,39 @@ The whole lifecycle is readable afterwards in the log the family and she both
 see: a phone was linked, she agreed with notice version 2026-09-08, she stopped
 sharing new cards.
 
+## The run on Wednesday 9 September
+
+Everything, after the language work, the privacy work and the four new
+features. **129 automated checks, all passing.**
+
+| Suite | Checks |
+| --- | --- |
+| Every module parses as a module, not as a script | 12 |
+| `tests/i18n_test.py`, three languages | 40 |
+| `tests/reminders_test.js`, coming, missed, done, with repeats | 15 |
+| `tests/docs_test.js`, reading a document, builds a real docx to prove the unzip | 24 |
+| `tests/rls_test.py`, one household cannot reach another | 25 |
+| Patch 002 and 003 verified through the API on the live database | 13 |
+| The real app driven in a real browser, real IndexedDB | 67 |
+
+Four defects found, all fixed the same morning:
+
+1. **The family app was never translated at all.** Every attribute in place,
+   every translation present, and nothing applied the dictionary to the page.
+   Every static check passed while it was broken, which is exactly why the
+   browser run exists. The suite now checks that both scripts call apply.
+2. **What Recall knows undercounted**: no letters read, while a card held a
+   document whose words it had read.
+3. **A message that counted the buttons for you**: press one of the three,
+   when the checklist switch had made it four.
+4. A stray probe file committed by accident.
+
+And one finding that is not a defect: this laptop's Edge holds a wedged Recall
+database for the live origin. Version 2 exists, a versionless open hangs, and
+the delete hangs with no blocked event. That is the R8.1 condition, and the
+reason the app cannot self-heal is that its own reset calls the delete that
+hangs. The same code passes 67 of 67 on a clean origin.
+
 ## The accessibility pass
 
 Axe 4.10, WCAG 2.0 A and AA, 2.1 A and AA, 2.2 AA.

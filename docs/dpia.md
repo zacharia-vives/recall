@@ -76,12 +76,13 @@ is nothing to share with and nothing is sent. It is recorded with the version of
 the notice that was read, the time, and which account was present.
 
 Where that record lives is worth one line, because Article 7(1) is about being
-able to demonstrate it. It goes in the `consents` table. If the database refuses
-that write, which it does until patch 002 is applied because the original policy
-only allowed a family member to record one, it goes into the activity log
-instead: insert only, no update policy, no delete policy, carrying the same
-three facts and the same notice version. Either way the record exists and she is
-never blocked from answering.
+able to demonstrate it. It goes in the `consents` table, and since patch 002 was
+applied on 9 September her own phone can write it there, which is where it
+belongs. If that write is ever refused, the app falls back to the activity log:
+insert only, no update policy, no delete policy, carrying the same three facts
+and the same notice version. Either way the record exists and she is never
+blocked from answering. Since the notice exists in three languages, the record
+says which language was read as well as which version.
 
 **Withdrawal.** Article 7(3), as easy as giving: the help screen has stop
 sharing with my family, behind one question. It marks the consent withdrawn,
@@ -188,10 +189,10 @@ paperwork as Supabase, same conclusion.
 | Right | State |
 | --- | --- |
 | Information, Articles 12 to 14 | The consent screen, read out loud, in short sentences. This is the strongest part |
-| Access, Article 15 | She can see every card and the whole activity log in the app. A machine readable copy needs the export, below |
+| Access, Article 15 | She can see every card and the whole activity log in the app, and the help screen counts exactly what Recall holds about her and says where it is. P20 |
 | Rectification, Article 16 | Family can edit any card. She cannot, by design, because an accidental edit is worse for her than a wrong field; she can ask, and the log shows what changed |
 | Erasure, Article 17 | Family can bin a card and the bin empties after thirty days. Deleting a whole household deletes everything in it, cascaded, and that works |
-| Portability, Article 20 | **Gap.** Export as photos plus a JSON file is written down as R4.5 and is on the cut list for Friday. It is a nice to have for a demo and a legal requirement for a product, and it should be the first thing built after the presentation |
+| Portability, Article 20 | **Done, 9 September.** The help screen has a copy of everything: one file with every card, the reminders, the checklist items, the phone numbers and the photos as text, in one press. P21 |
 | Restriction, Article 18 | Partly: stop sharing halts everything new. Freezing what is already there is not built |
 | Objection, Article 21 | Not applicable: consent, not legitimate interests |
 | Not being subject to automated decisions, Article 22 | Nothing automated decides anything. There is no profiling |
