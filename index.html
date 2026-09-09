@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-lang-managed="true">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -10,25 +10,25 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css?v=25">
+<link rel="stylesheet" href="css/style.css?v=26">
 </head>
 <body>
 
-<a class="skip" href="#main">Skip to the content</a>
+<a class="skip" href="#main" data-t="app.skip">Skip to the content</a>
 
 <header class="topbar">
   <img src="icons/icon-192.png" alt="" class="logo" width="44" height="44">
   <span class="brand">Recall</span>
-  <button id="btn-help" class="icon-btn" type="button" aria-label="How it works">?</button>
+  <button id="btn-help" class="icon-btn" type="button" aria-label="How it works" data-t-aria="app.help">?</button>
 </header>
 
 <!-- R7.3, R7.4. Only ever shown when family has put a code on this phone. -->
 <div id="lockscreen" class="lockscreen" hidden>
   <img src="icons/icon-192.png" alt="" class="lock-logo" width="72" height="72">
-  <h1>Recall is locked</h1>
-  <p id="lock-say" class="lock-say">Type your numbers.</p>
+  <h1 data-t="lock.title">Recall is locked</h1>
+  <p id="lock-say" class="lock-say" data-t="lock.say">Type your numbers.</p>
   <p id="lock-dots" class="dots" aria-hidden="true"></p>
-  <button id="btn-face" class="big" type="button" hidden>Use Face ID</button>
+  <button id="btn-face" class="big" type="button" hidden data-t="lock.face">Use Face ID</button>
   <div class="keypad">
     <button class="key" type="button" data-key="1">1</button>
     <button class="key" type="button" data-key="2">2</button>
@@ -39,20 +39,20 @@
     <button class="key" type="button" data-key="7">7</button>
     <button class="key" type="button" data-key="8">8</button>
     <button class="key" type="button" data-key="9">9</button>
-    <button class="key key-wide" type="button" data-key="clear">Start again</button>
+    <button class="key key-wide" type="button" data-key="clear" data-t="lock.again">Start again</button>
     <button class="key" type="button" data-key="0">0</button>
-    <button class="key" type="button" data-key="back">Back</button>
+    <button class="key" type="button" data-key="back" data-t="app.back">Back</button>
   </div>
   <details class="lock-rescue">
-    <summary>Family: unlock this phone</summary>
-    <p>Make a new phone code in the family app and type it here. It unlocks this
+    <summary data-t="lock.rescue">Family: unlock this phone</summary>
+    <p data-t="lock.rescue.body">Make a new phone code in the family app and type it here. It unlocks this
       phone and takes the numbers off it, so you can set new ones.</p>
     <form id="form-rescue">
       <label class="field">
-        <span class="label">Code from the family app</span>
+        <span class="label" data-t="lock.rescue.label">Code from the family app</span>
         <input id="rescue-code" maxlength="6" autocapitalize="characters" autocomplete="off">
       </label>
-      <button class="big" type="submit">Unlock this phone</button>
+      <button class="big" type="submit" data-t="lock.rescue.submit">Unlock this phone</button>
     </form>
     <p id="rescue-msg" class="link-msg" hidden></p>
   </details>
@@ -62,18 +62,18 @@
 
   <!-- first run -->
   <section id="screen-welcome" class="screen" hidden aria-labelledby="welcome-title">
-    <h1 id="welcome-title">This is Recall</h1>
+    <h1 id="welcome-title" data-t="welcome.title">This is Recall</h1>
     <div class="welcome">
-      <p>Recall keeps the things you would hate to lose.</p>
-      <p>Point the camera at a letter. Recall makes the print bigger and reads it
+      <p data-t="welcome.p1">Recall keeps the things you would hate to lose.</p>
+      <p data-t="welcome.p2">Point the camera at a letter. Recall makes the print bigger and reads it
         out loud, and then it keeps it for you.</p>
-      <p>Everything stays on this phone until someone in your family links it.</p>
-      <p class="warn">Recall is not a medical device. Keep your papers, and always
+      <p data-t="welcome.p3">Everything stays on this phone until someone in your family links it.</p>
+      <p class="warn" data-t="safety.notmedical">Recall is not a medical device. Keep your papers, and always
         follow what your doctor or pharmacist tells you.</p>
     </div>
     <div class="actions">
-      <button id="btn-welcome-read" class="big ghost" type="button">Read this out loud</button>
-      <button id="btn-welcome-start" class="big" type="button">Start</button>
+      <button id="btn-welcome-read" class="big ghost" type="button" data-t="welcome.read">Read this out loud</button>
+      <button id="btn-welcome-start" class="big" type="button" data-t="welcome.start">Start</button>
     </div>
   </section>
 
@@ -81,19 +81,19 @@
        This screen says device rather than phone: it is the one screen that can
        come up on a family member's computer as easily as on her phone. -->
   <section id="screen-stuck" class="screen" hidden aria-labelledby="stuck-title">
-    <h1 id="stuck-title">Recall cannot open its store</h1>
+    <h1 id="stuck-title" data-t="stuck.title">Recall cannot open its store</h1>
     <div class="welcome">
-      <p>Something in this device's own storage is stuck, so Recall cannot read
+      <p data-t="stuck.p1">Something in this device's own storage is stuck, so Recall cannot read
         your cards. This is not something you did.</p>
-      <p><b>First try this:</b> close Recall everywhere else, in every tab and
+      <p data-t-html="stuck.p2"><b>First try this:</b> close Recall everywhere else, in every tab and
         window, and press the button below.</p>
-      <p>If that does not help, Recall can start fresh on this device. Cards your
+      <p data-t="stuck.p3">If that does not help, Recall can start fresh on this device. Cards your
         family added come straight back. Cards that were only ever kept here
         cannot be brought back.</p>
     </div>
     <div class="actions">
-      <button id="btn-stuck-retry" class="big" type="button">Try again</button>
-      <button id="btn-stuck-fresh" class="big danger" type="button">Start fresh on this device</button>
+      <button id="btn-stuck-retry" class="big" type="button" data-t="stuck.retry">Try again</button>
+      <button id="btn-stuck-fresh" class="big danger" type="button" data-t="stuck.fresh">Start fresh on this device</button>
     </div>
     <p id="stuck-msg" class="link-msg" hidden></p>
   </section>
@@ -102,142 +102,160 @@
        words are the notice, so the version in js/config.js has to change
        whenever this text does. -->
   <section id="screen-consent" class="screen" hidden aria-labelledby="consent-title">
-    <h1 id="consent-title">Your family would like to help</h1>
+    <h1 id="consent-title" data-t="consent.title">Your family would like to help</h1>
     <div class="welcome">
-      <p><b>What that means.</b> The cards you keep, their photos, what Recall
+      <p data-t-html="consent.what"><b>What that means.</b> The cards you keep, their photos, what Recall
         reads off your letters and whether a reminder was done would be kept for
         your family as well, on a computer in Germany, not only on this phone.</p>
-      <p><b>Who can see them.</b> Only the people your family has let in. You can
+      <p data-t-html="consent.who"><b>Who can see them.</b> Only the people your family has let in. You can
         see their names on your Today screen, and everything they do is written
         down where you can read it.</p>
-      <p><b>Some of it is private in a special way.</b> Letters from a doctor or a
+      <p data-t-html="consent.special"><b>Some of it is private in a special way.</b> Letters from a doctor or a
         hospital say things about your health, and papers from a lawyer or a bank
         say things about your money. The law treats those as needing your clear
         yes, and that is what this screen is.</p>
-      <p><b>You can say no.</b> Recall keeps working on this phone on its own.
+      <p data-t-html="consent.no"><b>You can say no.</b> Recall keeps working on this phone on its own.
         Nothing goes anywhere.</p>
-      <p><b>You can stop later.</b> Ask for the help screen and press stop
+      <p data-t-html="consent.stop"><b>You can stop later.</b> Ask for the help screen and press stop
         sharing. What your family already has stays with them until they delete
         it, and nothing new is shared.</p>
-      <p class="warn">Recall is not a medical device. Keep your papers, and always
+      <p class="warn" data-t="safety.notmedical">Recall is not a medical device. Keep your papers, and always
         follow what your doctor or pharmacist tells you.</p>
     </div>
     <div class="actions">
-      <button id="btn-consent-read" class="big ghost" type="button">Read this to me again</button>
-      <button id="btn-consent-yes" class="big" type="button">Yes, share with my family</button>
-      <button id="btn-consent-no" class="big ghost" type="button">No, keep it all on this phone</button>
+      <button id="btn-consent-read" class="big ghost" type="button" data-t="consent.readagain">Read this to me again</button>
+      <button id="btn-consent-yes" class="big" type="button" data-t="consent.yes">Yes, share with my family</button>
+      <button id="btn-consent-no" class="big ghost" type="button" data-t="consent.nothanks">No, keep it all on this phone</button>
     </div>
     <p id="consent-msg" class="link-msg" hidden></p>
   </section>
 
   <!-- today -->
   <section id="screen-today" class="screen" aria-labelledby="today-title">
-    <h1 id="today-title">Today</h1>
+    <h1 id="today-title" data-t="today.title">Today</h1>
     <p id="today-date" class="date"></p>
     <div id="today-list" class="list"></div>
     <p id="access-line" class="access" hidden></p>
 
     <div id="install-box" class="install" hidden>
-      <p id="install-text">Keep Recall on your home screen, so it is one tap away.</p>
+      <p id="install-text" data-t="install.text">Keep Recall on your home screen, so it is one tap away.</p>
       <div class="install-acts">
-        <button id="btn-install" class="big" type="button">Add to my home screen</button>
-        <button id="btn-install-no" class="big ghost" type="button">Not now</button>
+        <button id="btn-install" class="big" type="button" data-t="install.yes">Add to my home screen</button>
+        <button id="btn-install-no" class="big ghost" type="button" data-t="install.no">Not now</button>
       </div>
     </div>
   </section>
 
   <!-- everything -->
   <section id="screen-records" class="screen" hidden aria-labelledby="records-title">
-    <h1 id="records-title">Everything you kept</h1>
+    <h1 id="records-title" data-t="records.title">Everything you kept</h1>
     <label class="search">
-      <span class="label">Search</span>
-      <input id="search" type="search" placeholder="a name, a place or a word" autocomplete="off">
+      <span class="label" data-t="records.search">Search</span>
+      <input id="search" type="search" placeholder="a name, a place or a word" data-t-ph="records.searchph" autocomplete="off">
     </label>
+    <!-- Three switches, all on to begin with. Pressed state is shown by the
+         tick and by the frame, not by colour alone, because colour alone is
+         not enough for somebody who cannot see the difference. R4.6. -->
+    <div class="filters" role="group" aria-labelledby="filter-title">
+      <span id="filter-title" class="label" data-t="filter.heading">Show</span>
+      <button class="chip" type="button" data-filter="letter" aria-pressed="true">
+        <span class="tick" aria-hidden="true">&#10003;</span><span data-t="filter.letters">Letters</span>
+      </button>
+      <button class="chip" type="button" data-filter="person" aria-pressed="true">
+        <span class="tick" aria-hidden="true">&#10003;</span><span data-t="filter.people">People</span>
+      </button>
+      <button class="chip" type="button" data-filter="place" aria-pressed="true">
+        <span class="tick" aria-hidden="true">&#10003;</span><span data-t="filter.places">Places</span>
+      </button>
+    </div>
     <div id="records-list" class="list"></div>
   </section>
 
   <!-- one card -->
   <section id="screen-record" class="screen" hidden aria-labelledby="record-title">
-    <button class="back" type="button" data-go="#/records">Back</button>
-    <h1 id="record-title">Card</h1>
+    <button class="back" type="button" data-go="#/records" data-t="app.back">Back</button>
+    <h1 id="record-title" data-t="record.title">Card</h1>
     <div id="record-detail"></div>
   </section>
 
   <!-- camera -->
   <section id="screen-capture" class="screen" hidden aria-labelledby="capture-title">
     <button class="back" type="button" data-go="#/today">Back</button>
-    <h1 id="capture-title">Point at the letter</h1>
+    <h1 id="capture-title" data-t="capture.title">Point at the letter</h1>
     <div class="camera-wrap">
       <video id="video" playsinline muted></video>
-      <p id="camera-msg" class="camera-msg">Starting the camera. Allow it if your browser asks.</p>
+      <p id="camera-msg" class="camera-msg" data-t="capture.starting">Starting the camera. Allow it if your browser asks.</p>
     </div>
     <label class="zoom">
-      <span class="label">Make it bigger</span>
+      <span class="label" data-t="capture.bigger">Make it bigger</span>
       <input id="zoom" type="range" min="100" max="400" step="10" value="150">
     </label>
     <div class="actions">
-      <button id="btn-read" class="big" type="button">Read it out loud</button>
-      <button id="btn-shoot" class="big ghost" type="button">Take the photo and keep it</button>
-      <button id="btn-pick" class="big ghost" type="button">Choose a photo</button>
-      <input id="file" type="file" accept="image/*" capture="environment" hidden>
+      <button id="btn-read" class="big" type="button" data-t="capture.read">Read it out loud</button>
+      <button id="btn-shoot" class="big ghost" type="button" data-t="capture.shoot">Take the photo and keep it</button>
+      <button id="btn-pick" class="big ghost" type="button" data-t="capture.pick">Choose a photo</button>
+      <!-- No capture attribute on purpose. With capture="environment" Android
+           jumps straight to the camera, which is what the other button is for:
+           this one has to open her gallery. Found on a Pixel 10. R2.7. -->
+      <input id="file" type="file" accept="image/*" hidden>
     </div>
   </section>
 
   <!-- save -->
   <section id="screen-new" class="screen" hidden aria-labelledby="new-title">
     <button class="back" type="button" data-go="#/today">Back</button>
-    <h1 id="new-title">What are we keeping?</h1>
-    <img id="shot" class="shot" alt="The photo you just took">
+    <h1 id="new-title" data-t="new.title">What are we keeping?</h1>
+    <img id="shot" class="shot" alt="The photo you just took" data-t-alt="new.shotalt">
     <p id="ocr-state" class="ocr-state" hidden></p>
     <div id="ocr-found" hidden>
-      <span class="label">What Recall read</span>
+      <span class="label" data-t="ocr.found">What Recall read</span>
       <p id="ocr-text" class="ocr-text"></p>
-      <button id="btn-read-again" class="big" type="button">Read it out loud</button>
+      <button id="btn-read-again" class="big" type="button" data-t="ocr.readagain">Read it out loud</button>
     </div>
     <form id="new-form" novalidate>
       <fieldset class="kinds">
-        <legend>What is this?</legend>
-        <label><input type="radio" name="kind" value="letter" checked> A letter</label>
-        <label><input type="radio" name="kind" value="person"> A person</label>
-        <label><input type="radio" name="kind" value="place"> A place</label>
+        <legend data-t="new.whatisthis">What is this?</legend>
+        <label><input type="radio" name="kind" value="letter" checked> <span data-t="kind.letter">A letter</span></label>
+        <label><input type="radio" name="kind" value="person"> <span data-t="kind.person">A person</span></label>
+        <label><input type="radio" name="kind" value="place"> <span data-t="kind.place">A place</span></label>
       </fieldset>
       <label class="field">
-        <span class="label">Name of the card</span>
+        <span class="label" data-t="field.name">Name of the card</span>
         <input id="f-title" name="title" required>
       </label>
       <label class="field">
-        <span class="label">Who</span>
-        <input id="f-people" name="people" placeholder="Marie, doctor Vermeulen">
+        <span class="label" data-t="field.who">Who</span>
+        <input id="f-people" name="people" placeholder="Marie, doctor Vermeulen" data-t-ph="field.whoph">
       </label>
       <label class="field">
-        <span class="label">Where</span>
-        <input id="f-place" name="place" placeholder="AZ Groeninge, Kortrijk">
+        <span class="label" data-t="field.where">Where</span>
+        <input id="f-place" name="place" placeholder="AZ Groeninge, Kortrijk" data-t-ph="field.whereph">
       </label>
       <label class="field">
-        <span class="label">When</span>
+        <span class="label" data-t="field.when">When</span>
         <input id="f-when" name="when" type="datetime-local">
       </label>
       <label class="field">
-        <span class="label">Remind me</span>
+        <span class="label" data-t="field.remind">Remind me</span>
         <select id="f-remind" name="remind">
-          <option value="">do not remind me</option>
-          <option value="day-before" selected>the day before</option>
-          <option value="daily">every day</option>
-          <option value="twice">twice a day</option>
+          <option value="" data-t="remind.never">do not remind me</option>
+          <option value="day-before" selected data-t="remind.daybefore">the day before</option>
+          <option value="daily" data-t="remind.daily">every day</option>
+          <option value="twice" data-t="remind.twice">twice a day</option>
         </select>
       </label>
       <div class="actions">
-        <button class="big" type="submit">Keep it</button>
+        <button class="big" type="submit" data-t="new.submit">Keep it</button>
       </div>
     </form>
   </section>
 
 </main>
 
-<nav class="tabs" aria-label="Main menu">
-  <a href="#/today" class="tab" data-tab="today"><span class="tab-icon" aria-hidden="true">&#9678;</span>Today</a>
-  <a href="#/capture" class="tab tab-main" data-tab="capture"><span class="tab-icon" aria-hidden="true">&#9635;</span>Camera</a>
-  <a href="#/records" class="tab" data-tab="records"><span class="tab-icon" aria-hidden="true">&#9776;</span>Everything</a>
+<nav class="tabs" aria-label="Main menu" data-t-aria="tabs.menu">
+  <a href="#/today" class="tab" data-tab="today"><span class="tab-icon" aria-hidden="true">&#9678;</span><span data-t="tabs.today">Today</span></a>
+  <a href="#/capture" class="tab tab-main" data-tab="capture"><span class="tab-icon" aria-hidden="true">&#9635;</span><span data-t="tabs.camera">Camera</span></a>
+  <a href="#/records" class="tab" data-tab="records"><span class="tab-icon" aria-hidden="true">&#9776;</span><span data-t="tabs.records">Everything</span></a>
 </nav>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -246,87 +264,106 @@
      browser's language, at the browser's type size, and it cannot be read out
      loud, none of which suits the person holding this phone. -->
 <dialog id="ask" aria-labelledby="ask-title">
-  <h2 id="ask-title">Are you sure?</h2>
+  <h2 id="ask-title" data-t="app.sure">Are you sure?</h2>
   <p id="ask-text"></p>
   <div class="actions">
-    <button id="ask-yes" class="big danger" type="button">Yes</button>
-    <button id="ask-no" class="big ghost" type="button">No, keep it</button>
+    <button id="ask-yes" class="big danger" type="button" data-t="app.yes">Yes</button>
+    <button id="ask-no" class="big ghost" type="button" data-t="app.keepit">No, keep it</button>
   </div>
 </dialog>
 
 <dialog id="help">
-  <h2>How does Recall work?</h2>
+  <h2 data-t="help.title">How does Recall work?</h2>
   <ol>
-    <li>Press <b>Camera</b> and point it at a letter or a photo.</li>
-    <li>Recall makes the letters bigger and reads them out loud.</li>
-    <li>Press <b>Keep it</b>. Recall keeps the date and puts it on your Today screen on the day.</li>
+    <li data-t-html="help.step1">Press <b>Camera</b> and point it at a letter or a photo.</li>
+    <li data-t="help.step2">Recall makes the letters bigger and reads them out loud.</li>
+    <li data-t-html="help.step3">Press <b>Keep it</b>. Recall keeps the date and puts it on your Today screen on the day.</li>
   </ol>
-  <button class="big" type="button" id="help-close">Close</button>
+  <button class="big" type="button" id="help-close" data-t="app.close">Close</button>
 
   <div class="family">
-    <h3>For family</h3>
-    <p>Family can add cards and set reminders at
-      <a href="helper.html">Recall for family</a>.</p>
-    <button id="btn-refresh" class="big ghost" type="button" hidden>Check for new family cards</button>
+    <h3 data-t="lang.heading">Language</h3>
+    <p class="hint-line" data-t="lang.hint">Recall writes and speaks in this language. Pick the one she reads her post in.</p>
+    <label class="field">
+      <span class="label" data-t="lang.label">Language</span>
+      <select id="lang-pick"></select>
+    </label>
+
+    <!-- P20. Article 15 in a form she can use: what is kept, how much of it,
+         where it is, and a copy of the lot in one press. -->
+    <h3 data-t="knows.heading">What Recall knows about you</h3>
+    <p class="hint-line" data-t="knows.hint">Everything Recall keeps about you, counted.</p>
+    <ul id="knows-list" class="knows"></ul>
+    <p id="knows-where" class="hint-line"></p>
+    <div class="lock-actions">
+      <button id="btn-export" class="big ghost" type="button" data-t="knows.export">Give me a copy of everything</button>
+    </div>
+    <p id="export-msg" class="link-msg" hidden></p>
+    <p><a class="link" href="privacy.html" data-t="knows.policy">Read the whole privacy notice</a></p>
+
+    <h3 data-t="help.family">For family</h3>
+    <p><span data-t="help.familyp">Family can add cards and set reminders at</span>
+      <a href="helper.html" data-t="help.familylink">Recall for family</a>.</p>
+    <button id="btn-refresh" class="big ghost" type="button" hidden data-t="help.refresh">Check for new family cards</button>
     <div id="link-wrap" hidden>
-      <p>Linking this phone? Type the six letter code from the family app.</p>
+      <p data-t="help.linkp">Linking this phone? Type the six letter code from the family app.</p>
       <form id="form-link">
         <label class="field">
-          <span class="label">Code</span>
+          <span class="label" data-t="help.code">Code</span>
           <input id="link-code" maxlength="6" autocapitalize="characters" autocomplete="off">
         </label>
-        <button class="big" type="submit">Link this phone</button>
+        <button class="big" type="submit" data-t="help.linkbtn">Link this phone</button>
       </form>
       <p id="link-msg" class="link-msg" hidden></p>
     </div>
 
-    <h3>The voice</h3>
-    <p class="hint-line">Phones come with several. Try them and leave the one she
+    <h3 data-t="voice.heading">The voice</h3>
+    <p class="hint-line" data-t="voice.hint">Phones come with several. Try them and leave the one she
       likes: it is the voice she will hear every day. Only voices that speak on
       the phone itself are offered, so a letter is never sent away to be read.</p>
     <label class="field">
-      <span class="label">Voice</span>
+      <span class="label" data-t="voice.label">Voice</span>
       <select id="voice-pick"></select>
     </label>
     <div class="lock-actions">
-      <button id="btn-voice-try" class="big ghost" type="button">Try this voice</button>
+      <button id="btn-voice-try" class="big ghost" type="button" data-t="voice.try">Try this voice</button>
     </div>
     <p id="voice-msg" class="link-msg" hidden></p>
 
     <div id="sharing-wrap" hidden>
-      <h3>Sharing with your family</h3>
+      <h3 data-t="share.heading">Sharing with your family</h3>
       <p id="sharing-state" class="hint-line"></p>
-      <button id="btn-stop-sharing" class="big danger" type="button">Stop sharing with my family</button>
+      <button id="btn-stop-sharing" class="big danger" type="button" data-t="share.stop">Stop sharing with my family</button>
       <p id="sharing-msg" class="link-msg" hidden></p>
     </div>
 
-    <h3>A code to unlock this phone</h3>
-    <p class="hint-line">Only if it is wanted. She has to be able to use this
+    <h3 data-t="code.heading">A code to unlock this phone</h3>
+    <p class="hint-line" data-t="code.hint">Only if it is wanted. She has to be able to use this
       phone alone, so nothing here is compulsory, and the code never locks her
       out for good: you can always unlock the phone with a fresh phone code from
       the family app.</p>
     <p id="lock-state" class="hint-line"></p>
     <form id="form-setcode">
       <label class="field">
-        <span class="label">Numbers, four or six</span>
+        <span class="label" data-t="code.label1">Numbers, four or six</span>
         <input id="new-code" type="password" inputmode="numeric" autocomplete="off" maxlength="6">
       </label>
       <label class="field">
-        <span class="label">Type them again</span>
+        <span class="label" data-t="code.label2">Type them again</span>
         <input id="new-code-2" type="password" inputmode="numeric" autocomplete="off" maxlength="6">
       </label>
-      <button class="big" type="submit">Use this code</button>
+      <button class="big" type="submit" data-t="code.submit">Use this code</button>
     </form>
     <div class="lock-actions">
-      <button id="btn-face-on" class="big ghost" type="button" hidden>Also allow Face ID</button>
-      <button id="btn-face-off" class="big ghost" type="button" hidden>Turn Face ID off</button>
-      <button id="btn-lock-now" class="big ghost" type="button" hidden>Lock the phone now</button>
-      <button id="btn-lock-off" class="big danger" type="button" hidden>Take the code off</button>
+      <button id="btn-face-on" class="big ghost" type="button" hidden data-t="code.faceon">Also allow Face ID</button>
+      <button id="btn-face-off" class="big ghost" type="button" hidden data-t="code.faceoff">Turn Face ID off</button>
+      <button id="btn-lock-now" class="big ghost" type="button" hidden data-t="code.locknow">Lock the phone now</button>
+      <button id="btn-lock-off" class="big danger" type="button" hidden data-t="code.lockoff">Take the code off</button>
     </div>
     <p id="lock-msg" class="link-msg" hidden></p>
   </div>
 </dialog>
 
-<script type="module" src="js/app.js?v=25"></script>
+<script type="module" src="js/app.js?v=26"></script>
 </body>
 </html>

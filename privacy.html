@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recall, privacy</title>
+<meta name="description" content="What Recall keeps, why, where, and what you can do about it.">
+<meta name="theme-color" content="#F0692B">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="stylesheet" href="css/style.css?v=26">
+<link rel="stylesheet" href="css/privacy.css?v=26">
+</head>
+<body class="policy">
+
+<header class="topbar">
+  <img src="icons/icon-192.png" alt="" class="logo" width="36" height="36">
+  <span class="brand">Recall</span>
+  <label class="lang-bar">
+    <span class="label">Language</span>
+    <select id="lang-pick">
+      <option value="nl">Nederlands</option>
+      <option value="fr">Français</option>
+      <option value="en">English</option>
+    </select>
+  </label>
+</header>
+
+<main id="main" class="policy-wrap">
+
+<!-- The legal text lives here as plain markup rather than in the app's
+     dictionary: it is long, it is read rather than pressed, and a lawyer
+     should be able to read the file without knowing what a key is. -->
+
+<section class="policy-lang" data-lang="en">
+  <h1>What Recall keeps, and what it does not</h1>
+  <p class="lead">Recall is used by older people to hold on to the things they would
+    hate to lose: a hospital letter, an appointment, the name of a face. That means
+    it holds private things, so this page says exactly what is kept, why, where, and
+    what you can do about it. Last changed on 9 September 2026.</p>
+
+  <h2>Four things we hold ourselves to</h2>
+  <dl class="values">
+    <dt>Care</dt>
+    <dd>Nothing in Recall is designed to alarm, hurry or trick the person using it.
+      Nothing is filed silently: what Recall reads off a letter is shown and read
+      back before it is kept. The app never tells anybody what to do about their
+      health. It repeats what the paper says.</dd>
+    <dt>Security</dt>
+    <dd>Reading a letter happens on the phone itself, so a hospital letter is not
+      sent to anybody to be read. Every rule about who may see what is enforced by
+      the database, not by the app, and twenty five automated checks prove one
+      household cannot reach another's. Photos are reachable only through a short
+      lived link, and only for someone in that household.</dd>
+    <dt>Respect</dt>
+    <dd>Nothing leaves the phone until the person holding it has been asked out
+      loud and has said yes. Saying no keeps the whole app working. Stopping later
+      takes one press. And what the family can see is deliberately limited to what
+      helping needs: never a location, never when the app was opened, never how
+      long anybody looked at anything.</dd>
+    <dt>Transparency</dt>
+    <dd>Everything the family does is written down where she can read it, in her
+      own app. The help screen counts exactly what Recall holds about her, and one
+      press gives her a copy of all of it. This page is the long version of the
+      same thing.</dd>
+  </dl>
+
+  <h2>Who is responsible</h2>
+  <p>Recall is a student project at VIVES University of Applied Sciences, Kortrijk,
+    Belgium, built by a team of four. For anything in this notice, write to
+    <a href="mailto:zacharia.janssen@student.vives.be">zacharia.janssen@student.vives.be</a>.
+    If Recall were ever sold as a service, the company operating it would become the
+    controller and this notice would be reissued in its name.</p>
+
+  <h2>What is kept</h2>
+  <table>
+    <tr><th>What</th><th>Where it comes from</th></tr>
+    <tr><td>The name of a card, who is on it, where, when, labels</td><td>Typed by the family, or read off a letter</td></tr>
+    <tr><td>A photo of a letter, a person or a place</td><td>The camera on her phone</td></tr>
+    <tr><td>The text Recall read off a letter</td><td>Read on the phone itself</td></tr>
+    <tr><td>The sentence Recall says out loud</td><td>Written by the family</td></tr>
+    <tr><td>Reminder times, and whether one was marked done</td><td>The app</td></tr>
+    <tr><td>Who is in the household and what they are called</td><td>The family, when they set it up</td></tr>
+    <tr><td>A list of what the family did: added, changed, removed</td><td>The app</td></tr>
+    <tr><td>The record that she said yes, when, and to which version of the words</td><td>The consent screen</td></tr>
+  </table>
+
+  <h2>What is deliberately not kept</h2>
+  <p>This list is a design decision, not an oversight: where she is, when she opened
+    the app, how long she looked at anything, whether she read a card, any analytics
+    or tracking of any kind, any advertising identifier, her name or email as an
+    account, because she never signs in. Her national register number and bank
+    account numbers are stripped out of what Recall reads before anything is stored,
+    and there is a test that proves it on a letter that carries one.</p>
+  <p>Nothing about her is profiled, scored, predicted or decided automatically.</p>
+
+  <h2>Why we are allowed to keep it</h2>
+  <p>While Recall is only on her phone, nothing reaches us at all. Once a family
+    member links the phone and she agrees, the cards are kept for the household on
+    the basis of <b>her consent</b>, article 6(1)(a) GDPR. Letters from a doctor or a
+    hospital say things about her health, and the law treats those as needing
+    <b>explicit consent</b>, article 9(2)(a), which is why the consent screen is read
+    out loud and asks her plainly rather than hiding behind a tick box.</p>
+  <p>She can take that back at any time, and it is as easy as giving it: the help
+    screen, then stop sharing. What the family already has stays with them until they
+    delete it, and she is told that before she says yes rather than after.</p>
+  <p>Where a court has appointed an administrator under the Belgian law of 17 March
+    2013, that person consents instead.</p>
+
+  <h2>Where it is kept, and who can see it</h2>
+  <p>On her phone, in the phone's own storage. If the household is linked, also on a
+    Supabase database and file store in <b>Frankfurt, Germany</b>, inside the EU. Only
+    people the family has let into that household can see it. We do not sell anything
+    to anybody, and there is nobody to sell it to: there are no advertisers and no
+    analytics in this app.</p>
+  <p>Two honest notes. Supabase and GitHub, who host this, are American companies,
+    so the paperwork that has to be in place for that (a processor agreement and the
+    standard contractual clauses) is a real requirement, and for a student project it
+    is not signed yet. And the library that reads letters is currently fetched from a
+    content delivery network, which means her browser tells that network its own IP
+    address. Both are written down as open findings in our assessment, and both are
+    on the list to fix before any real household uses this.</p>
+
+  <h2>How long</h2>
+  <p>A card stays until somebody deletes it. A deleted card sits in a bin for thirty
+    days and is then gone for good. What is on her phone lives only on her phone: if
+    the household is unlinked, nothing new is sent, and clearing the app clears it.
+    The record that she consented is kept as long as the household exists, because
+    the law requires being able to show that consent was given.</p>
+
+  <h2>What she can do, and how</h2>
+  <table>
+    <tr><th>Right</th><th>Where it is in the app</th></tr>
+    <tr><td>Know what is kept</td><td>Help screen, <b>What Recall knows about you</b>, counted</td></tr>
+    <tr><td>Get a copy of everything</td><td>Same screen, <b>Give me a copy of everything</b>, one file</td></tr>
+    <tr><td>Correct something wrong</td><td>The family can edit any card; the log shows what changed</td></tr>
+    <tr><td>Have it deleted</td><td>Any card, from the family app; the whole household with it</td></tr>
+    <tr><td>Stop the sharing</td><td>Help screen, <b>Stop sharing with my family</b></td></tr>
+    <tr><td>See who has access</td><td>Her Today screen names them</td></tr>
+    <tr><td>Complain</td><td>To us, and to the Belgian Data Protection Authority, Drukpersstraat 35, 1000 Brussels</td></tr>
+  </table>
+
+  <h2>Recall is not a medical device</h2>
+  <p>Recall magnifies, reads aloud, files and reminds. It does not diagnose, monitor,
+    interpret a prescription or decide anything about anybody's treatment. Keep the
+    paper, and always follow what a doctor or pharmacist says.</p>
+</section>
+
+<section class="policy-lang" data-lang="nl" hidden>
+  <h1>Wat Recall bewaart, en wat niet</h1>
+  <p class="lead">Recall wordt gebruikt door oudere mensen om vast te houden wat zij
+    niet willen verliezen: een brief van het ziekenhuis, een afspraak, de naam bij een
+    gezicht. Daardoor bevat het privé-dingen, en daarom staat hier precies wat er
+    bewaard wordt, waarom, waar, en wat u eraan kunt doen. Laatst gewijzigd op
+    9 september 2026.</p>
+
+  <h2>Vier dingen waar wij ons aan houden</h2>
+  <dl class="values">
+    <dt>Zorg</dt>
+    <dd>Niets in Recall is bedoeld om iemand te doen schrikken, op te jagen of te
+      misleiden. Er wordt niets stil opgeslagen: wat Recall van een brief leest,
+      wordt eerst getoond en voorgelezen. De app zegt nooit wat u met uw gezondheid
+      moet doen. Ze herhaalt wat er op het papier staat.</dd>
+    <dt>Veiligheid</dt>
+    <dd>Het lezen van een brief gebeurt op de telefoon zelf, dus een ziekenhuisbrief
+      wordt naar niemand gestuurd om gelezen te worden. Elke regel over wie wat mag
+      zien, wordt door de databank afgedwongen en niet door de app, en vijfentwintig
+      automatische testen bewijzen dat het ene huishouden niet bij het andere kan.
+      Foto's zijn alleen bereikbaar via een kortlopende link, en alleen voor iemand
+      uit dat huishouden.</dd>
+    <dt>Respect</dt>
+    <dd>Er gaat niets van de telefoon weg voordat de persoon die hem vasthoudt het
+      hardop gevraagd is en ja gezegd heeft. Nee zeggen laat de hele app gewoon
+      werken. Later stoppen is één druk op de knop. En wat de familie kan zien is
+      met opzet beperkt tot wat helpen nodig heeft: nooit een locatie, nooit wanneer
+      de app geopend werd, nooit hoe lang iemand naar iets keek.</dd>
+    <dt>Transparantie</dt>
+    <dd>Alles wat de familie doet, wordt opgeschreven waar zij het kan lezen, in haar
+      eigen app. Het hulpscherm telt precies wat Recall over haar bewaart, en één
+      druk geeft haar een kopie van alles. Deze pagina is de lange versie daarvan.</dd>
+  </dl>
+
+  <h2>Wie verantwoordelijk is</h2>
+  <p>Recall is een studentenproject aan VIVES Hogeschool in Kortrijk, gemaakt door een
+    team van vier. Voor alles in deze verklaring:
+    <a href="mailto:zacharia.janssen@student.vives.be">zacharia.janssen@student.vives.be</a>.
+    Als Recall ooit als dienst verkocht wordt, wordt het bedrijf dat ze uitbaat de
+    verwerkingsverantwoordelijke en wordt deze verklaring op zijn naam opnieuw
+    uitgegeven.</p>
+
+  <h2>Wat er bewaard wordt</h2>
+  <table>
+    <tr><th>Wat</th><th>Waar het van komt</th></tr>
+    <tr><td>De naam van een kaart, wie erop staat, waar, wanneer, labels</td><td>Getypt door de familie, of van een brief gelezen</td></tr>
+    <tr><td>Een foto van een brief, een persoon of een plaats</td><td>De camera van haar telefoon</td></tr>
+    <tr><td>De tekst die Recall van een brief gelezen heeft</td><td>Gelezen op de telefoon zelf</td></tr>
+    <tr><td>De zin die Recall voorleest</td><td>Geschreven door de familie</td></tr>
+    <tr><td>Tijden van herinneringen, en of er een op gedaan gezet is</td><td>De app</td></tr>
+    <tr><td>Wie in het huishouden zit en hoe zij heten</td><td>De familie, bij het instellen</td></tr>
+    <tr><td>Een lijst van wat de familie deed: toegevoegd, gewijzigd, verwijderd</td><td>De app</td></tr>
+    <tr><td>De vastlegging dat zij ja zei, wanneer, en bij welke versie van de tekst</td><td>Het toestemmingsscherm</td></tr>
+  </table>
+
+  <h2>Wat met opzet niet bewaard wordt</h2>
+  <p>Deze lijst is een keuze, geen vergetelheid: waar zij is, wanneer zij de app
+    opende, hoe lang zij naar iets keek, of zij een kaart gelezen heeft, welke vorm
+    van meten of volgen dan ook, elke advertentiecode, haar naam of e-mail als
+    account, want zij meldt zich nooit aan. Haar rijksregisternummer en
+    rekeningnummers worden uit wat Recall leest gehaald voordat er iets bewaard
+    wordt, en er is een test die dat bewijst op een brief die er een bevat.</p>
+  <p>Er wordt niets over haar geprofileerd, gescoord, voorspeld of automatisch
+    beslist.</p>
+
+  <h2>Waarom wij het mogen bewaren</h2>
+  <p>Zolang Recall alleen op haar telefoon staat, komt er niets bij ons terecht.
+    Zodra een familielid de telefoon koppelt en zij toestemt, worden de kaarten voor
+    het huishouden bewaard op basis van <b>haar toestemming</b>, artikel 6, lid 1, a
+    AVG. Brieven van een dokter of een ziekenhuis zeggen iets over haar gezondheid,
+    en de wet vraagt daarvoor <b>uitdrukkelijke toestemming</b>, artikel 9, lid 2, a.
+    Daarom wordt het toestemmingsscherm hardop voorgelezen en vraagt het het gewoon,
+    in plaats van zich achter een vinkje te verstoppen.</p>
+  <p>Zij kan die altijd intrekken, en dat is even makkelijk als geven: het
+    hulpscherm, dan stoppen met delen. Wat de familie al heeft, blijft bij hen tot
+    zij het verwijderen, en dat wordt haar gezegd voordat zij ja zegt, niet erna.</p>
+  <p>Waar een rechter een bewindvoerder heeft aangesteld volgens de wet van 17 maart
+    2013, geeft die persoon de toestemming.</p>
+
+  <h2>Waar het staat, en wie het kan zien</h2>
+  <p>Op haar telefoon, in de opslag van de telefoon zelf. Als het huishouden gekoppeld
+    is, ook op een Supabase-databank en bestandsopslag in <b>Frankfurt, Duitsland</b>,
+    binnen de EU. Alleen mensen die de familie in dat huishouden heeft toegelaten,
+    kunnen het zien. Wij verkopen niets aan niemand, en er is ook niemand om aan te
+    verkopen: er zitten geen adverteerders en geen metingen in deze app.</p>
+  <p>Twee eerlijke opmerkingen. Supabase en GitHub, die dit hosten, zijn Amerikaanse
+    bedrijven, dus het papierwerk dat daarvoor nodig is (een verwerkersovereenkomst en
+    de standaardcontractbepalingen) is een echte vereiste, en voor een studentenproject
+    is het nog niet ondertekend. En de bibliotheek die brieven leest, wordt nu van een
+    content delivery network gehaald, waardoor haar browser dat netwerk haar IP-adres
+    vertelt. Beide staan als openstaande bevindingen in onze effectbeoordeling, en
+    beide moeten opgelost zijn voordat een echt huishouden dit gebruikt.</p>
+
+  <h2>Hoe lang</h2>
+  <p>Een kaart blijft tot iemand ze verwijdert. Een verwijderde kaart zit dertig dagen
+    in de prullenbak en is dan definitief weg. Wat op haar telefoon staat, staat alleen
+    daar: als het huishouden ontkoppeld wordt, gaat er niets nieuws weg, en het wissen
+    van de app wist het. De vastlegging van haar toestemming blijft zolang het
+    huishouden bestaat, omdat de wet vraagt dat wij kunnen aantonen dat er toestemming
+    gegeven is.</p>
+
+  <h2>Wat zij kan doen, en hoe</h2>
+  <table>
+    <tr><th>Recht</th><th>Waar het in de app staat</th></tr>
+    <tr><td>Weten wat er bewaard wordt</td><td>Hulpscherm, <b>Wat Recall over u weet</b>, geteld</td></tr>
+    <tr><td>Een kopie van alles krijgen</td><td>Zelfde scherm, <b>Geef mij een kopie van alles</b>, één bestand</td></tr>
+    <tr><td>Iets verkeerds laten verbeteren</td><td>De familie kan elke kaart aanpassen; de lijst toont wat veranderde</td></tr>
+    <tr><td>Laten verwijderen</td><td>Elke kaart, uit de familie-app; het hele huishouden erbij</td></tr>
+    <tr><td>Het delen stoppen</td><td>Hulpscherm, <b>Stop met delen met mijn familie</b></td></tr>
+    <tr><td>Zien wie toegang heeft</td><td>Haar scherm Vandaag noemt hen bij naam</td></tr>
+    <tr><td>Klacht neerleggen</td><td>Bij ons, en bij de Gegevensbeschermingsautoriteit, Drukpersstraat 35, 1000 Brussel</td></tr>
+  </table>
+
+  <h2>Recall is geen medisch hulpmiddel</h2>
+  <p>Recall vergroot, leest voor, bewaart en herinnert. Ze stelt geen diagnose, volgt
+    niets op, legt geen voorschrift uit en beslist niets over iemands behandeling.
+    Houd het papier bij, en volg altijd wat een arts of apotheker zegt.</p>
+</section>
+
+<section class="policy-lang" data-lang="fr" hidden>
+  <h1>Ce que Recall garde, et ce qu'il ne garde pas</h1>
+  <p class="lead">Recall est utilisé par des personnes âgées pour garder ce qu'elles ne
+    veulent pas perdre : une lettre de l'hôpital, un rendez-vous, le nom qui va avec un
+    visage. Il contient donc des choses privées, et cette page dit exactement ce qui
+    est gardé, pourquoi, où, et ce que vous pouvez y faire. Dernière modification le
+    9 septembre 2026.</p>
+
+  <h2>Quatre choses que nous nous imposons</h2>
+  <dl class="values">
+    <dt>Attention</dt>
+    <dd>Rien dans Recall n'est conçu pour effrayer, presser ou tromper la personne qui
+      l'utilise. Rien n'est enregistré en silence : ce que Recall lit sur une lettre est
+      montré et relu avant d'être gardé. L'application ne dit jamais quoi faire de sa
+      santé. Elle répète ce qui est écrit sur le papier.</dd>
+    <dt>Sécurité</dt>
+    <dd>La lecture d'une lettre se fait sur le téléphone même, donc une lettre
+      d'hôpital n'est envoyée à personne pour être lue. Chaque règle sur qui peut voir
+      quoi est appliquée par la base de données et non par l'application, et
+      vingt-cinq tests automatiques prouvent qu'un foyer ne peut pas atteindre celui
+      d'un autre. Les photos ne sont accessibles que par un lien de courte durée, et
+      seulement pour quelqu'un de ce foyer.</dd>
+    <dt>Respect</dt>
+    <dd>Rien ne quitte le téléphone avant que la personne qui le tient ait été
+      interrogée à voix haute et ait dit oui. Dire non laisse toute l'application
+      fonctionner. Arrêter plus tard prend une seule pression. Et ce que la famille
+      peut voir est délibérément limité à ce qu'aider exige : jamais un lieu, jamais
+      quand l'application a été ouverte, jamais combien de temps quelqu'un a regardé
+      quelque chose.</dd>
+    <dt>Transparence</dt>
+    <dd>Tout ce que fait la famille est noté là où elle peut le lire, dans sa propre
+      application. L'écran d'aide compte exactement ce que Recall garde sur elle, et une
+      pression lui en donne une copie complète. Cette page est la version longue de la
+      même chose.</dd>
+  </dl>
+
+  <h2>Qui est responsable</h2>
+  <p>Recall est un projet d'étudiants à la haute école VIVES, Courtrai, Belgique, réalisé
+    par une équipe de quatre. Pour tout ce qui concerne cette déclaration :
+    <a href="mailto:zacharia.janssen@student.vives.be">zacharia.janssen@student.vives.be</a>.
+    Si Recall était un jour vendu comme service, l'entreprise qui l'exploite deviendrait
+    responsable du traitement et cette déclaration serait réémise en son nom.</p>
+
+  <h2>Ce qui est gardé</h2>
+  <table>
+    <tr><th>Quoi</th><th>D'où cela vient</th></tr>
+    <tr><td>Le nom d'une fiche, qui y figure, où, quand, les étiquettes</td><td>Tapé par la famille, ou lu sur une lettre</td></tr>
+    <tr><td>Une photo d'une lettre, d'une personne ou d'un lieu</td><td>La caméra de son téléphone</td></tr>
+    <tr><td>Le texte que Recall a lu sur une lettre</td><td>Lu sur le téléphone même</td></tr>
+    <tr><td>La phrase que Recall dit à voix haute</td><td>Écrite par la famille</td></tr>
+    <tr><td>Les heures des rappels, et si l'un a été marqué comme fait</td><td>L'application</td></tr>
+    <tr><td>Qui fait partie du foyer et comment ils s'appellent</td><td>La famille, à la configuration</td></tr>
+    <tr><td>La liste de ce que la famille a fait : ajouté, modifié, retiré</td><td>L'application</td></tr>
+    <tr><td>La trace qu'elle a dit oui, quand, et à quelle version du texte</td><td>L'écran de consentement</td></tr>
+  </table>
+
+  <h2>Ce qui n'est délibérément pas gardé</h2>
+  <p>Cette liste est un choix, pas un oubli : où elle se trouve, quand elle a ouvert
+    l'application, combien de temps elle a regardé quelque chose, si elle a lu une
+    fiche, toute forme de mesure ou de suivi, tout identifiant publicitaire, son nom ou
+    son e-mail comme compte, puisqu'elle ne se connecte jamais. Son numéro de registre
+    national et ses numéros de compte sont retirés de ce que Recall lit avant que quoi
+    que ce soit soit stocké, et un test le prouve sur une lettre qui en contient un.</p>
+  <p>Rien à son sujet n'est profilé, noté, prédit ni décidé automatiquement.</p>
+
+  <h2>Pourquoi nous avons le droit de le garder</h2>
+  <p>Tant que Recall n'est que sur son téléphone, rien ne nous parvient. Dès qu'un
+    membre de la famille relie le téléphone et qu'elle accepte, les fiches sont gardées
+    pour le foyer sur la base de <b>son consentement</b>, article 6, 1, a du RGPD. Les
+    lettres d'un médecin ou d'un hôpital parlent de sa santé, et la loi exige pour cela
+    un <b>consentement explicite</b>, article 9, 2, a. C'est pourquoi l'écran de
+    consentement est lu à voix haute et pose la question simplement, au lieu de se
+    cacher derrière une case à cocher.</p>
+  <p>Elle peut le retirer à tout moment, et c'est aussi simple que de le donner :
+    l'écran d'aide, puis arrêter le partage. Ce que la famille a déjà reste chez elle
+    jusqu'à ce qu'elle le supprime, et cela lui est dit avant qu'elle dise oui, pas
+    après.</p>
+  <p>Lorsqu'un juge a désigné un administrateur selon la loi belge du 17 mars 2013,
+    c'est cette personne qui consent.</p>
+
+  <h2>Où c'est gardé, et qui peut le voir</h2>
+  <p>Sur son téléphone, dans la mémoire du téléphone. Si le foyer est relié, aussi sur
+    une base de données et un stockage de fichiers Supabase à <b>Francfort,
+    Allemagne</b>, dans l'UE. Seules les personnes que la famille a laissées entrer dans
+    ce foyer peuvent le voir. Nous ne vendons rien à personne, et il n'y a personne à
+    qui vendre : il n'y a ni annonceurs ni mesure d'audience dans cette application.</p>
+  <p>Deux remarques honnêtes. Supabase et GitHub, qui hébergent ceci, sont des
+    entreprises américaines, donc les documents requis pour cela (un contrat de
+    sous-traitance et les clauses contractuelles types) sont une véritable exigence, et
+    pour un projet d'étudiants ils ne sont pas encore signés. Et la bibliothèque qui lit
+    les lettres est actuellement chargée depuis un réseau de diffusion de contenu, ce
+    qui fait que son navigateur communique son adresse IP à ce réseau. Les deux sont
+    consignés comme constats ouverts dans notre analyse d'impact, et les deux doivent
+    être réglés avant qu'un vrai foyer utilise ceci.</p>
+
+  <h2>Combien de temps</h2>
+  <p>Une fiche reste jusqu'à ce que quelqu'un la supprime. Une fiche supprimée reste
+    trente jours à la corbeille puis disparaît définitivement. Ce qui est sur son
+    téléphone n'est que là : si le foyer est délié, rien de nouveau ne part, et effacer
+    l'application l'efface. La trace de son consentement est conservée aussi longtemps
+    que le foyer existe, parce que la loi exige de pouvoir démontrer que le consentement
+    a été donné.</p>
+
+  <h2>Ce qu'elle peut faire, et comment</h2>
+  <table>
+    <tr><th>Droit</th><th>Où c'est dans l'application</th></tr>
+    <tr><td>Savoir ce qui est gardé</td><td>Écran d'aide, <b>Ce que Recall sait de vous</b>, compté</td></tr>
+    <tr><td>Obtenir une copie de tout</td><td>Même écran, <b>Donnez-moi une copie de tout</b>, un fichier</td></tr>
+    <tr><td>Faire corriger une erreur</td><td>La famille peut modifier chaque fiche ; la liste montre ce qui a changé</td></tr>
+    <tr><td>Faire supprimer</td><td>Chaque fiche, depuis l'application famille ; tout le foyer avec</td></tr>
+    <tr><td>Arrêter le partage</td><td>Écran d'aide, <b>Arrêter le partage avec ma famille</b></td></tr>
+    <tr><td>Voir qui a accès</td><td>Son écran Aujourd'hui les nomme</td></tr>
+    <tr><td>Porter plainte</td><td>Chez nous, et auprès de l'Autorité de protection des données, rue de la Presse 35, 1000 Bruxelles</td></tr>
+  </table>
+
+  <h2>Recall n'est pas un dispositif médical</h2>
+  <p>Recall agrandit, lit à voix haute, classe et rappelle. Il ne diagnostique pas, ne
+    surveille pas, n'interprète pas une ordonnance et ne décide rien sur le traitement de
+    quiconque. Gardez le papier, et suivez toujours ce que dit un médecin ou un
+    pharmacien.</p>
+</section>
+
+<p class="policy-back"><a class="link" href="index.html">Recall</a> &middot;
+  <a class="link" href="helper.html">Recall for family</a></p>
+
+</main>
+
+<script type="module">
+  // The page shows one language and remembers the same choice as the app, so
+  // somebody who set the app to Dutch does not land on English here.
+  import * as i18n from "./js/i18n.js?v=26";
+
+  const pick = document.getElementById("lang-pick");
+
+  function show(code) {
+    document.querySelectorAll(".policy-lang").forEach((block) => {
+      block.hidden = block.dataset.lang !== code;
+    });
+    document.documentElement.lang = code;
+    pick.value = code;
+  }
+
+  show(i18n.lang());
+  pick.addEventListener("change", () => {
+    i18n.setLang(pick.value);
+    show(pick.value);
+  });
+</script>
+</body>
+</html>

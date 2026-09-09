@@ -1,8 +1,9 @@
 // The family side. Everything here needs a signed in helper and a household, so
 // unlike the keeper app this one does nothing until the cloud is configured.
 
-import * as cloud from "./cloud.js?v=25";
-import { NOTICE_VERSION } from "./config.js?v=25";
+import * as cloud from "./cloud.js?v=26";
+import { NOTICE_VERSION } from "./config.js?v=26";
+import * as i18n from "./i18n.js?v=26";
 
 const panes = {
   unconfigured: document.getElementById("s-unconfigured"),
@@ -50,8 +51,10 @@ function when(iso) {
   if (!iso) return "";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) +
-    " at " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  const tag = i18n.spokenLang();
+  return d.toLocaleDateString(tag, { weekday: "short", day: "numeric", month: "short" }) +
+    " " + i18n.t("run.dateat") + " " +
+    d.toLocaleTimeString(tag, { hour: "2-digit", minute: "2-digit" });
 }
 
 function localValue(iso) {
@@ -73,10 +76,10 @@ async function startSignIn(event) {
   try {
     await cloud.signInByEmail(email, redirect);
     msg.hidden = false;
-    msg.textContent = "Check your email. The link brings you straight back here.";
+    msg.textContent = i18n.t("hrun.checkemail");
   } catch (err) {
     msg.hidden = false;
-    msg.textContent = "That did not work: " + (err.message || err);
+    msg.textContent = i18n.t("hrun.wentwrong") + " " + (err.message || err);
   }
 }
 
@@ -129,7 +132,7 @@ async function createHousehold(event) {
   const button = event.target.querySelector('button[type="submit"]');
   if (button) {
     button.disabled = true;
-    button.textContent = "Creating...";
+    button.textContent = i18n.t("hrun.creating");
   }
 
   const name = document.getElementById("hh-name").value.trim();
@@ -139,15 +142,15 @@ async function createHousehold(event) {
     await cloud.recordConsent(id, NOTICE_VERSION);
     household = { id: id, name: name, role: "helper", myName: me };
     await openHousehold();
-    say("The household is ready.");
+    say(i18n.t("hrun.hhready"));
   } catch (err) {
-    say("Could not create it: " + (err.message || err));
+    say(i18n.t("hrun.wentwrong") + " " + (err.message || err));
   } finally {
     creating = false;
     const button = document.querySelector('#form-household button[type="submit"]');
     if (button) {
       button.disabled = false;
-      button.textContent = "Create it";
+      button.textContent = i18n.t("h.create");
     }
   }
 }
@@ -179,9 +182,9 @@ function renderFollow() {
       ? list.map(reminderRow).join("")
       : '<p class="none">' + empty + "</p>";
   };
-  fill("follow-coming", groups.coming, "Nothing is due.");
-  fill("follow-missed", groups.missed, "Nothing was missed.");
-  fill("follow-done", groups.done.slice(0, 10), "Nothing marked done yet.");
+  fill("follow-coming", groups.coming, i18n.t("hrun.nothingdue"));
+  fill("follow-missed", groups.missed, i18n.t("hrun.nothingmissed"));
+  fill("follow-done", groups.done.slice(0, 10), i18n.t("hrun.nothingdone"));
 }
 
 /* ----------------------------------------------------------------- cards */
@@ -257,7 +260,7 @@ async function saveCard(event) {
   };
 
   if (!payload.title) {
-    say("The card needs a name.");
+    say(i18n.t("hrun.needsname"));
     return;
   }
 
@@ -296,9 +299,9 @@ async function saveCard(event) {
 
     document.getElementById("form-card").hidden = true;
     await refresh();
-    say(id ? "The card is updated." : "The card is added.");
+    say(id ? i18n.t("hrun.updated") : i18n.t("hrun.added"));
   } catch (err) {
-    say("Could not save it: " + (err.message || err));
+    say(i18n.t("hrun.wentwrong") + " " + (err.message || err));
   }
 }
 
@@ -424,7 +427,7 @@ function waitForPhone() {
   waitTimer = window.setInterval(async () => {
     if (Date.now() - started > 15 * 60 * 1000) {
       stopWaiting();
-      line.textContent = "The code has expired. Make a new one.";
+      line.textContent = i18n.t("hrun.expired");
       return;
     }
     let now = [];
@@ -440,7 +443,7 @@ function waitForPhone() {
 
     stopWaiting();
     document.getElementById("w-done").textContent =
-      (fresh[0].display_name || "That phone") + " is linked and has every card.";
+      i18n.t("hrun.phonelinked", { name: fresh[0].display_name || i18n.t("h.phones") });
     freshDevice = fresh[0].id;
     const others = now.filter(
       (m) => m.role === "keeper" && !fresh.some((f) => f.id === m.id)
@@ -461,7 +464,7 @@ async function makeWizardCode() {
     knownDevices = await cloud.members(household.id);
     const link = await cloud.createDeviceLink(household.id, name || "her phone");
     document.getElementById("link-code").textContent = link.code;
-    document.getElementById("w-waiting").textContent = "Waiting for her phone.";
+    document.getElementById("w-waiting").textContent = i18n.t("h.waiting");
     wizardStep(2);
 
     const url = keeperUrl(link.code);
@@ -484,12 +487,12 @@ async function makeWizardCode() {
       wrap.hidden = false;
     } catch (err) {
       wrap.hidden = true;
-      say("Let her type the six letters, the square did not load.");
+      say(i18n.t("hrun.qrfailed"));
     }
 
     waitForPhone();
   } catch (err) {
-    say("Could not make a code: " + (err.message || err));
+    say(i18n.t("hrun.wentwrong") + " " + (err.message || err));
   }
 }
 
@@ -521,11 +524,11 @@ async function sendInvite(event) {
     const token = await cloud.inviteHelper(household.id, email);
     const url = location.origin + location.pathname + "?invite=" + token;
     msg.hidden = false;
-    msg.textContent = "Send them this link: " + url;
+    msg.textContent = i18n.t("hrun.invitelink") + " " + url;
     await renderHouse();
   } catch (err) {
     msg.hidden = false;
-    msg.textContent = "Could not invite: " + (err.message || err);
+    msg.textContent = i18n.t("hrun.wentwrong") + " " + (err.message || err);
   }
 }
 
@@ -556,7 +559,28 @@ async function openHousehold() {
   await refresh();
 }
 
+function drawLanguages() {
+  const pick = document.getElementById("lang-pick");
+  if (!pick) return;
+  const now = i18n.lang();
+  pick.innerHTML = i18n.LANGUAGES.map((one) =>
+    '<option value="' + one.code + '"' + (one.code === now ? " selected" : "") + ">" +
+    one.label + "</option>"
+  ).join("");
+}
+
 function wire() {
+  const picker = document.getElementById("lang-pick");
+  if (picker) {
+    picker.addEventListener("change", () => {
+      i18n.setLang(picker.value);
+      // Anything drawn from a script needs drawing again, the markup looks
+      // after itself.
+      drawLanguages();
+      render();
+    });
+  }
+
   document.getElementById("form-signin").addEventListener("submit", startSignIn);
   document.getElementById("form-household").addEventListener("submit", createHousehold);
   document.getElementById("form-card").addEventListener("submit", saveCard);
@@ -568,12 +592,12 @@ function wire() {
   document.getElementById("btn-w-stop").addEventListener("click", () => {
     stopWaiting();
     document.getElementById("w-waiting").textContent =
-      "Not waiting any more. The code still works for fifteen minutes.";
+      i18n.t("hrun.notwaiting");
   });
   document.getElementById("btn-w-finish").addEventListener("click", async () => {
     closeWizard();
     await renderHouse();
-    say("Her phone is set up.");
+    say(i18n.t("hrun.phoneset"));
   });
 
   document.getElementById("btn-new-card").addEventListener("click", () => openCardForm(null));
@@ -608,7 +632,7 @@ function wire() {
     if (t.dataset.done) {
       await cloud.markDone(household.id, t.dataset.done, t.dataset.rec);
       await refresh();
-      say("Marked done.");
+      say(i18n.t("run.markeddone"));
       return;
     }
     if (t.dataset.edit) {
@@ -617,7 +641,7 @@ function wire() {
     }
     if (t.dataset.bin) {
       const card = cards.find((c) => c.id === t.dataset.bin);
-      if (!await ask("Move " + card.title + " to the bin? It stays there for thirty days.", "Yes, to the bin")) return;
+      if (!await ask(i18n.t("hrun.binask", { title: card.title }), i18n.t("hrun.binyes"))) return;
       await cloud.binRecord(household.id, card.id, card.title);
       await refresh();
       return;
@@ -631,19 +655,19 @@ function wire() {
     const drop = t.closest("[data-drop-hh]");
     if (drop) {
       const label = drop.dataset.dropName;
-      if (!await ask("Delete " + label + " and everything in it? This cannot be undone.", "Yes, delete it")) return;
+      if (!await ask(i18n.t("hrun.deleteask", { label: label }), i18n.t("run.deleteyes"))) return;
       try {
         await cloud.deleteHousehold(drop.dataset.dropHh);
         say(label + " is gone.");
         await showHouseholds();
       } catch (err) {
-        say("Could not delete it: " + (err.message || err));
+        say(i18n.t("hrun.wentwrong") + " " + (err.message || err));
       }
       return;
     }
 
     if (t.dataset.remove) {
-      if (!await ask("Remove " + t.dataset.name + "? She will see that this happened.", "Yes, remove")) return;
+      if (!await ask(i18n.t("hrun.removeask", { name: t.dataset.name }), i18n.t("hrun.removeyes"))) return;
       await cloud.removeMember(t.dataset.remove, household.id, t.dataset.name);
       await renderHouse();
       // The wizard shows its own copy of the list on the last step.
@@ -654,7 +678,7 @@ function wire() {
           ? rows.map((m) => deviceRow(m, true)).join("")
           : '<p class="none">Only the new phone is linked now.</p>';
       }
-      say("Removed.");
+      say(i18n.t("hrun.removed"));
     }
   });
 }
@@ -683,9 +707,9 @@ async function init() {
     try {
       const id = await cloud.acceptInvite(invite, user.email || "");
       history.replaceState(null, "", location.pathname);
-      say("You are in.");
+      say(i18n.t("hrun.youarein"));
     } catch (err) {
-      say("That invitation did not work: " + (err.message || err));
+      say(i18n.t("hrun.wentwrong") + " " + (err.message || err));
     }
   }
 

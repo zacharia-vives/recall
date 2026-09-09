@@ -1,0 +1,91 @@
+/* The privacy notice. Long, read rather than pressed, so it gets a reading
+   width and nothing else. Same type sizes as the rest: nothing under 18px,
+   because the person this is about may well be reading it herself. */
+
+.policy-wrap {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+.policy h1 {
+  font-size: 1.9rem;
+  line-height: 1.15;
+  margin: 0 0 0.75rem;
+}
+
+.policy h2 {
+  font-size: 1.3rem;
+  margin: 2rem 0 0.5rem;
+}
+
+.policy .lead {
+  font-size: 1.125rem;
+}
+
+.policy p,
+.policy dd,
+.policy td,
+.policy th {
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+.values {
+  margin: 0.5rem 0 0;
+}
+
+.values dt {
+  font-weight: 700;
+  font-size: 1.125rem;
+  margin-top: 1rem;
+}
+
+.values dd {
+  margin: 0.25rem 0 0;
+}
+
+.policy table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0 0;
+}
+
+.policy th,
+.policy td {
+  text-align: left;
+  padding: 0.5rem 0.5rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule, #e5ddd3);
+  vertical-align: top;
+}
+
+.policy th {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.policy-back {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule, #e5ddd3);
+}
+
+/* The language picker in a top bar, on both this page and the family app. */
+.lang-bar {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lang-bar .label {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.lang-bar select {
+  font-size: 1rem;
+  padding: 0.35rem 0.5rem;
+  min-height: 2.75rem;
+}

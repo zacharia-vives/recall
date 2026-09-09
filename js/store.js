@@ -1,3 +1,5 @@
+import * as i18n from "./i18n.js?v=26";
+
 // Store: everything is kept on the device in IndexedDB.
 // Requirement P1: local only by default, nothing leaves the phone unless a
 // helper links it to a household. js/cloud.js does that half, and it is never
@@ -23,7 +25,7 @@ function open() {
     // is blocked and this request would otherwise wait for ever without an
     // error. Fail loudly instead, so the app can say something useful.
     req.onblocked = () => {
-      const err = new Error("Recall is open in another tab. Close it and try again.");
+      const err = new Error(i18n.t("store.othertab"));
       err.stuck = true;
       reject(err);
     };
@@ -32,7 +34,7 @@ function open() {
     // in here can repair that, so fail in a way the app can offer a way out of.
     window.setTimeout(() => {
       if (!db) {
-        const err = new Error("The store on this device will not open.");
+        const err = new Error(i18n.t("store.wontopen"));
         err.stuck = true;
         reject(err);
       }
@@ -69,7 +71,7 @@ export function startFresh() {
     const req = indexedDB.deleteDatabase(DB_NAME);
     req.onsuccess = () => resolve(true);
     req.onerror = () => reject(req.error || new Error("The store would not go."));
-    req.onblocked = () => reject(new Error("Close Recall in your other tabs first, then try again."));
+    req.onblocked = () => reject(new Error(i18n.t("store.closetabs")));
     // Seen for real: the browser itself was still holding the old store open,
     // and no tab of ours could make it let go. Closing the browser completely
     // and opening it again is the thing that actually works, so say that.
@@ -139,6 +141,22 @@ export async function hasPhotoStored(id) {
   return Boolean(row);
 }
 
+// The export needs the picture itself rather than a link to it, because a
+// blob url dies with the page and a copy of your things should not. P21.
+export async function photoBlob(id) {
+  const store = await tx("photos", "readonly");
+  const row = await ask(store.get(id));
+  return row ? row.blob : null;
+}
+
+// The export needs the picture itself rather than a link to it, because a
+// blob url dies with the page and a copy of your things should not. P21.
+export async function photoBlob(id) {
+  const store = await tx("photos", "readonly");
+  const row = await ask(store.get(id));
+  return row ? row.blob : null;
+}
+
 export async function photoUrl(id) {
   const store = await tx("photos", "readonly");
   const row = await ask(store.get(id));
@@ -200,6 +218,11 @@ export async function markReminderDone(id) {
 }
 
 // Three values and no more, the same three the family side sees (P17).
+// Long enough for a clock that is off by a few minutes, and for somebody who
+// is at the appointment while it is happening. Short enough that a morning
+// appointment shows as missed the same afternoon rather than the next day.
+const GRACE_MS = 60 * 60 * 1000;
+
 export function reminderStatus(reminder) {
   const due = new Date(reminder.dueAt).getTime();
   const now = Date.now();
@@ -210,7 +233,7 @@ export function reminderStatus(reminder) {
     if (step === 0) return "done";
     if (now - done < step) return "done";
   }
-  if (due < now - 12 * 3600 * 1000) return "missed";
+  if (due < now - GRACE_MS) return "missed";
   return "coming";
 }
 

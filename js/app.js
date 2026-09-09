@@ -1,21 +1,29 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=25";
-import * as speech from "./speech.js?v=25";
-import * as camera from "./camera.js?v=25";
-import * as ocr from "./ocr.js?v=25";
-import { isConfigured, NOTICE_VERSION } from "./config.js?v=25";
-import * as install from "./install.js?v=25";
-import * as lock from "./lock.js?v=25";
+import * as store from "./store.js?v=26";
+import * as speech from "./speech.js?v=26";
+import * as camera from "./camera.js?v=26";
+import * as ocr from "./ocr.js?v=26";
+import { isConfigured, NOTICE_VERSION } from "./config.js?v=26";
+import * as install from "./install.js?v=26";
+import * as lock from "./lock.js?v=26";
+import * as i18n from "./i18n.js?v=26";
+
+// Short, because it is used on nearly every line that says something.
+const t = i18n.t;
 
 const HOUSEHOLD_KEY = "recall.householdId";
 
 const KINDS = {
-  letter: { label: "Letter", badge: "L" },
-  person: { label: "Person", badge: "P" },
-  place: { label: "Place", badge: "●" }
+  letter: { key: "kind.letter", badge: "L" },
+  person: { key: "kind.person", badge: "P" },
+  place: { key: "kind.place", badge: "●" }
 };
+
+function kindLabel(kind) {
+  return t((KINDS[kind] || KINDS.letter).key);
+}
 
 const screens = {
   stuck: document.getElementById("screen-stuck"),
@@ -58,9 +66,11 @@ function readableDate(iso) {
   if (!iso) return "";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-GB", {
+  const tag = i18n.spokenLang();
+  return d.toLocaleDateString(tag, {
     weekday: "long", day: "numeric", month: "long", year: "numeric"
-  }) + " at " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  }) + " " + t("run.dateat") + " " +
+    d.toLocaleTimeString(tag, { hour: "2-digit", minute: "2-digit" });
 }
 
 function isDueSoon(record) {
@@ -121,19 +131,19 @@ function todayItemHtml(reminder, record) {
       "<span>" +
         '<span class="title">' + esc(record.title) + "</span>" +
         '<span class="meta">' + esc(readableDate(reminder.dueAt)) + "</span>" +
-        (status === "missed" ? '<span class="status">this one has passed</span>' : "") +
+        (status === "missed" ? '<span class="status">' + t("run.passed") + "</span>" : "") +
       "</span>" +
     "</button>" +
     '<div class="today-acts">' +
-      '<button class="big" type="button" data-say="' + esc(spoken) + '">Read it out loud</button>' +
-      '<button class="big ghost" type="button" data-done="' + esc(reminder.id) + '">Mark done</button>' +
+      '<button class="big" type="button" data-say="' + esc(spoken) + '">' + t("record.read") + "</button>" +
+      '<button class="big ghost" type="button" data-done="' + esc(reminder.id) + '">' + t("run.markdone") + "</button>" +
     "</div>" +
   "</div>";
 }
 
 async function renderToday() {
   const dateEl = document.getElementById("today-date");
-  dateEl.textContent = new Date().toLocaleDateString("en-GB", {
+  dateEl.textContent = new Date().toLocaleDateString(i18n.spokenLang(), {
     weekday: "long", day: "numeric", month: "long"
   });
 
@@ -157,26 +167,33 @@ async function renderToday() {
 
   if (rows.length === 0) {
     list.innerHTML =
-      '<p class="empty">Nothing is due today or tomorrow.<br>' +
-      "Point the camera at a letter to add something.</p>";
+      '<p class="empty">' + t("run.nothingdue") + "<br>" + t("run.today.empty") + "</p>";
     return;
   }
   list.innerHTML = rows.join("");
   paintThumbs(list);
 }
 
+// Which of the three kinds are switched on. All three to begin with, because
+// the screen is called Everything.
+const showing = { letter: true, person: true, place: true };
+
 function renderRecords(filter) {
   const list = document.getElementById("records-list");
   const needle = (filter || "").trim().toLowerCase();
+  const kept = records.filter((r) => showing[r.kind] !== false);
   const rows = needle
-    ? records.filter((r) =>
+    ? kept.filter((r) =>
         (r.title + " " + (r.people || []).join(" ") + " " + (r.tags || []).join(" ") + " " + (r.place || ""))
           .toLowerCase()
           .includes(needle))
-    : records;
+    : kept;
 
   if (rows.length === 0) {
-    list.innerHTML = '<p class="empty">Nothing found.</p>';
+    const nothingOn = !showing.letter && !showing.person && !showing.place;
+    list.innerHTML = '<p class="empty">' +
+      (nothingOn ? t("filter.noneon") : needle ? t("records.nohits") : t("records.none")) +
+      "</p>";
     return;
   }
   list.innerHTML = rows.map((r) => cardHtml(r)).join("");
@@ -187,7 +204,7 @@ async function renderRecord(id) {
   const record = records.find((r) => r.id === id);
   const box = document.getElementById("record-detail");
   if (!record) {
-    box.innerHTML = '<p class="empty">This card does not exist any more.</p>';
+    box.innerHTML = '<p class="empty">' + t("run.cardgone") + "</p>";
     return;
   }
   document.getElementById("record-title").textContent = record.title;
@@ -195,39 +212,38 @@ async function renderRecord(id) {
   const mine = reminders.filter((r) => r.recordId === record.id);
   const reminder = mine.length ? mine[0] : null;
   const repeatWords = {
-    none: "once", daily: "every day",
-    twice_daily: "twice a day", weekly: "every week"
+    none: t("rep.once"), daily: t("rep.daily"),
+    twice_daily: t("rep.twice"), weekly: t("rep.weekly")
   };
 
   const rows = [
-    ["Kind", (KINDS[record.kind] || KINDS.letter).label],
-    ["Who", (record.people || []).join(", ")],
-    ["Where", record.place],
-    ["When", readableDate(record.happensAt)],
-    ["Tags", (record.tags || []).join(", ")],
-    ["Reminder", reminder
-      ? readableDate(reminder.dueAt) + ", " + (repeatWords[reminder.repeat] || "once")
+    [t("run.kind"), kindLabel(record.kind)],
+    [t("field.who"), (record.people || []).join(", ")],
+    [t("field.where"), record.place],
+    [t("field.when"), readableDate(record.happensAt)],
+    [t("run.tags"), (record.tags || []).join(", ")],
+    [t("run.reminder"), reminder
+      ? readableDate(reminder.dueAt) + ", " + (repeatWords[reminder.repeat] || t("rep.once"))
       : ""],
-    ["Last done", reminder && reminder.lastDoneAt ? readableDate(reminder.lastDoneAt) : ""]
+    [t("run.lastdone"), reminder && reminder.lastDoneAt ? readableDate(reminder.lastDoneAt) : ""]
   ].filter((row) => row[1]);
 
   box.innerHTML =
-    (record.hasPhoto ? '<img class="detail-photo" id="detail-photo" alt="Photo on this card">' : "") +
+    (record.hasPhoto ? '<img class="detail-photo" id="detail-photo" alt="' + esc(t("run.photoalt")) + '">' : "") +
     '<div class="fields">' +
       rows.map((row) =>
         '<div class="row"><span class="k">' + esc(row[0]) + '</span><span class="v">' + esc(row[1]) + "</span></div>"
       ).join("") +
     "</div>" +
     '<div class="actions">' +
-      '<button class="big" type="button" id="btn-say">Read it out loud</button>' +
+      '<button class="big" type="button" id="btn-say">' + t("record.read") + "</button>" +
       (reminder && store.reminderStatus(reminder) !== "done"
         ? '<button class="big ghost" type="button" data-done="' + esc(reminder.id) +
-          '">Mark done</button>'
+          '">' + t("run.markdone") + "</button>"
         : "") +
-      '<button class="big danger" type="button" id="btn-del">Delete this card</button>' +
+      '<button class="big danger" type="button" id="btn-del">' + t("run.deletecard") + "</button>" +
     "</div>" +
-    '<p class="disclaimer">Recall is not a medical device. Keep the paper letter, ' +
-    "and always follow what your doctor or pharmacist tells you.</p>";
+    '<p class="disclaimer">' + t("run.carddisclaimer") + "</p>";
 
   if (record.hasPhoto) {
     const url = await store.photoUrl(record.id);
@@ -239,18 +255,15 @@ async function renderRecord(id) {
       speech.stop();
       return;
     }
-    if (!speech.speak(sentenceFor(record))) say("This browser cannot read out loud.");
+    if (!speech.speak(sentenceFor(record), i18n.spokenLang())) say(t("run.nospeech"));
   });
 
   document.getElementById("btn-del").addEventListener("click", async () => {
-    const sure = await ask(
-      "This card and its photo will be deleted. Are you sure?",
-      "Yes, delete it"
-    );
+    const sure = await ask(t("run.deleteask"), t("run.deleteyes"));
     if (!sure) return;
     await store.deleteRecord(record.id);
     records = await store.allRecords();
-    say("The card is deleted.");
+    say(t("run.deleted"));
     go("#/records");
   });
 }
@@ -265,12 +278,11 @@ function welcomed() {
   }
 }
 
-const WELCOME_SPOKEN =
-  "This is Recall. Recall keeps the things you would hate to lose. " +
-  "Point the camera at a letter. Recall makes the print bigger and reads it out loud, " +
-  "and then it keeps it for you. Everything stays on this phone until someone in your " +
-  "family links it. Recall is not a medical device. Keep your papers, and always follow " +
-  "what your doctor or pharmacist tells you.";
+// Spoken, in her language. The words are the same as the screen.
+function welcomeSpoken() {
+  return t("run.welcomespoken") + " " + t("welcome.p3") + " " + t("safety.notmedical");
+}
+
 
 function finishWelcome() {
   try {
@@ -302,17 +314,23 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=25");
+    const cloud = await import("./cloud.js?v=26");
     const people = await cloud.members(id);
-    const helpers = people.filter((m) => m.role === "helper").map((m) => m.display_name || "family");
+    const helpers = people
+      .filter((m) => m.role === "helper")
+      .map((m) => m.display_name || t("run.afamilymember"));
     if (helpers.length === 0) {
       line.hidden = true;
       return;
     }
     const names = helpers.length === 1
       ? helpers[0]
-      : helpers.slice(0, -1).join(", ") + " and " + helpers[helpers.length - 1];
-    line.textContent = names + " can see your cards.";
+      : helpers.slice(0, -1).join(", ") + " " + t("run.and") + " " + helpers[helpers.length - 1];
+    // One name or several changes the verb in Dutch and French, so the two
+    // sentences are separate keys rather than one with a plural glued on.
+    line.textContent = helpers.length === 1
+      ? t("run.canseeone", { who: names })
+      : t("run.canseemany", { who: names });
     line.hidden = false;
   } catch (err) {
     line.hidden = true;
@@ -328,7 +346,7 @@ function ask(question, yesLabel) {
   const no = document.getElementById("ask-no");
   yes.textContent = yesLabel || "Yes";
 
-  speech.speak(question);
+  speech.speak(question, i18n.spokenLang());
 
   return new Promise((resolve) => {
     const finish = (answer) => {
@@ -361,27 +379,120 @@ function drawVoices() {
   if (!all.length) {
     pick.innerHTML = '<option value="">this phone has only one voice</option>';
     msg.hidden = false;
-    msg.textContent = "Nothing to choose here, so Recall uses the voice the phone has.";
+    msg.textContent = t("voice.only");
     return;
   }
 
-  const current = speech.pickVoice("nl-BE");
+  const current = speech.pickVoice(i18n.spokenLang());
   pick.innerHTML = all.map((v) =>
     '<option value="' + esc(v.name) + '"' +
     (current && current.name === v.name ? " selected" : "") + ">" +
     esc(v.name + "  (" + v.lang + ")") + "</option>"
   ).join("");
 
-  // A letter here is usually Dutch. If the device has no Dutch voice it will be
-  // read with an English accent, which sounds broken and is not obvious why.
-  if (!dutch.length) {
+  // If the device has no voice for the language she reads in, the text is read
+  // with a foreign accent, which sounds broken and is not obvious why. N15.
+  const mine = speech.voicesFor(i18n.lang());
+  if (!mine.length) {
     msg.hidden = false;
-    msg.textContent = "This device has no Dutch voice, so a Dutch letter is read " +
-      "with an English accent. On Android: Settings, then Text to speech, then " +
-      "install Dutch. On Windows: Settings, Time and language, Speech.";
+    msg.textContent = t("voice.missing");
   } else {
     msg.hidden = true;
   }
+}
+
+/* the language, L1 to L6 */
+
+function drawLanguages() {
+  const pick = document.getElementById("lang-pick");
+  if (!pick) return;
+  const now = i18n.lang();
+  pick.innerHTML = i18n.LANGUAGES.map((one) =>
+    '<option value="' + one.code + '"' + (one.code === now ? " selected" : "") + ">" +
+    esc(one.label) + "</option>"
+  ).join("");
+}
+
+// Everything drawn from a script has to be drawn again, because only the
+// markup carrying data-t is refreshed by the module itself.
+async function redrawEverything() {
+  drawLanguages();
+  drawVoices();
+  await drawLockSettings();
+  await drawSharingState();
+  await drawKnows();
+  await route();
+  await showWhoHasAccess();
+}
+
+/* what Recall knows about you, P20 and P21. Article 15 and article 20, in a
+   form she can use without writing anybody a letter. */
+
+async function drawKnows() {
+  const list = document.getElementById("knows-list");
+  const where = document.getElementById("knows-where");
+  if (!list) return;
+
+  let photos = 0;
+  for (const record of records) {
+    if (record.hasPhoto) photos += 1;
+  }
+  const read = records.filter((r) => r.ocrText && r.ocrText.length).length;
+
+  const counted = [
+    [t("knows.cards"), records.length],
+    [t("knows.photos"), photos],
+    [t("knows.reminders"), reminders.length],
+    [t("knows.readtext"), read]
+  ];
+  list.innerHTML = counted.map((row) =>
+    "<li><span>" + esc(row[0]) + "</span><b>" + row[1] + "</b></li>"
+  ).join("");
+
+  where.textContent = linkedHousehold() ? t("knows.whereon") : t("knows.whereoff");
+}
+
+// Article 20. One file, everything in it, readable by a person and by a
+// machine. The photos travel as text so the file stands on its own.
+async function exportEverything() {
+  const msg = document.getElementById("export-msg");
+  msg.hidden = false;
+  msg.textContent = t("run.onemoment");
+
+  const photos = {};
+  for (const record of records) {
+    if (!record.hasPhoto) continue;
+    const blob = await store.photoBlob(record.id);
+    if (!blob) continue;
+    photos[record.id] = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  const bundle = {
+    what: "Everything Recall keeps about you",
+    made: new Date().toISOString(),
+    language: i18n.lang(),
+    sharedWithFamily: Boolean(linkedHousehold()),
+    cards: records,
+    reminders: reminders,
+    photos: photos
+  };
+
+  const file = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(file);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "recall-" + new Date().toISOString().slice(0, 10) + ".json";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+  msg.textContent = t("knows.exported");
 }
 
 /* consent, P4 and P19 */
@@ -391,23 +502,20 @@ const CONSENT_KEY = "recall.consent";
 // The same words as the screen, in the order they are read. Whenever either
 // changes, NOTICE_VERSION in config.js changes with it, so a recorded consent
 // always points at the text that was actually read out.
-const NOTICE_SPOKEN =
-  "Your family would like to help. That means the cards you keep, their photos, " +
-  "what Recall reads off your letters and whether a reminder was done would be " +
-  "kept for your family as well, on a computer in Germany, not only on this phone. " +
-  "Only the people your family has let in can see them, you can see their names, " +
-  "and everything they do is written down where you can read it. " +
-  "Letters from a doctor say things about your health, and papers from a lawyer or " +
-  "a bank say things about your money. The law treats those as needing your clear " +
-  "yes, and that is what this is. " +
-  "You can say no, and Recall keeps working on this phone on its own. " +
-  "You can stop later, in the help screen, and nothing new is shared after that. " +
-  "Recall is not a medical device. Keep your papers, and always follow what your " +
-  "doctor or pharmacist tells you.";
+function noticeSpoken() {
+  return t("run.consentspoken");
+}
+
+
+// The notice exists in three languages, so the record says which one was read.
+function noticeVersion() {
+  return NOTICE_VERSION + "/" + i18n.lang();
+}
 
 function consentRemembered() {
   try {
-    return window.localStorage.getItem(CONSENT_KEY) === NOTICE_VERSION;
+    const seen = window.localStorage.getItem(CONSENT_KEY) || "";
+    return seen.split("/")[0] === NOTICE_VERSION;
   } catch (err) {
     return false;
   }
@@ -415,7 +523,7 @@ function consentRemembered() {
 
 function rememberConsent(value) {
   try {
-    if (value) window.localStorage.setItem(CONSENT_KEY, NOTICE_VERSION);
+    if (value) window.localStorage.setItem(CONSENT_KEY, noticeVersion());
     else window.localStorage.removeItem(CONSENT_KEY);
   } catch (err) {
     // nothing to do
@@ -429,7 +537,7 @@ async function consentNeeded() {
   if (!isConfigured() || !linkedHousehold()) return false;
   if (consentRemembered()) return false;
   try {
-    const cloud = await import("./cloud.js?v=25");
+    const cloud = await import("./cloud.js?v=26");
     const latest = await cloud.latestConsent(linkedHousehold());
     if (latest && !latest.withdrawn_at) {
       rememberConsent(true);
@@ -447,17 +555,17 @@ function readNotice() {
     speech.stop();
     return;
   }
-  speech.speak(NOTICE_SPOKEN);
+  speech.speak(noticeSpoken(), i18n.spokenLang());
 }
 
 async function consentYes() {
   const msg = document.getElementById("consent-msg");
   speech.stop();
   msg.hidden = false;
-  msg.textContent = "Thank you. Fetching the cards your family made.";
+  msg.textContent = t("consent.thanks");
   try {
-    const cloud = await import("./cloud.js?v=25");
-    const where = await cloud.recordConsent(linkedHousehold(), NOTICE_VERSION);
+    const cloud = await import("./cloud.js?v=26");
+    const where = await cloud.recordConsent(linkedHousehold(), noticeVersion());
     window.console.info("Recall: consent recorded in the " + where + " table.");
     rememberConsent(true);
     await route();
@@ -465,8 +573,7 @@ async function consentYes() {
     await syncHousehold({ loud: true });
     showInstallOffer(true);
   } catch (err) {
-    msg.textContent = "That did not save: " + (err.message || err) +
-      ". Nothing has been shared.";
+    msg.textContent = t("consent.failed") + " " + (err.message || err);
   }
 }
 
@@ -476,7 +583,7 @@ async function consentNo() {
   speech.stop();
   window.localStorage.removeItem(HOUSEHOLD_KEY);
   rememberConsent(false);
-  say("Nothing is shared. Recall stays on this phone.");
+  say(t("consent.declined"));
   await route();
   await showWhoHasAccess();
 }
@@ -484,25 +591,21 @@ async function consentNo() {
 // Article 7(3): as easy to take back as to give.
 async function stopSharing() {
   const msg = document.getElementById("sharing-msg");
-  const sure = await ask(
-    "Stop sharing new cards with your family? What they already have stays with " +
-    "them until they delete it.",
-    "Yes, stop sharing"
-  );
+  const sure = await ask(t("share.stopask"), t("share.stopyes"));
   if (!sure) return;
 
   msg.hidden = false;
-  msg.textContent = "Stopping.";
+  msg.textContent = t("share.stopping");
   const id = linkedHousehold();
   try {
-    const cloud = await import("./cloud.js?v=25");
+    const cloud = await import("./cloud.js?v=26");
     await cloud.withdrawConsent(id);
   } catch (err) {
     // Even if the note cannot be written, the sharing still stops here.
   }
   window.localStorage.removeItem(HOUSEHOLD_KEY);
   rememberConsent(false);
-  msg.textContent = "Stopped. Nothing new is shared. Your cards stay on this phone.";
+  msg.textContent = t("share.stopped");
   await drawSharingState();
   await route();
   await showWhoHasAccess();
@@ -517,8 +620,7 @@ async function drawSharingState() {
     return;
   }
   wrap.hidden = false;
-  state.textContent = "Your cards are shared with your family. They can add cards " +
-    "and set reminders, and you can see everything they do.";
+  state.textContent = t("share.on");
 }
 
 /* the lock, R7.3 and R7.4 */
@@ -567,7 +669,7 @@ async function pressKey(key) {
   if (key === "clear") {
     typed = "";
     drawDots();
-    lockSay("Type your numbers.");
+    lockSay(t("lock.say"));
     return;
   }
 
@@ -580,21 +682,21 @@ async function pressKey(key) {
   const ok = await lock.checkCode(typed);
   if (ok) {
     hideLock();
-    lockSay("Type your numbers.");
+    lockSay(t("lock.say"));
     return;
   }
   typed = "";
   drawDots();
-  lockSay("That is not it. Try again, or ask your family.");
+  lockSay(t("lock.wrong"));
 }
 
 async function unlockWithFace() {
   try {
     const ok = await lock.checkFace();
     if (ok) hideLock();
-    else lockSay("That did not work. Type your numbers instead.");
+    else lockSay(t("run.facefailed"));
   } catch (err) {
-    lockSay("Face ID did not work. Type your numbers instead.");
+    lockSay(t("run.facefailed"));
   }
 }
 
@@ -606,24 +708,24 @@ async function rescueWithCode(event) {
   const msg = document.getElementById("rescue-msg");
   const code = document.getElementById("rescue-code").value.trim();
   msg.hidden = false;
-  msg.textContent = "Checking the code.";
+  msg.textContent = t("run.checkingcode");
 
   if (!isConfigured()) {
-    msg.textContent = "This phone is not linked to a family, so there is no code to check.";
+    msg.textContent = t("run.notlinked");
     return;
   }
 
   try {
-    const cloud = await import("./cloud.js?v=25");
+    const cloud = await import("./cloud.js?v=26");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
     hideLock();
-    say("The phone is unlocked and the code is off. Set a new one in the help screen.");
+    say(t("run.unlocked"));
     await showWhoHasAccess();
     await syncHousehold({ loud: true });
   } catch (err) {
-    msg.textContent = "That code did not work: " + (err.message || err);
+    msg.textContent = t("run.badlockcode") + " " + (err.message || err);
   }
 }
 
@@ -640,9 +742,10 @@ async function drawLockSettings() {
   const canFace = await lock.faceAvailable();
 
   state.textContent = on
-    ? "This phone asks for " + lock.codeLength() + " numbers when Recall is opened" +
-      (lock.faceReady() ? ", and Face ID works as well." : ".")
-    : "This phone asks for nothing. Recall opens straight away.";
+    ? (lock.faceReady()
+        ? t("run.lockasksface", { n: lock.codeLength() })
+        : t("run.lockasks", { n: lock.codeLength() }))
+    : t("run.locknothing");
 
   faceOn.hidden = !(on && canFace && !lock.faceReady());
   faceOff.hidden = !(on && lock.faceReady());
@@ -658,14 +761,14 @@ async function saveCode(event) {
   msg.hidden = false;
 
   if (one.value !== two.value) {
-    msg.textContent = "The two do not match.";
+    msg.textContent = t("run.codenomatch");
     return;
   }
   try {
     await lock.setCode(one.value);
     one.value = "";
     two.value = "";
-    msg.textContent = "Done. Recall will ask for those numbers next time it opens.";
+    msg.textContent = t("run.codeset");
     await drawLockSettings();
   } catch (err) {
     msg.textContent = err.message || String(err);
@@ -704,11 +807,11 @@ function showInstallOffer(force) {
   }
 
   if (install.canPrompt()) {
-    text.textContent = "Keep Recall on your home screen, so it is one tap away.";
+    text.textContent = t("install.text");
     button.hidden = false;
   } else {
     // iPhone, where there is no prompt to offer, only instructions.
-    text.textContent = "Keep Recall on the home screen. " + install.iphoneSteps();
+    text.textContent = t("run.iphonehint") + " " + install.iphoneSteps();
     button.hidden = true;
   }
   box.hidden = false;
@@ -720,18 +823,18 @@ async function linkThisPhone(event) {
   const code = document.getElementById("link-code").value.trim();
   const msg = document.getElementById("link-msg");
   msg.hidden = false;
-  msg.textContent = "One moment.";
+  msg.textContent = t("run.onemoment");
   try {
-    const cloud = await import("./cloud.js?v=25");
+    const cloud = await import("./cloud.js?v=26");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
-    msg.textContent = "This phone is linked. Fetching the family cards.";
+    msg.textContent = t("run.linkedfetch");
     await showWhoHasAccess();
     await syncHousehold({ loud: true });
-    msg.textContent = "This phone is linked. Family can add cards now.";
+    msg.textContent = t("run.linkedok");
     showInstallOffer(true);
   } catch (err) {
-    msg.textContent = "That code did not work: " + (err.message || err);
+    msg.textContent = t("run.badlockcode") + " " + (err.message || err);
   }
 }
 
@@ -747,9 +850,9 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=25");
+    cloud = await import("./cloud.js?v=26");
   } catch (err) {
-    if (loud) say("Could not reach the family cards.");
+    if (loud) say(t("run.unreachable"));
     return false;
   }
 
@@ -877,9 +980,9 @@ async function syncHousehold(options) {
 
   if (problem) {
     window.console.error("Recall sync problem:", problem);
-    if (loud) say("Something did not sync: " + (problem.message || problem));
+    if (loud) say(t("run.syncproblem") + " " + (problem.message || problem));
   } else if (loud) {
-    say(changed ? "Up to date, new cards arrived." : "Up to date, nothing new.");
+    say(changed ? t("run.syncnew") : t("run.syncsame"));
   }
   return changed;
 }
@@ -997,23 +1100,23 @@ async function readTheFrame() {
   const view = viewNow();
   const blob = await camera.capture(video, view.zoom, view.shape);
   if (!blob) {
-    say("The camera is not ready yet.");
+    say(t("run.cameranotready"));
     return;
   }
 
-  cameraMessage("Recall is reading what you see. The first time takes a moment.");
+  cameraMessage(t("run.livereading"));
   try {
     const text = await ocr.readText(blob, (percent) => {
-      cameraMessage("Recall is reading what you see. " + percent + " per cent.");
+      cameraMessage(t("run.livepercent", { n: percent }));
     });
     if (!text) {
-      cameraMessage("No words found. Hold the phone still, a little further away.");
+      cameraMessage(t("run.nowords"));
       return;
     }
     speech.speak(text.slice(0, 600), ocr.guessLang(text));
-    cameraMessage("Reading it out loud. Press again to stop.");
+    cameraMessage(t("run.readingaloud"));
   } catch (err) {
-    cameraMessage("Recall could not read this. Try the photo instead.");
+    cameraMessage(t("run.livefailed"));
   }
 }
 
@@ -1042,11 +1145,11 @@ async function usePhoto(blob) {
   foundBox.hidden = true;
   textBox.textContent = "";
   state.hidden = false;
-  state.textContent = "Recall is reading the letter. The first time takes a moment.";
+  state.textContent = t("run.letterreading");
 
   try {
     const text = await ocr.readText(blob, (percent) => {
-      state.textContent = "Recall is reading the letter. " + percent + " per cent.";
+      state.textContent = t("run.letterpercent", { n: percent });
     });
     const when = ocr.findDate(text);
     const title = ocr.guessTitle(text);
@@ -1059,8 +1162,8 @@ async function usePhoto(blob) {
 
     pendingText = text;
     state.textContent = when
-      ? "Recall read: " + readableDate(when.toISOString()) + ". Is that right?"
-      : "Recall found no date. Fill one in yourself if you need it.";
+      ? t("run.datefound", { date: readableDate(when.toISOString()) })
+      : t("run.nodate");
 
     // S1: never file silently. What was read is on the screen, and it can be
     // heard again as often as they like.
@@ -1070,7 +1173,7 @@ async function usePhoto(blob) {
       speech.speak(text.slice(0, 600), ocr.guessLang(text));
     }
   } catch (err) {
-    state.textContent = "Recall could not read the text. You can still keep the card.";
+    state.textContent = t("run.letterfailed");
   }
 }
 
@@ -1079,7 +1182,7 @@ async function saveNew(event) {
   const form = event.target;
   const title = document.getElementById("f-title").value.trim();
   if (!title) {
-    say("Give the card a name first.");
+    say(t("new.needname"));
     document.getElementById("f-title").focus();
     return;
   }
@@ -1129,7 +1232,7 @@ async function saveNew(event) {
   reminders = await store.allReminders();
   syncHousehold();
   pendingPhoto = null;
-  say("Kept.");
+  say(t("new.kept"));
   go("#/record/" + id);
 }
 
@@ -1148,7 +1251,7 @@ function wire() {
     const sayIt = target.closest("[data-say]");
     if (sayIt) {
       if (speech.speaking()) speech.stop();
-      else if (!speech.speak(sayIt.dataset.say)) say("This browser cannot read out loud.");
+      else if (!speech.speak(sayIt.dataset.say, i18n.spokenLang())) say(t("run.nospeech"));
       return;
     }
 
@@ -1156,7 +1259,7 @@ function wire() {
     if (doneIt) {
       await store.markReminderDone(doneIt.dataset.done);
       reminders = await store.allReminders();
-      say("Marked done.");
+      say(t("run.markeddone"));
       await route();
       return;
     }
@@ -1179,14 +1282,14 @@ function wire() {
       speech.stop();
       return;
     }
-    if (!speech.speak(text, ocr.guessLang(text))) say("This browser cannot read out loud.");
+    if (!speech.speak(text, ocr.guessLang(text))) say(t("run.nospeech"));
   });
 
   document.getElementById("btn-shoot").addEventListener("click", async () => {
     const view = viewNow();
     const blob = await camera.capture(video, view.zoom, view.shape);
     if (!blob) {
-      say("The camera is not ready yet.");
+      say(t("run.cameranotready"));
       return;
     }
     await usePhoto(blob);
@@ -1203,7 +1306,7 @@ function wire() {
 
   document.getElementById("btn-welcome-read").addEventListener("click", () => {
     if (speech.speaking()) speech.stop();
-    else speech.speak(WELCOME_SPOKEN);
+    else speech.speak(welcomeSpoken(), i18n.spokenLang());
   });
   document.getElementById("btn-welcome-start").addEventListener("click", finishWelcome);
 
@@ -1219,7 +1322,7 @@ function wire() {
     rememberInstallAsked();
     const outcome = await install.prompt();
     document.getElementById("install-box").hidden = true;
-    if (outcome === "accepted") say("Recall is on your home screen.");
+    if (outcome === "accepted") say(t("run.installed"));
   });
   document.getElementById("btn-install-no").addEventListener("click", () => {
     rememberInstallAsked();
@@ -1236,13 +1339,40 @@ function wire() {
     speech.chooseVoice(event.target.value);
     const msg = document.getElementById("voice-msg");
     msg.hidden = false;
-    msg.textContent = "Saved. Press try to hear it.";
+    msg.textContent = t("voice.saved");
   });
   document.getElementById("btn-voice-try").addEventListener("click", () => {
     const name = document.getElementById("voice-pick").value;
     const nl = /nl|dutch|belg/i.test(name);
     speech.sample(name, nl ? "nl-BE" : "en-GB");
   });
+
+  document.getElementById("lang-pick").addEventListener("change", async (event) => {
+    i18n.setLang(event.target.value);
+    say(t("lang.changed"));
+    await redrawEverything();
+    // The new language deserves a voice that speaks it.
+    speech.chooseVoice("");
+  });
+  document.getElementById("btn-export").addEventListener("click", exportEverything);
+
+  document.querySelectorAll("[data-filter]").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const kind = chip.dataset.filter;
+      showing[kind] = !showing[kind];
+      chip.setAttribute("aria-pressed", showing[kind] ? "true" : "false");
+      renderRecords(document.getElementById("search").value);
+    });
+  });
+
+  document.getElementById("lang-pick").addEventListener("change", async (event) => {
+    i18n.setLang(event.target.value);
+    say(t("lang.changed"));
+    await redrawEverything();
+    // The new language deserves a voice that speaks it.
+    speech.chooseVoice("");
+  });
+  document.getElementById("btn-export").addEventListener("click", exportEverything);
 
   document.getElementById("btn-consent-read").addEventListener("click", readNotice);
   document.getElementById("btn-consent-yes").addEventListener("click", consentYes);
@@ -1253,7 +1383,7 @@ function wire() {
   document.getElementById("btn-lock-off").addEventListener("click", async () => {
     lock.clearLock();
     document.getElementById("lock-msg").hidden = false;
-    document.getElementById("lock-msg").textContent = "The code is off.";
+    document.getElementById("lock-msg").textContent = t("run.codeoff");
     await drawLockSettings();
   });
   document.getElementById("btn-lock-now").addEventListener("click", () => {
@@ -1263,34 +1393,45 @@ function wire() {
   document.getElementById("btn-face-on").addEventListener("click", async () => {
     const msg = document.getElementById("lock-msg");
     msg.hidden = false;
-    msg.textContent = "Ask her to look at the phone.";
+    msg.textContent = t("run.facelook");
     try {
       await lock.addFace("her phone");
-      msg.textContent = "Face ID works on this phone now. The numbers still work too.";
+      msg.textContent = t("run.faceon");
     } catch (err) {
-      msg.textContent = "Face ID was not set up: " + (err.message || err);
+      msg.textContent = t("run.facefailed") + " " + (err.message || err);
     }
     await drawLockSettings();
   });
   document.getElementById("btn-face-off").addEventListener("click", async () => {
     lock.removeFace();
     document.getElementById("lock-msg").hidden = false;
-    document.getElementById("lock-msg").textContent = "Face ID is off. The numbers still work.";
+    document.getElementById("lock-msg").textContent = t("run.faceoff");
     await drawLockSettings();
   });
 
-  document.getElementById("btn-stuck-retry").addEventListener("click", () => {
-    window.location.reload();
+  document.getElementById("btn-stuck-retry").addEventListener("click", async () => {
+    const msg = document.getElementById("stuck-msg");
+    msg.hidden = false;
+    msg.textContent = t("run.onemoment");
+    try {
+      await store.allRecords();
+      msg.textContent = t("stuck.opened");
+      window.setTimeout(() => window.location.reload(), 900);
+    } catch (err) {
+      msg.textContent = t("stuck.closeall");
+    }
   });
   document.getElementById("btn-stuck-fresh").addEventListener("click", async () => {
     const msg = document.getElementById("stuck-msg");
+    if (!await ask(t("stuck.freshask"), t("stuck.fresh"))) return;
     msg.hidden = false;
-    msg.textContent = "Clearing the store on this device.";
+    msg.textContent = t("run.clearing");
     try {
       await store.startFresh();
       window.location.reload();
     } catch (err) {
-      msg.textContent = err.message || String(err);
+      // Even the reset can be blocked by another tab holding the store open.
+      msg.textContent = t("stuck.closeall");
     }
   });
 
@@ -1299,6 +1440,8 @@ function wire() {
     await drawLockSettings();
     await drawSharingState();
     drawVoices();
+    drawLanguages();
+    await drawKnows();
     help.showModal();
   });
   document.getElementById("help-close").addEventListener("click", () => help.close());
@@ -1308,7 +1451,7 @@ function wire() {
     document.getElementById("form-link").addEventListener("submit", linkThisPhone);
     document.getElementById("btn-refresh").hidden = false;
     document.getElementById("btn-refresh").addEventListener("click", async () => {
-      say("Looking for new cards.");
+      say(t("run.looking"));
       await syncHousehold({ loud: true });
     });
   }
@@ -1326,18 +1469,22 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=25");
+    const cloud = await import("./cloud.js?v=26");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
-    say("This phone is linked to the family.");
+    say(t("run.linkedfamily"));
     return true;
   } catch (err) {
-    say("That link did not work: " + (err.message || err));
+    say(t("run.linkfailed") + " " + (err.message || err));
     return false;
   }
 }
 
 async function init() {
+  // Before anything is drawn or read out, so nothing is ever shown in the
+  // wrong language even for a moment.
+  i18n.apply();
+
   wire();
 
   // Chrome and Safari hand over the voice list a moment after the page loads,
@@ -1366,7 +1513,7 @@ async function init() {
       document.getElementById("stuck-msg").hidden = true;
       return;
     }
-    say(err.message || "The store on this device did not open.");
+    say(err.message || t("run.storefailed"));
   }
 
   const linked = await claimFromLink();
@@ -1376,7 +1523,7 @@ async function init() {
   // question comes before it and not after.
   if (await consentNeeded()) {
     show("consent");
-    speech.speak(NOTICE_SPOKEN);
+    speech.speak(noticeSpoken(), i18n.spokenLang());
     return;
   }
 

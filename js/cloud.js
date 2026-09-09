@@ -5,7 +5,7 @@
 // Two roles live here: a helper signs in with an emailed link, a keeper phone
 // signs in anonymously once and is claimed into a household with a code.
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from "./config.js?v=25";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from "./config.js?v=26";
 
 const LIB = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
@@ -344,9 +344,14 @@ export async function markDone(householdId, reminderId, recordId) {
 }
 
 // P17. Three values, and no more than three.
+// Long enough for a clock that is off by a few minutes, and for somebody who
+// is at the appointment while it is happening. Short enough that a morning
+// appointment shows as missed the same afternoon rather than the next day.
+const GRACE_MS = 60 * 60 * 1000;
+
 export function reminderStatus(reminder) {
   if (reminder.done_at) return "done";
-  if (new Date(reminder.due_at).getTime() < Date.now() - 12 * 3600 * 1000) return "missed";
+  if (new Date(reminder.due_at).getTime() < Date.now() - GRACE_MS) return "missed";
   return "coming";
 }
 

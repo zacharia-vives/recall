@@ -8,193 +8,197 @@
 <meta name="theme-color" content="#231710">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=25">
-<link rel="stylesheet" href="css/helper.css?v=25">
+<link rel="stylesheet" href="css/style.css?v=26">
+<link rel="stylesheet" href="css/helper.css?v=26">
 </head>
 <body class="helper">
 
 <header class="topbar">
   <img src="icons/icon-192.png" alt="" class="logo" width="36" height="36">
-  <span class="brand">Recall <em>for family</em></span>
+  <span class="brand">Recall <em data-t="h.brand">for family</em></span>
   <span id="who" class="who"></span>
-  <button id="btn-out" class="text-btn" type="button" hidden>Sign out</button>
+  <label class="lang-bar">
+    <span class="label" data-t="lang.label">Language</span>
+    <select id="lang-pick"></select>
+  </label>
+  <button id="btn-out" class="text-btn" type="button" hidden data-t="h.signout">Sign out</button>
 </header>
 
 <main id="main">
 
   <!-- the cloud is not set up yet -->
   <section id="s-unconfigured" class="pane" hidden>
-    <h1>Not connected yet</h1>
+    <h1 data-t="h.unconfigured">Not connected yet</h1>
     <p>The family side needs a database. Someone has to put a Supabase project url
       and its anon key into <code>js/config.js</code>, and run <code>db/schema.sql</code>
       once in the SQL editor.</p>
     <p>Until then the keeper app keeps working on its own, entirely on the phone,
       which is how it is meant to be.</p>
-    <p><a class="link" href="index.html">Back to the keeper app</a></p>
+    <p><a class="link" href="index.html" data-t="h.backtokeeper">Back to the keeper app</a></p>
   </section>
 
   <!-- sign in -->
   <section id="s-signin" class="pane" hidden>
-    <h1>Sign in</h1>
-    <p>We send a link to your email. No password to remember, and nothing to install.</p>
+    <h1 data-t="h.signin">Sign in</h1>
+    <p data-t="h.signinp">We send a link to your email. No password to remember, and nothing to install.</p>
     <form id="form-signin">
       <label class="field">
-        <span class="label">Your email</span>
+        <span class="label" data-t="h.email">Your email</span>
         <input id="email" type="email" required autocomplete="email" placeholder="marie@example.be">
       </label>
-      <button class="btn" type="submit">Send me the link</button>
+      <button class="btn" type="submit" data-t="h.sendlink">Send me the link</button>
     </form>
     <p id="signin-msg" class="msg" hidden></p>
   </section>
 
   <!-- choose or create a household -->
   <section id="s-households" class="pane" hidden>
-    <h1>Whose cards?</h1>
+    <h1 data-t="h.whose">Whose cards?</h1>
     <div id="household-list" class="rows"></div>
     <details class="new-household">
-      <summary>Set up a new household</summary>
+      <summary data-t="h.newhh">Set up a new household</summary>
       <form id="form-household">
         <label class="field">
-          <span class="label">Name it after the person</span>
-          <input id="hh-name" required placeholder="At my mother, Godelieve">
+          <span class="label" data-t="h.hhname">Name it after the person</span>
+          <input id="hh-name" required placeholder="At my mother, Godelieve" data-t-ph="h.hhnameph">
         </label>
         <label class="field">
-          <span class="label">Your own name, so she can see who helps</span>
+          <span class="label" data-t="h.myname">Your own name, so she can see who helps</span>
           <input id="hh-me" required placeholder="Marie">
         </label>
-        <button class="btn" type="submit">Create it</button>
+        <button class="btn" type="submit" data-t="h.create">Create it</button>
       </form>
     </details>
   </section>
 
   <!-- the household itself -->
   <section id="s-app" class="pane" hidden>
-    <nav class="subtabs" aria-label="Sections">
-      <button class="subtab" data-view="follow" aria-current="page">Follow up</button>
-      <button class="subtab" data-view="cards">Cards</button>
-      <button class="subtab" data-view="house">Household</button>
+    <nav class="subtabs" aria-label="Sections" data-t-aria="h.tabs">
+      <button class="subtab" data-view="follow" aria-current="page" data-t="h.follow">Follow up</button>
+      <button class="subtab" data-view="cards" data-t="h.cards">Cards</button>
+      <button class="subtab" data-view="house" data-t="h.house">Household</button>
     </nav>
 
     <div id="v-follow" class="view">
-      <h2>What is coming</h2>
+      <h2 data-t="h.coming">What is coming</h2>
       <div id="follow-coming" class="rows"></div>
-      <h2>Missed</h2>
+      <h2 data-t="h.missed">Missed</h2>
       <div id="follow-missed" class="rows"></div>
-      <h2>Done</h2>
+      <h2 data-t="h.donelist">Done</h2>
       <div id="follow-done" class="rows"></div>
     </div>
 
     <div id="v-cards" class="view" hidden>
       <div class="view-head">
-        <h2>Cards</h2>
-        <button id="btn-new-card" class="btn" type="button">Add a card</button>
+        <h2 data-t="h.cards">Cards</h2>
+        <button id="btn-new-card" class="btn" type="button" data-t="h.addcard">Add a card</button>
       </div>
       <form id="form-card" class="card-form" hidden>
         <input type="hidden" id="c-id">
         <div class="two">
           <label class="field">
-            <span class="label">What is it</span>
+            <span class="label" data-t="h.whatisit">What is it</span>
             <select id="c-kind">
-              <option value="letter">A letter</option>
-              <option value="person">A person</option>
-              <option value="place">A place</option>
+              <option value="letter" data-t="kind.letter">A letter</option>
+              <option value="person" data-t="kind.person">A person</option>
+              <option value="place" data-t="kind.place">A place</option>
             </select>
           </label>
           <label class="field">
-            <span class="label">Name of the card</span>
-            <input id="c-title" required placeholder="Cardiology, check-up">
+            <span class="label" data-t="h.cardname">Name of the card</span>
+            <input id="c-title" required placeholder="Cardiology, check-up" data-t-ph="h.cardnameph">
           </label>
         </div>
         <div class="two">
           <label class="field">
-            <span class="label">Who</span>
-            <input id="c-people" placeholder="doctor Vermeulen, Marie">
+            <span class="label" data-t="field.who">Who</span>
+            <input id="c-people" placeholder="doctor Vermeulen, Marie" data-t-ph="h.whoph">
           </label>
           <label class="field">
-            <span class="label">Where</span>
-            <input id="c-place" placeholder="AZ Groeninge, Kortrijk">
+            <span class="label" data-t="field.where">Where</span>
+            <input id="c-place" placeholder="AZ Groeninge, Kortrijk" data-t-ph="field.whereph">
           </label>
         </div>
         <div class="two">
           <label class="field">
-            <span class="label">When</span>
+            <span class="label" data-t="field.when">When</span>
             <input id="c-when" type="datetime-local">
           </label>
           <label class="field">
-            <span class="label">Photo, optional</span>
+            <span class="label" data-t="h.photo">Photo, optional</span>
             <input id="c-photo" type="file" accept="image/*">
           </label>
         </div>
         <label class="field">
-          <span class="label">What Recall should say out loud</span>
-          <input id="c-spoken" placeholder="Your appointment with the cardiologist is tomorrow at ten.">
+          <span class="label" data-t="h.spoken">What Recall should say out loud</span>
+          <input id="c-spoken" placeholder="Your appointment with the cardiologist is tomorrow at ten." data-t-ph="h.spokenph">
         </label>
         <div class="two">
           <label class="field">
-            <span class="label">Remind her</span>
+            <span class="label" data-t="h.remindher">Remind her</span>
             <select id="c-repeat">
-              <option value="">no reminder</option>
-              <option value="none">once, the day before</option>
-              <option value="daily">every day</option>
-              <option value="twice_daily">twice a day</option>
-              <option value="weekly">every week</option>
+              <option value="" data-t="h.rep.none">no reminder</option>
+              <option value="none" data-t="h.rep.once">once, the day before</option>
+              <option value="daily" data-t="h.rep.daily">every day</option>
+              <option value="twice_daily" data-t="h.rep.twice">twice a day</option>
+              <option value="weekly" data-t="h.rep.weekly">every week</option>
             </select>
           </label>
           <label class="field">
-            <span class="label">Reminder time</span>
+            <span class="label" data-t="h.remindat">Reminder time</span>
             <input id="c-remind-at" type="datetime-local">
           </label>
         </div>
-        <p class="hint">A reminder waits on her Today screen and is read out loud
+        <p class="hint" data-t="h.remindhint">A reminder waits on her Today screen and is read out loud
           when she opens Recall. Recall cannot make a closed phone ring, so for
           something that really matters, call her as well.</p>
         <div class="form-actions">
-          <button class="btn" type="submit">Save the card</button>
-          <button class="btn ghost" type="button" id="btn-cancel-card">Cancel</button>
+          <button class="btn" type="submit" data-t="h.savecard">Save the card</button>
+          <button class="btn ghost" type="button" id="btn-cancel-card" data-t="app.cancel">Cancel</button>
         </div>
       </form>
       <div id="cards-list" class="rows"></div>
       <details id="bin-wrap" class="bin">
-        <summary>The bin</summary>
-        <p class="hint">Cards stay here for thirty days before they are gone for good.</p>
+        <summary data-t="h.bin">The bin</summary>
+        <p class="hint" data-t="h.binhint">Cards stay here for thirty days before they are gone for good.</p>
         <div id="bin-list" class="rows"></div>
       </details>
     </div>
 
     <div id="v-house" class="view" hidden>
-      <h2>Who has access</h2>
+      <h2 data-t="h.access">Who has access</h2>
       <div id="members-list" class="rows"></div>
 
-      <h2>Her phones</h2>
+      <h2 data-t="h.phones">Her phones</h2>
       <div id="devices-list" class="rows"></div>
-      <button id="btn-wizard" class="btn" type="button">Set up a phone</button>
+      <button id="btn-wizard" class="btn" type="button" data-t="h.setupphone">Set up a phone</button>
 
       <!-- R7.1, R7.2. The same three steps whether this is the first phone or a
            replacement, because the family should not have to know the difference. -->
       <div id="wizard" class="wizard" hidden>
         <ol class="steps">
-          <li id="step-1" class="step" aria-current="step">1. What happens</li>
-          <li id="step-2" class="step">2. Show her the square</li>
-          <li id="step-3" class="step">3. Finish</li>
+          <li id="step-1" class="step" aria-current="step" data-t="h.step1">1. What happens</li>
+          <li id="step-2" class="step" data-t="h.step2">2. Show her the square</li>
+          <li id="step-3" class="step" data-t="h.step3">3. Finish</li>
         </ol>
 
         <div id="w-1" class="wstep">
-          <p>Her cards live in the household, not on the phone, so a new phone has
+          <p data-t="h.w1">Her cards live in the household, not on the phone, so a new phone has
             everything the moment it is linked. Nothing is copied and nothing is lost.
             The old phone keeps working until you remove it here, which is the last
             step.</p>
           <label class="field">
-            <span class="label">What to call this phone</span>
-            <input id="w-name" placeholder="Godelieve, new phone">
+            <span class="label" data-t="h.phonename">What to call this phone</span>
+            <input id="w-name" placeholder="Godelieve, new phone" data-t-ph="h.phonenameph">
           </label>
           <div class="form-actions">
-            <button id="btn-w-code" class="btn" type="button">Make the code</button>
-            <button id="btn-w-cancel" class="btn ghost" type="button">Cancel</button>
+            <button id="btn-w-code" class="btn" type="button" data-t="h.makecode">Make the code</button>
+            <button id="btn-w-cancel" class="btn ghost" type="button" data-t="app.cancel">Cancel</button>
           </div>
         </div>
 
         <div id="w-2" class="wstep" hidden>
-          <p>On her phone, open the camera and point it at this square. It opens
+          <p data-t="h.w2">On her phone, open the camera and point it at this square. It opens
             Recall and links the phone. If the camera will not cooperate, she can
             type the six letters instead. Both are good for fifteen minutes.</p>
           <div class="linkbox">
@@ -204,36 +208,39 @@
             <div id="qr-holder"></div>
             <p class="hint" id="qr-url"></p>
           </div>
-          <p id="w-waiting" class="msg">Waiting for her phone.</p>
+          <p id="w-waiting" class="msg" data-t="h.waiting">Waiting for her phone.</p>
           <div class="form-actions">
-            <button id="btn-w-again" class="btn ghost" type="button">Make a new code</button>
-            <button id="btn-w-stop" class="btn ghost" type="button">Stop waiting</button>
+            <button id="btn-w-again" class="btn ghost" type="button" data-t="h.newcode">Make a new code</button>
+            <button id="btn-w-stop" class="btn ghost" type="button" data-t="h.stopwaiting">Stop waiting</button>
           </div>
         </div>
 
         <div id="w-3" class="wstep" hidden>
-          <p id="w-done" class="msg">That phone is linked.</p>
-          <p class="hint">If this replaces an older phone, remove the old one here.
+          <p id="w-done" class="msg" data-t="h.linked">That phone is linked.</p>
+          <p class="hint" data-t="h.replacehint">If this replaces an older phone, remove the old one here.
             It loses access the moment you do.</p>
           <div id="w-others" class="rows"></div>
           <div class="form-actions">
-            <button id="btn-w-finish" class="btn" type="button">Finished</button>
+            <button id="btn-w-finish" class="btn" type="button" data-t="h.finished">Finished</button>
           </div>
         </div>
       </div>
 
-      <h2>Invite another helper</h2>
+      <h2 data-t="h.invite">Invite another helper</h2>
       <form id="form-invite" class="inline-form">
         <label class="field">
-          <span class="label">Their email</span>
+          <span class="label" data-t="h.theiremail">Their email</span>
           <input id="inv-email" type="email" required placeholder="tom@example.be">
         </label>
-        <button class="btn" type="submit">Create an invitation</button>
+        <button class="btn" type="submit" data-t="h.makeinvite">Create an invitation</button>
       </form>
       <p id="invite-msg" class="msg" hidden></p>
 
-      <h2>What has happened</h2>
-      <p class="hint">She can read this list too. That is the point of it.</p>
+      <h2 data-t="h.privacy">Privacy and what we keep</h2>
+      <p class="hint"><a class="link" href="privacy.html" data-t="knows.policy">Read the whole privacy notice</a></p>
+
+      <h2 data-t="h.whathappened">What has happened</h2>
+      <p class="hint" data-t="h.logthepoint">She can read this list too. That is the point of it.</p>
       <div id="activity-list" class="rows"></div>
     </div>
   </section>
@@ -241,16 +248,16 @@
 </main>
 
 <dialog id="ask" aria-labelledby="ask-title">
-  <h2 id="ask-title">Are you sure?</h2>
+  <h2 id="ask-title" data-t="app.sure">Are you sure?</h2>
   <p id="ask-text"></p>
   <div class="form-actions">
-    <button id="ask-yes" class="btn danger" type="button">Yes</button>
-    <button id="ask-no" class="btn ghost" type="button">Cancel</button>
+    <button id="ask-yes" class="btn danger" type="button" data-t="app.yes">Yes</button>
+    <button id="ask-no" class="btn ghost" type="button" data-t="app.cancel">Cancel</button>
   </div>
 </dialog>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script type="module" src="js/helper.js?v=25"></script>
+<script type="module" src="js/helper.js?v=26"></script>
 </body>
 </html>

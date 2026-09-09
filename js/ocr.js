@@ -1,3 +1,5 @@
+import * as i18n from "./i18n.js?v=26";
+
 // OCR and date reading.
 // Requirement P2: this runs on the device. A hospital letter never leaves the
 // phone, so we load Tesseract in the page and never call a cloud service.
@@ -35,7 +37,7 @@ export function redact(text) {
 
 export async function readText(blob, onProgress) {
   const Tesseract = await loadLibrary();
-  const result = await Tesseract.recognize(blob, "nld+eng", {
+  const result = await Tesseract.recognize(blob, tessLangs(), {
     logger: (m) => {
       if (onProgress && m.status === "recognizing text") {
         onProgress(Math.round(m.progress * 100));
@@ -97,17 +99,33 @@ export function findDate(text) {
   return null;
 }
 
-// Which voice should read this text back? A Belgian letter is usually Dutch even
-// though our interface is English, and reading Dutch with an English voice is
-// unpleasant to listen to. This is deliberately crude and good enough.
+// Which language data to download. Whatever she reads in comes first, English
+// second because a Belgian letter often carries some, and nothing else, because
+// every extra language is another few megabytes over her connection.
+function tessLangs() {
+  const mine = i18n.lang();
+  if (mine === "fr") return "fra+eng";
+  if (mine === "en") return "eng+nld";
+  return "nld+eng";
+}
+
+// Which voice should read this text back? A Belgian letter is usually Dutch or
+// French whatever the interface is set to, and hearing Dutch read by an English
+// voice is unpleasant. Deliberately crude, and good enough.
 export function guessLang(text) {
-  const words = text.toLowerCase().split(/[^a-z]+/);
-  const dutchHints = ["de", "het", "een", "uw", "van", "niet", "met", "voor", "bij", "wij"];
-  let hits = 0;
-  for (const w of words) {
-    if (dutchHints.includes(w)) hits += 1;
+  const words = text.toLowerCase().split(/[^a-zàâçéèêëîïôûùüÿœ]+/);
+  const dutch = ["de", "het", "een", "uw", "van", "niet", "met", "voor", "bij", "wij"];
+  const french = ["le", "la", "les", "des", "vous", "votre", "avec", "pour", "nous", "est"];
+  let nl = 0;
+  let fr = 0;
+  for (const word of words) {
+    if (dutch.includes(word)) nl += 1;
+    if (french.includes(word)) fr += 1;
   }
-  return hits >= 3 ? "nl-BE" : "en-GB";
+  if (fr >= 3 && fr > nl) return "fr-BE";
+  if (nl >= 3) return "nl-BE";
+  // Nothing obvious, so read it in the language she has chosen.
+  return i18n.spokenLang();
 }
 
 // The first line that looks like a title, used to prefill the name of the card.

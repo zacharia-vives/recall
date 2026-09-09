@@ -1,9 +1,12 @@
+import * as i18n from "./i18n.js?v=26";
+
 // Reading out loud, with the Web Speech API. Free, and on the voices we allow
 // it also works with no network. Requirement S2: we speak the text as it is, we
 // never shorten or rewrite what a letter says.
 //
-// The interface is English, but a Belgian letter is usually Dutch, so speak()
-// takes the language of the text it is given.
+// The interface speaks Dutch, French or English, and a letter may be in a
+// different language again, so speak() takes the language of the text it is
+// given and falls back to the one she chose.
 //
 // Two things make a voice sound like a machine, and only one of them is the
 // voice. The other is what you hand it. A wall of text with no sentence breaks,
@@ -18,6 +21,7 @@
 // the localService flag, and we pick the best voice that runs on the phone.
 // That is a real cost in warmth and it is the right way round.
 
+// Only used before the dictionary has an opinion, which is almost never.
 const DEFAULT_LANG = "en-GB";
 const VOICE_KEY = "recall.voice";
 
@@ -35,7 +39,7 @@ function allVoices() {
 
 // Everything that can speak this language without telling anybody about it.
 export function voicesFor(lang) {
-  const short = (lang || DEFAULT_LANG).slice(0, 2).toLowerCase();
+  const short = (lang || i18n.spokenLang()).slice(0, 2).toLowerCase();
   return allVoices()
     .filter((v) => v.localService !== false)
     .filter((v) => !CLOUD.test(v.name))
@@ -71,7 +75,7 @@ export function chooseVoice(name) {
 }
 
 export function pickVoice(lang) {
-  const useLang = lang || DEFAULT_LANG;
+  const useLang = lang || i18n.spokenLang();
   const mine = chosenName();
   const local = voicesFor(useLang);
   if (mine) {
@@ -88,17 +92,53 @@ export function pickVoice(lang) {
 
 /* turning stored text into something a person would say */
 
-const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July",
-  "August", "September", "October", "November", "December"];
-const MONTHS_NL = ["januari", "februari", "maart", "april", "mei", "juni", "juli",
-  "augustus", "september", "oktober", "november", "december"];
+// Three languages, so the shaping is a table rather than a pile of ifs. Add a
+// language here and the whole of humanise() follows.
+const SHAPE = {
+  en: {
+    months: ["January", "February", "March", "April", "May", "June", "July",
+      "August", "September", "October", "November", "December"],
+    date: (day, month, year) => "the " + day + ordinal(day) + " of " + month + " " + year,
+    onTheHour: (hour) => hour + " o'clock",
+    pastTheHour: (hour, min) => hour + " " + min,
+    numberDropped: "a number Recall does not keep",
+    accountDropped: "an account number Recall does not keep",
+    somethingDropped: "something Recall does not keep",
+    short: [[/\bdr\.\s*/gi, "doctor "], [/\bmr\.\s*/gi, "mister "],
+            [/\bmrs\.\s*/gi, "missus "], [/\bno\.\s*/gi, "number "],
+            [/\be\.g\.\s*/gi, "for example "], [/\betc\.\s*/gi, "and so on "]]
+  },
+  nl: {
+    months: ["januari", "februari", "maart", "april", "mei", "juni", "juli",
+      "augustus", "september", "oktober", "november", "december"],
+    date: (day, month, year) => day + " " + month + " " + year,
+    onTheHour: (hour) => hour + " uur",
+    pastTheHour: (hour, min) => hour + " uur " + min,
+    numberDropped: "een nummer dat wij niet bewaren",
+    accountDropped: "een rekeningnummer dat wij niet bewaren",
+    somethingDropped: "iets dat wij niet bewaren",
+    short: [[/\bdr\.\s*/gi, "dokter "], [/\bnr\.\s*/gi, "nummer "],
+            [/\bt\.a\.v\.\s*/gi, "ter attentie van "], [/\bbv\.\s*/gi, "bijvoorbeeld "],
+            [/\bevt\.\s*/gi, "eventueel "], [/\ba\.u\.b\.\s*/gi, "alstublieft "]]
+  },
+  fr: {
+    months: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
+      "août", "septembre", "octobre", "novembre", "décembre"],
+    date: (day, month, year) => "le " + day + " " + month + " " + year,
+    onTheHour: (hour) => hour + " heures",
+    pastTheHour: (hour, min) => hour + " heures " + min,
+    numberDropped: "un numéro que Recall ne garde pas",
+    accountDropped: "un numéro de compte que Recall ne garde pas",
+    somethingDropped: "quelque chose que Recall ne garde pas",
+    short: [[/\bdr\.\s*/gi, "docteur "], [/\bm\.\s*/gi, "monsieur "],
+            [/\bmme\.?\s*/gi, "madame "], [/\bn°\s*/gi, "numéro "],
+            [/\bp\.\s*ex\.\s*/gi, "par exemple "], [/\betc\.\s*/gi, "et ainsi de suite "]]
+  }
+};
 
-function sayDate(day, month, year, dutch) {
-  const names = dutch ? MONTHS_NL : MONTHS_EN;
-  const name = names[Math.max(0, Math.min(11, month - 1))];
-  return dutch
-    ? day + " " + name + " " + year
-    : "the " + day + ordinal(day) + " of " + name + " " + year;
+function shapeFor(lang) {
+  const short = String(lang || "").slice(0, 2).toLowerCase();
+  return SHAPE[short] || SHAPE.en;
 }
 
 function ordinal(day) {
@@ -112,38 +152,31 @@ function ordinal(day) {
 // S2 still holds: nothing is added, nothing is left out, nothing is summarised.
 // The same words come out, in the shape a person would say them.
 export function humanise(text, lang) {
-  const dutch = String(lang || "").toLowerCase().startsWith("nl");
+  const shape = shapeFor(lang);
   let out = String(text || "");
 
   // What the redaction left behind. Read as a sentence, not as brackets.
-  out = out.replace(/\[national number removed\]/gi,
-    dutch ? "een nummer dat wij niet bewaren" : "a number Recall does not keep");
-  out = out.replace(/\[account number removed\]/gi,
-    dutch ? "een rekeningnummer dat wij niet bewaren" : "an account number Recall does not keep");
-  out = out.replace(/\[[^\]]*removed[^\]]*\]/gi,
-    dutch ? "iets dat wij niet bewaren" : "something Recall does not keep");
+  out = out.replace(/\[national number removed\]/gi, shape.numberDropped);
+  out = out.replace(/\[account number removed\]/gi, shape.accountDropped);
+  out = out.replace(/\[[^\]]*removed[^\]]*\]/gi, shape.somethingDropped);
 
   // Dates, the way they are written on Belgian post.
-  out = out.replace(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})\b/g,
-    (m, d, mo, y) => sayDate(Number(d), Number(mo), y, dutch));
+  out = out.replace(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})\b/g, (m, d, mo, y) => {
+    const index = Math.max(0, Math.min(11, Number(mo) - 1));
+    return shape.date(Number(d), shape.months[index], y);
+  });
 
-  // Times. 10:30 read as ten thirty, and on the hour said as such.
+  // Times. Ten thirty rather than ten colon three zero.
   out = out.replace(/\b(\d{1,2}):(\d{2})\b/g, (m, h, min) => {
     const hour = Number(h);
-    if (min === "00") return dutch ? hour + " uur" : hour + " o'clock";
-    return dutch ? hour + " uur " + Number(min) : hour + " " + min;
+    return min === "00" ? shape.onTheHour(hour) : shape.pastTheHour(hour, Number(min));
   });
 
   // Abbreviations nobody says out loud.
-  const short = dutch
-    ? [[/\bdr\.\s*/gi, "dokter "], [/\bnr\.\s*/gi, "nummer "], [/\bt\.a\.v\.\s*/gi, "ter attentie van "],
-       [/\bbv\.\s*/gi, "bijvoorbeeld "], [/\bevt\.\s*/gi, "eventueel "], [/\ba\.u\.b\.\s*/gi, "alstublieft "]]
-    : [[/\bdr\.\s*/gi, "doctor "], [/\bmr\.\s*/gi, "mister "], [/\bmrs\.\s*/gi, "missus "],
-       [/\bno\.\s*/gi, "number "], [/\be\.g\.\s*/gi, "for example "], [/\betc\.\s*/gi, "and so on "]];
-  short.forEach(([pattern, word]) => { out = out.replace(pattern, word); });
+  shape.short.forEach((pair) => { out = out.replace(pair[0], pair[1]); });
 
   // A line of a letter is usually a sentence even when it has no full stop, and
-  // OCR loses the punctuation anyway. A line break becomes a real pause.
+  // the reading loses the punctuation anyway. A line break becomes a pause.
   out = out.replace(/\r/g, "");
   out = out.replace(/[ \t]+\n/g, "\n");
   out = out.replace(/\n{2,}/g, ".\n");
@@ -175,7 +208,7 @@ export function speak(text, lang, options) {
   if (!canSpeak() || !text) return false;
   stop();
 
-  const useLang = lang || DEFAULT_LANG;
+  const useLang = lang || i18n.spokenLang();
   const plain = (options && options.raw) ? String(text) : humanise(text, useLang);
   const parts = sentences(plain);
   if (!parts.length) return false;
@@ -197,14 +230,9 @@ export function speak(text, lang, options) {
 
 // For the voice chooser: one short line in the voice being tried.
 export function sample(voiceName, lang) {
-  const dutch = String(lang || "").toLowerCase().startsWith("nl");
   chooseVoice(voiceName);
-  return speak(
-    dutch
-      ? "Goedemiddag. Uw afspraak bij de cardioloog is morgen om tien uur."
-      : "Good afternoon. Your appointment with the cardiologist is tomorrow at ten o'clock.",
-    dutch ? "nl-BE" : "en-GB"
-  );
+  const useLang = lang || i18n.spokenLang();
+  return speak(i18n.t("voice.sample"), useLang);
 }
 
 export function stop() {

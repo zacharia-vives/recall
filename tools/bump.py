@@ -33,6 +33,8 @@ FILES = [
     "js/install.js",
     "js/lock.js",
     "js/config.js",
+    "js/i18n.js",
+    "privacy.html",
 ]
 
 VERSION_QUERY = re.compile(r"\?v=(\d+)")

@@ -1,3 +1,5 @@
+import * as i18n from "./i18n.js?v=26";
+
 // Camera with a magnifier. The zoom is a CSS transform on the video element,
 // which works on every phone, instead of the track zoom setting that only some
 // Android devices support.
@@ -6,12 +8,12 @@ let stream = null;
 
 export async function start(video, onMessage) {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    onMessage("This phone or browser does not allow the camera. Choose a photo instead.");
+    onMessage(i18n.t("cam.nosupport"));
     return false;
   }
   // The browser now asks for permission, which can sit there for a while. Say
   // so, otherwise the user is looking at a black rectangle with no explanation.
-  onMessage("Allow the camera. If that does not work, choose a photo instead.");
+  onMessage(i18n.t("cam.allow"));
 
   try {
     stream = await navigator.mediaDevices.getUserMedia({
@@ -28,9 +30,9 @@ export async function start(video, onMessage) {
     return true;
   } catch (err) {
     if (err && err.name === "NotAllowedError") {
-      onMessage("The camera has no permission yet. Allow it, or choose a photo instead.");
+      onMessage(i18n.t("cam.norights"));
     } else {
-      onMessage("The camera will not start. Choose a photo instead.");
+      onMessage(i18n.t("cam.wontstart"));
     }
     return false;
   }
