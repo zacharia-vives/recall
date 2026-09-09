@@ -1034,3 +1034,37 @@ textarea {
   background: var(--card, #fff);
   color: inherit;
 }
+
+/* ---------------------------------------------------- getting there, F14 */
+
+.maps {
+  margin: 0 0 1.25rem;
+}
+
+/* A link that has to look and behave like the other big buttons. */
+a.big.map {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  margin-bottom: 0.5rem;
+}
+
+a.big.map:focus-visible {
+  outline: 3px solid var(--accent, #f0692b);
+  outline-offset: 2px;
+}
+
+/* The other two sit side by side and smaller: they are for somebody who
+   already prefers them, not a decision she has to make. */
+.maps-others {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.maps-others a.big.map {
+  flex: 1 1 0;
+  font-size: 1.0625rem;
+  min-height: 3.25rem;
+  margin-bottom: 0.35rem;
+}

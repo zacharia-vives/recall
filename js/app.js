@@ -1,15 +1,15 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=32";
-import * as speech from "./speech.js?v=32";
-import * as camera from "./camera.js?v=32";
-import * as ocr from "./ocr.js?v=32";
-import { isConfigured, NOTICE_VERSION } from "./config.js?v=32";
-import * as install from "./install.js?v=32";
-import * as lock from "./lock.js?v=32";
-import * as i18n from "./i18n.js?v=32";
-import * as docs from "./docs.js?v=32";
+import * as store from "./store.js?v=33";
+import * as speech from "./speech.js?v=33";
+import * as camera from "./camera.js?v=33";
+import * as ocr from "./ocr.js?v=33";
+import { isConfigured, NOTICE_VERSION } from "./config.js?v=33";
+import * as install from "./install.js?v=33";
+import * as lock from "./lock.js?v=33";
+import * as i18n from "./i18n.js?v=33";
+import * as docs from "./docs.js?v=33";
 
 // Short, because it is used on nearly every line that says something.
 const t = i18n.t;
@@ -280,6 +280,7 @@ async function renderRecord(id) {
         : "") +
       '<button class="big danger" type="button" id="btn-del">' + t("run.deletecard") + "</button>" +
     "</div>" +
+    mapsHtml(record) +
     '<p class="disclaimer">' + t("run.carddisclaimer") + "</p>";
 
   if (record.hasPhoto) {
@@ -429,7 +430,7 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=32");
+    const cloud = await import("./cloud.js?v=33");
     const people = await cloud.members(id);
     const helpers = people
       .filter((m) => m.role === "helper")
@@ -514,6 +515,51 @@ function drawVoices() {
   } else {
     msg.hidden = true;
   }
+}
+
+/* getting there, F14 */
+
+// Whichever map app the phone actually has, first. All three are ordinary
+// https links rather than the app's own scheme, because a universal link opens
+// the app when it is installed and the website when it is not, and never
+// leaves her looking at an error page.
+function mapLinks(place) {
+  const where = encodeURIComponent(place);
+  const apple = { key: "maps.apple", url: "https://maps.apple.com/?q=" + where };
+  const google = {
+    key: "maps.google",
+    url: "https://www.google.com/maps/search/?api=1&query=" + where
+  };
+  const waze = { key: "maps.waze", url: "https://waze.com/ul?q=" + where + "&navigate=yes" };
+
+  // An iPhone has Apple Maps whether anybody asked for it or not, so that goes
+  // first there and Google first everywhere else. Waze is never first: it is
+  // for whoever already uses it.
+  const apple_first = /iPhone|iPad|iPod/.test(window.navigator.userAgent || "") ||
+    (/Macintosh/.test(window.navigator.userAgent || "") && window.navigator.maxTouchPoints > 1);
+  return apple_first ? [apple, google, waze] : [google, apple, waze];
+}
+
+// One big button that does the obvious thing, and the other two smaller for
+// somebody who prefers them. Three equal buttons would be three decisions.
+function mapsHtml(record) {
+  if (!record.place || !record.place.trim()) return "";
+  const links = mapLinks(record.place.trim());
+  const first = links[0];
+  const rest = links.slice(1);
+
+  return '<div class="maps">' +
+    '<a class="big map" href="' + esc(first.url) + '" target="_blank" rel="noopener">' +
+      esc(t("maps.show")) + " (" + esc(t(first.key)) + ")" +
+    "</a>" +
+    '<div class="maps-others">' +
+      rest.map((one) =>
+        '<a class="big ghost map" href="' + esc(one.url) + '" target="_blank" rel="noopener">' +
+        esc(t(one.key)) + "</a>"
+      ).join("") +
+    "</div>" +
+    '<p class="hint-line">' + t("maps.hint") + "</p>" +
+  "</div>";
 }
 
 /* looking at something closely, F5 */
@@ -860,7 +906,7 @@ async function consentNeeded() {
   if (!isConfigured() || !linkedHousehold()) return false;
   if (consentRemembered()) return false;
   try {
-    const cloud = await import("./cloud.js?v=32");
+    const cloud = await import("./cloud.js?v=33");
     const latest = await cloud.latestConsent(linkedHousehold());
     if (latest && !latest.withdrawn_at) {
       rememberConsent(true);
@@ -887,7 +933,7 @@ async function consentYes() {
   msg.hidden = false;
   msg.textContent = t("consent.thanks");
   try {
-    const cloud = await import("./cloud.js?v=32");
+    const cloud = await import("./cloud.js?v=33");
     const where = await cloud.recordConsent(linkedHousehold(), noticeVersion());
     window.console.info("Recall: consent recorded in the " + where + " table.");
     rememberConsent(true);
@@ -921,7 +967,7 @@ async function stopSharing() {
   msg.textContent = t("share.stopping");
   const id = linkedHousehold();
   try {
-    const cloud = await import("./cloud.js?v=32");
+    const cloud = await import("./cloud.js?v=33");
     await cloud.withdrawConsent(id);
   } catch (err) {
     // Even if the note cannot be written, the sharing still stops here.
@@ -1039,7 +1085,7 @@ async function rescueWithCode(event) {
   }
 
   try {
-    const cloud = await import("./cloud.js?v=32");
+    const cloud = await import("./cloud.js?v=33");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
@@ -1083,6 +1129,10 @@ async function saveCode(event) {
   const two = document.getElementById("new-code-2");
   msg.hidden = false;
 
+  if (one.value.length !== 4 && one.value.length !== 6) {
+    msg.textContent = t("run.codeshort");
+    return;
+  }
   if (one.value !== two.value) {
     msg.textContent = t("run.codenomatch");
     return;
@@ -1148,7 +1198,7 @@ async function linkThisPhone(event) {
   msg.hidden = false;
   msg.textContent = t("run.onemoment");
   try {
-    const cloud = await import("./cloud.js?v=32");
+    const cloud = await import("./cloud.js?v=33");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     msg.textContent = t("run.linkedfetch");
@@ -1173,7 +1223,7 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=32");
+    cloud = await import("./cloud.js?v=33");
   } catch (err) {
     if (loud) say(t("run.unreachable"));
     return false;
@@ -1535,6 +1585,13 @@ async function saveNew(event) {
     return;
   }
 
+  const typedPhone = document.getElementById("f-phone").value.trim();
+  if (typedPhone && !dialable(typedPhone)) {
+    say(t("phone.notanumber"));
+    document.getElementById("f-phone").focus();
+    return;
+  }
+
   const id = store.newId();
   const when = document.getElementById("f-when").value;
   const record = {
@@ -1851,7 +1908,7 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=32");
+    const cloud = await import("./cloud.js?v=33");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     say(t("run.linkedfamily"));

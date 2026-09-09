@@ -502,7 +502,6 @@ const WORDS = {
   "run.markdone":        { en: "Mark done", nl: "Zet op gedaan", fr: "Marquer comme fait" },
   "run.deletecard":      { en: "Delete this card", nl: "Verwijder deze kaart", fr: "Supprimer cette fiche" },
   "run.nothingdue":      { en: "Nothing is due today or tomorrow.", nl: "Er staat niets voor vandaag of morgen.", fr: "Rien de prévu aujourd'hui ni demain." },
-  "run.nothingfound":    { en: "Nothing found.", nl: "Niets gevonden.", fr: "Rien trouvé." },
   "run.cardgone":        { en: "This card does not exist any more.", nl: "Deze kaart bestaat niet meer.", fr: "Cette fiche n'existe plus." },
   "run.kind":            { en: "Kind", nl: "Soort", fr: "Type" },
   "run.tags":            { en: "Tags", nl: "Labels", fr: "Étiquettes" },
@@ -593,7 +592,6 @@ const WORDS = {
                            nl: "Dit lijkt op een lijstje. Moet Recall er een lijstje van maken?",
                            fr: "Cela ressemble à une liste. Recall doit-il en faire une liste ?" },
   "list.yesmake":        { en: "Yes, make a checklist", nl: "Ja, maak een lijstje", fr: "Oui, faire une liste" },
-  "list.nokeepletter":   { en: "No, keep it as a letter", nl: "Nee, hou het als brief", fr: "Non, garder comme lettre" },
 
   /* calling somebody, F10 to F13 */
   "phone.label":         { en: "Phone number", nl: "Telefoonnummer", fr: "Numéro de téléphone" },
@@ -614,6 +612,15 @@ const WORDS = {
   "h.remindkind":        { en: "What kind", nl: "Welk soort", fr: "Quel genre" },
   "h.phone":             { en: "Phone number, for a call reminder", nl: "Telefoonnummer, voor een belherinnering", fr: "Numéro de téléphone, pour un rappel d'appel" },
   "h.items":             { en: "The things on the list, one per line", nl: "De dingen op het lijstje, één per lijn", fr: "Les choses sur la liste, une par ligne" },
+
+  /* getting there, F14 */
+  "maps.show":           { en: "Show me the way", nl: "Toon mij de weg", fr: "Montrez-moi le chemin" },
+  "maps.apple":          { en: "Apple Maps", nl: "Apple Maps", fr: "Apple Maps" },
+  "maps.google":         { en: "Google Maps", nl: "Google Maps", fr: "Google Maps" },
+  "maps.waze":           { en: "Waze", nl: "Waze", fr: "Waze" },
+  "maps.hint":           { en: "This opens the map app on this phone.",
+                           nl: "Dit opent de kaart-app op deze telefoon.",
+                           fr: "Ceci ouvre l'application de cartes de ce téléphone." },
 
   "hrun.wentwrong":      { en: "That did not work.", nl: "Dat werkte niet.", fr: "Cela n'a pas fonctionné." }
 };

@@ -86,7 +86,9 @@ SAME_IS_FINE = {
     "lang.label", "lang.heading", "h.photo", "app.cancel",
     # Document is the same word in all three, and a phone number example is
     # a phone number example.
-    "file.attached", "phone.ph", "h.phone"
+    "file.attached", "phone.ph", "h.phone",
+    # Apple Maps, Google Maps and Waze are called that everywhere.
+    "maps.apple", "maps.google", "maps.waze"
 }
 untranslated = [k for k in words
                 if k not in SAME_IS_FINE
@@ -168,7 +170,10 @@ check("no English sentences left in the two scripts", not LEFTOVERS, LEFTOVERS[:
 # ------------------------------------------------------------------ dead weight
 unused = sorted(set(words) - used_in_html - used_in_js)
 # These are reached indirectly, by name built at runtime or by the tests.
-EXPECTED_UNUSED = {"lock.wrong", "run.dateat"}
+# Reached by a name built at run time rather than by a literal, which this
+# scanner cannot see: the three map apps are looked up from a table.
+EXPECTED_UNUSED = {"lock.wrong", "run.dateat",
+                   "maps.apple", "maps.google", "maps.waze"}
 really_unused = [k for k in unused if k not in EXPECTED_UNUSED]
 check("no key is dead weight", len(really_unused) <= 6,
       str(len(really_unused)) + " unused: " + ", ".join(really_unused[:8]))
