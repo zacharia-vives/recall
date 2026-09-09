@@ -1,7 +1,7 @@
 // Service worker. Keeps the app shell available with no network, which matters
 // because the today screen has to work in a kitchen with bad wifi.
 
-const VERSION = 33;
+const VERSION = 35;
 const CACHE = "recall-v" + VERSION;
 
 const SHELL = [
@@ -16,6 +16,7 @@ const SHELL = [
   "js/helper.js",
   "js/store.js",
   "js/speech.js",
+  "js/voices.js",
   "js/camera.js",
   "js/ocr.js",
   "js/config.js",
@@ -69,6 +70,19 @@ self.addEventListener("fetch", (event) => {
     );
     return;
   }
+
+  // The neural voice is deliberately left alone. Its runtime is tens of
+  // megabytes and its model is sixty, and the library already keeps the model
+  // in the origin private file system, so caching it here would store a second
+  // copy of the same thing and double what the phone gives up. Worse, a
+  // cache-first rule over a partly stored binary hands back a broken file for
+  // good. It is fetched once, kept by the library, and the service worker does
+  // not get involved.
+  const voiceFiles =
+    url.hostname.endsWith("huggingface.co") ||
+    url.pathname.indexOf("onnxruntime-web") >= 0 ||
+    url.pathname.indexOf("piper") >= 0;
+  if (voiceFiles) return;
 
   // The OCR library and its language data are big and never change, so once
   // they are here we keep them and never ask again.

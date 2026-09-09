@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=33";
+import * as i18n from "./i18n.js?v=35";
 
 // Reading out loud, with the Web Speech API. Free, and on the voices we allow
 // it also works with no network. Requirement S2: we speak the text as it is, we
@@ -224,8 +224,76 @@ function isApple() {
   return /Macintosh/.test(ua) && window.navigator.maxTouchPoints > 1;
 }
 
+/* A neural voice makes a wav file, which is not something speechSynthesis can
+   play, so it goes through an <audio> element instead. One at a time, and the
+   handle is kept so stop() can stop this as well as the ordinary queue. */
+let playing = null;
+
+function playWav(blob, rate) {
+  return new Promise((resolve) => {
+    stopWav();
+    const audio = new Audio(URL.createObjectURL(blob));
+    // The neural voice already speaks at a measured pace, so it needs far less
+    // slowing down than the device voice does. Below about 0.9 it starts to
+    // sound wrong rather than calm.
+    audio.playbackRate = rate || 0.95;
+    playing = audio;
+    const done = () => {
+      if (playing === audio) playing = null;
+      URL.revokeObjectURL(audio.src);
+      resolve(true);
+    };
+    audio.addEventListener("ended", done);
+    audio.addEventListener("error", done);
+    audio.play().catch(() => done());
+  });
+}
+
+function stopWav() {
+  if (!playing) return;
+  try {
+    playing.pause();
+    URL.revokeObjectURL(playing.src);
+  } catch (err) {
+    // Already gone.
+  }
+  playing = null;
+}
+
+/* Read something out loud, with the best voice this device actually has.
+
+   The better voice is tried first and everything about it is allowed to fail:
+   not turned on, not downloaded, browser cannot do it, model throws. Every one
+   of those ends up in the same place, which is the device voice reading the
+   same words. That is the fallback, and it is the reason this is safe to ship
+   two days before a presentation. */
+export async function read(text, lang, options) {
+  if (!text) return false;
+  const useLang = lang || i18n.spokenLang();
+  const plain = (options && options.raw) ? String(text) : humanise(text, useLang);
+  if (!plain.trim()) return false;
+
+  try {
+    const voices = await import("./voices.js?v=35");
+    if (voices.wanted()) {
+      const wav = await voices.makeAudio(plain, i18n.lang());
+      if (wav) {
+        // Stop the ordinary queue too, or both voices talk at once.
+        if (canSpeak()) window.speechSynthesis.cancel();
+        await playWav(wav, options && options.rate);
+        return true;
+      }
+    }
+  } catch (err) {
+    // The module itself would not even load. Fall through.
+  }
+
+  return speak(text, lang, options);
+}
+
 export function speak(text, lang, options) {
   if (!canSpeak() || !text) return false;
+  stopWav();
 
   // Only clear the queue when there is something in it.
   if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
@@ -264,9 +332,11 @@ export function sample(voiceName, lang) {
 }
 
 export function stop() {
+  stopWav();
   if (canSpeak()) window.speechSynthesis.cancel();
 }
 
 export function speaking() {
+  if (playing && !playing.paused && !playing.ended) return true;
   return canSpeak() && (window.speechSynthesis.speaking || window.speechSynthesis.pending);
 }

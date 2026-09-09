@@ -1,15 +1,15 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=33";
-import * as speech from "./speech.js?v=33";
-import * as camera from "./camera.js?v=33";
-import * as ocr from "./ocr.js?v=33";
-import { isConfigured, NOTICE_VERSION } from "./config.js?v=33";
-import * as install from "./install.js?v=33";
-import * as lock from "./lock.js?v=33";
-import * as i18n from "./i18n.js?v=33";
-import * as docs from "./docs.js?v=33";
+import * as store from "./store.js?v=35";
+import * as speech from "./speech.js?v=35";
+import * as camera from "./camera.js?v=35";
+import * as ocr from "./ocr.js?v=35";
+import { isConfigured, NOTICE_VERSION } from "./config.js?v=35";
+import * as install from "./install.js?v=35";
+import * as lock from "./lock.js?v=35";
+import * as i18n from "./i18n.js?v=35";
+import * as docs from "./docs.js?v=35";
 
 // Short, because it is used on nearly every line that says something.
 const t = i18n.t;
@@ -320,7 +320,7 @@ async function renderRecord(id) {
         speech.stop();
         return;
       }
-      speech.speak(words, ocr.guessLang(words));
+      speech.read(words, ocr.guessLang(words));
     });
   }
 
@@ -366,12 +366,12 @@ async function renderRecord(id) {
     }
   }
 
-  document.getElementById("btn-say").addEventListener("click", () => {
+  document.getElementById("btn-say").addEventListener("click", async () => {
     if (speech.speaking()) {
       speech.stop();
       return;
     }
-    if (!speech.speak(sentenceFor(record), i18n.spokenLang())) say(t("run.nospeech"));
+    if (!(await readAloud(sentenceFor(record), i18n.spokenLang()))) say(t("run.nospeech"));
   });
 
   document.getElementById("btn-del").addEventListener("click", async () => {
@@ -430,7 +430,7 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=33");
+    const cloud = await import("./cloud.js?v=35");
     const people = await cloud.members(id);
     const helpers = people
       .filter((m) => m.role === "helper")
@@ -462,7 +462,7 @@ function ask(question, yesLabel) {
   const no = document.getElementById("ask-no");
   yes.textContent = yesLabel || "Yes";
 
-  speech.speak(question, i18n.spokenLang());
+  speech.read(question, i18n.spokenLang());
 
   return new Promise((resolve) => {
     const finish = (answer) => {
@@ -644,7 +644,7 @@ async function chooseFile(event) {
         speech.stop();
         return;
       }
-      speech.speak(pendingFileText, ocr.guessLang(pendingFileText));
+      speech.read(pendingFileText, ocr.guessLang(pendingFileText));
     });
   }
   document.getElementById("btn-file-off").addEventListener("click", () => {
@@ -786,8 +786,112 @@ async function redrawEverything() {
   await drawLockSettings();
   await drawSharingState();
   await drawKnows();
+  await drawSeen();
+  await drawBetterVoice();
   await route();
   await showWhoHasAccess();
+}
+
+/* the better voice, N16
+
+   Everything here is about one decision: sixty megabytes, once, on wifi. So
+   the screen says the number before anything is downloaded, shows a real bar
+   while it happens, and says plainly which voice is being used at any moment.
+   A phone that cannot do it at all says so and keeps working. */
+
+/* Reading out loud, with a word while she waits.
+
+   The neural voice takes a few seconds to make a sentence, and a few seconds
+   of silence after pressing a big button that says "read it out loud" reads as
+   broken. So if that voice is in use, say so first. With the phone's own voice
+   there is nothing to wait for and nothing is said. */
+async function readAloud(text, lang) {
+  let slow = false;
+  try {
+    const voices = await import("./voices.js?v=35");
+    slow = voices.wanted() && (await voices.isReady(i18n.lang()));
+  } catch (err) {
+    slow = false;
+  }
+  if (slow) say(t("run.onemoment"));
+  return speech.read(text, lang);
+}
+
+async function drawBetterVoice() {
+  const onBtn = document.getElementById("better-on");
+  if (!onBtn) return;
+
+  const voices = await import("./voices.js?v=35");
+  const hint = document.getElementById("better-hint");
+  const getBtn = document.getElementById("better-get");
+  const tryBtn = document.getElementById("better-try");
+  const removeBtn = document.getElementById("better-remove");
+  const msg = document.getElementById("better-msg");
+  const voice = voices.voiceFor(i18n.lang());
+
+  hint.textContent = t("better.hint", { mb: voice ? voice.mb : 60 });
+
+  // A browser that cannot run it is told once, and the controls go away
+  // rather than sitting there failing.
+  if (!voices.possible() || !voice) {
+    onBtn.hidden = true;
+    getBtn.hidden = true;
+    tryBtn.hidden = true;
+    removeBtn.hidden = true;
+    msg.hidden = false;
+    msg.textContent = t("better.cannot");
+    return;
+  }
+
+  const on = voices.wanted();
+  onBtn.hidden = false;
+  onBtn.setAttribute("aria-pressed", on ? "true" : "false");
+
+  const ready = await voices.isReady(i18n.lang());
+  getBtn.hidden = ready;
+  getBtn.textContent = t("better.get", { mb: voice.mb });
+  tryBtn.hidden = !ready;
+  removeBtn.hidden = !ready;
+
+  // Three states, three different sentences, because "ready" and "ready but
+  // switched off" are not the same thing to somebody wondering why the voice
+  // still sounds the same.
+  msg.hidden = false;
+  if (ready && on) msg.textContent = t("better.ready");
+  else if (ready) msg.textContent = t("better.readyoff");
+  else msg.textContent = t("better.notyet");
+}
+
+async function getBetterVoice() {
+  const voices = await import("./voices.js?v=35");
+  const getBtn = document.getElementById("better-get");
+  const bar = document.getElementById("better-bar");
+  const fill = bar.querySelector("i");
+  const msg = document.getElementById("better-msg");
+
+  getBtn.disabled = true;
+  bar.hidden = false;
+  fill.style.width = "0";
+  msg.hidden = false;
+  msg.textContent = t("better.getting", { pct: 0 });
+
+  try {
+    await voices.fetchVoice(i18n.lang(), (pct) => {
+      fill.style.width = pct + "%";
+      msg.textContent = t("better.getting", { pct: pct });
+    });
+    // Downloading it is also choosing it: nobody waits for sixty megabytes
+    // and then wants the old voice.
+    voices.setWanted(true);
+    bar.hidden = true;
+    await drawBetterVoice();
+  } catch (err) {
+    bar.hidden = true;
+    msg.hidden = false;
+    msg.textContent = t("better.failed");
+  } finally {
+    getBtn.disabled = false;
+  }
 }
 
 /* what Recall knows about you, P20 and P21. Article 15 and article 20, in a
@@ -819,6 +923,70 @@ async function drawKnows() {
   ).join("");
 
   where.textContent = linkedHousehold() ? t("knows.whereon") : t("knows.whereoff");
+}
+
+/* P23. What the family has done, in her own app and her own language.
+
+   The spoken notice tells her that everything the family does is written down
+   where she can read it. That was true of the database and of the family app,
+   and false of the only interface she ever opens. The rows are written in
+   English by whatever wrote them, so nothing here shows the stored sentence:
+   the action is looked up in the dictionary and the name is the only part
+   that comes from the row. */
+const SEEN_KNOWN = [
+  "added", "edited", "deleted", "restored", "reminder_set",
+  "marked_done", "invited", "removed", "linked", "unlinked"
+];
+
+async function drawSeen() {
+  const list = document.getElementById("seen-list");
+  const msg = document.getElementById("seen-msg");
+  if (!list || !msg) return;
+
+  list.innerHTML = "";
+  msg.hidden = true;
+  msg.textContent = "";
+
+  const household = linkedHousehold();
+  if (!household) {
+    msg.hidden = false;
+    msg.textContent = t("seen.notshared");
+    return;
+  }
+
+  let rows = [];
+  try {
+    // Loaded here rather than at the top, the way every other cloud call in
+    // this app does it, so a phone that is only ever used offline never
+    // downloads the library at all.
+    const cloud = await import("./cloud.js?v=35");
+    rows = await cloud.listActivity(household, 40);
+  } catch (err) {
+    // Offline, or the request failed. Say which, rather than showing an empty
+    // list that reads as "your family has done nothing".
+    msg.hidden = false;
+    msg.textContent = t("seen.offline");
+    return;
+  }
+
+  if (!rows.length) {
+    msg.hidden = false;
+    msg.textContent = t("seen.none");
+    return;
+  }
+
+  list.innerHTML = rows.map((row) => {
+    // A row written by a partner's software has no account behind it, so it
+    // says so in her language rather than showing the English it was stored
+    // with.
+    const who = row.actor_name === "a connected system"
+      ? t("seen.system")
+      : (row.actor_name || t("seen.someone"));
+    const known = SEEN_KNOWN.indexOf(row.action) >= 0;
+    const said = known ? t("seen." + row.action, { who: who }) : who;
+    return "<li><span>" + esc(said) + "</span>" +
+      '<span class="s">' + esc(readableDate(row.at)) + "</span></li>";
+  }).join("");
 }
 
 // Article 20. One file, everything in it, readable by a person and by a
@@ -906,7 +1074,7 @@ async function consentNeeded() {
   if (!isConfigured() || !linkedHousehold()) return false;
   if (consentRemembered()) return false;
   try {
-    const cloud = await import("./cloud.js?v=33");
+    const cloud = await import("./cloud.js?v=35");
     const latest = await cloud.latestConsent(linkedHousehold());
     if (latest && !latest.withdrawn_at) {
       rememberConsent(true);
@@ -924,7 +1092,7 @@ function readNotice() {
     speech.stop();
     return;
   }
-  speech.speak(noticeSpoken(), i18n.spokenLang());
+  speech.read(noticeSpoken(), i18n.spokenLang());
 }
 
 async function consentYes() {
@@ -933,7 +1101,7 @@ async function consentYes() {
   msg.hidden = false;
   msg.textContent = t("consent.thanks");
   try {
-    const cloud = await import("./cloud.js?v=33");
+    const cloud = await import("./cloud.js?v=35");
     const where = await cloud.recordConsent(linkedHousehold(), noticeVersion());
     window.console.info("Recall: consent recorded in the " + where + " table.");
     rememberConsent(true);
@@ -967,7 +1135,7 @@ async function stopSharing() {
   msg.textContent = t("share.stopping");
   const id = linkedHousehold();
   try {
-    const cloud = await import("./cloud.js?v=33");
+    const cloud = await import("./cloud.js?v=35");
     await cloud.withdrawConsent(id);
   } catch (err) {
     // Even if the note cannot be written, the sharing still stops here.
@@ -1085,7 +1253,7 @@ async function rescueWithCode(event) {
   }
 
   try {
-    const cloud = await import("./cloud.js?v=33");
+    const cloud = await import("./cloud.js?v=35");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
@@ -1198,7 +1366,7 @@ async function linkThisPhone(event) {
   msg.hidden = false;
   msg.textContent = t("run.onemoment");
   try {
-    const cloud = await import("./cloud.js?v=33");
+    const cloud = await import("./cloud.js?v=35");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     msg.textContent = t("run.linkedfetch");
@@ -1223,7 +1391,7 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=33");
+    cloud = await import("./cloud.js?v=35");
   } catch (err) {
     if (loud) say(t("run.unreachable"));
     return false;
@@ -1496,7 +1664,7 @@ async function readTheFrame() {
       cameraMessage(t("run.nowords"));
       return;
     }
-    speech.speak(text.slice(0, 600), ocr.guessLang(text));
+    speech.read(text.slice(0, 600), ocr.guessLang(text));
     cameraMessage(t("run.readingaloud"));
   } catch (err) {
     cameraMessage(t("run.livefailed"));
@@ -1561,7 +1729,7 @@ async function usePhoto(blob) {
     if (text) {
       textBox.textContent = text;
       foundBox.hidden = false;
-      speech.speak(text.slice(0, 600), ocr.guessLang(text));
+      speech.read(text.slice(0, 600), ocr.guessLang(text));
 
       const makeList = document.getElementById("btn-make-list");
       makeList.hidden = false;
@@ -1671,7 +1839,7 @@ function wire() {
     const sayIt = target.closest("[data-say]");
     if (sayIt) {
       if (speech.speaking()) speech.stop();
-      else if (!speech.speak(sayIt.dataset.say, i18n.spokenLang())) say(t("run.nospeech"));
+      else if (!(await readAloud(sayIt.dataset.say, i18n.spokenLang()))) say(t("run.nospeech"));
       return;
     }
 
@@ -1696,13 +1864,13 @@ function wire() {
 
   document.getElementById("btn-read").addEventListener("click", readTheFrame);
 
-  document.getElementById("btn-read-again").addEventListener("click", () => {
+  document.getElementById("btn-read-again").addEventListener("click", async () => {
     const text = document.getElementById("ocr-text").textContent;
     if (speech.speaking()) {
       speech.stop();
       return;
     }
-    if (!speech.speak(text, ocr.guessLang(text))) say(t("run.nospeech"));
+    if (!(await readAloud(text, ocr.guessLang(text)))) say(t("run.nospeech"));
   });
 
   document.getElementById("btn-shoot").addEventListener("click", async () => {
@@ -1745,7 +1913,7 @@ function wire() {
 
   document.getElementById("btn-welcome-read").addEventListener("click", () => {
     if (speech.speaking()) speech.stop();
-    else speech.speak(welcomeSpoken(), i18n.spokenLang());
+    else speech.read(welcomeSpoken(), i18n.spokenLang());
   });
   document.getElementById("btn-welcome-start").addEventListener("click", finishWelcome);
 
@@ -1793,6 +1961,32 @@ function wire() {
     // The new language deserves a voice that speaks it.
     speech.chooseVoice("");
   });
+  document.getElementById("better-on").addEventListener("click", async (event) => {
+    const voices = await import("./voices.js?v=35");
+    const now = event.currentTarget.getAttribute("aria-pressed") !== "true";
+    voices.setWanted(now);
+    speech.stop();
+    await drawBetterVoice();
+  });
+
+  document.getElementById("better-get").addEventListener("click", getBetterVoice);
+
+  document.getElementById("better-try").addEventListener("click", () => {
+    if (speech.speaking()) {
+      speech.stop();
+      return;
+    }
+    speech.read(t("better.sample"), i18n.spokenLang());
+  });
+
+  document.getElementById("better-remove").addEventListener("click", async () => {
+    const voices = await import("./voices.js?v=35");
+    speech.stop();
+    await voices.remove(i18n.lang());
+    voices.setWanted(false);
+    await drawBetterVoice();
+  });
+
   document.getElementById("btn-export").addEventListener("click", exportEverything);
 
   document.querySelectorAll("[data-filter]").forEach((chip) => {
@@ -1881,6 +2075,8 @@ function wire() {
     drawVoices();
     drawLanguages();
     await drawKnows();
+    await drawSeen();
+    await drawBetterVoice();
     help.showModal();
   });
   document.getElementById("help-close").addEventListener("click", () => help.close());
@@ -1908,7 +2104,7 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=33");
+    const cloud = await import("./cloud.js?v=35");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     say(t("run.linkedfamily"));
@@ -1962,7 +2158,7 @@ async function init() {
   // question comes before it and not after.
   if (await consentNeeded()) {
     show("consent");
-    speech.speak(noticeSpoken(), i18n.spokenLang());
+    speech.read(noticeSpoken(), i18n.spokenLang());
     return;
   }
 

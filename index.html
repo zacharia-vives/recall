@@ -10,7 +10,7 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css?v=33">
+<link rel="stylesheet" href="css/style.css?v=35">
 </head>
 <body>
 
@@ -321,22 +321,52 @@
 
   <div class="family">
     <h3 data-t="lang.heading">Language</h3>
-    <p class="hint-line" data-t="lang.hint">Recall writes and speaks in this language. Pick the one she reads her post in.</p>
+    <p class="hint-line" data-t="lang.hint">Recall writes and speaks in this language. Pick the one their post is written in.</p>
     <label class="field">
       <span class="label" data-t="lang.label">Language</span>
       <select id="lang-pick"></select>
     </label>
 
+    <!-- N16. The better voice. Off until somebody turns it on, because it is
+         a sixty megabyte download, and everything about it falls back to the
+         phone's own voice. -->
+    <h3 data-t="better.heading">A better voice</h3>
+    <p class="hint-line" id="better-hint"></p>
+    <!-- A pressed switch, the same shape as the filters on Everything, so the
+         state is a tick and a heavier frame rather than colour alone. -->
+    <p>
+      <button id="better-on" class="chip" type="button" aria-pressed="false">
+        <span class="tick" aria-hidden="true">&check;</span>
+        <span data-t="better.use">Use the better voice</span>
+      </button>
+    </p>
+    <div class="lock-actions">
+      <button id="better-get" class="big ghost" type="button"></button>
+      <button id="better-try" class="big ghost" type="button" hidden data-t="better.tryit">Hear it</button>
+    </div>
+    <div id="better-bar" class="voice-bar" hidden><i></i></div>
+    <p id="better-msg" class="link-msg" hidden></p>
+    <p><button id="better-remove" class="link" type="button" hidden data-t="better.remove">Remove it and free up the space</button></p>
+
     <!-- P20. Article 15 in a form she can use: what is kept, how much of it,
          where it is, and a copy of the lot in one press. -->
     <h3 data-t="knows.heading">What Recall knows about you</h3>
-    <p class="hint-line" data-t="knows.hint">Everything Recall keeps about you, counted.</p>
+    <p class="hint-line" data-t="knows.hint">Everything Recall keeps about you, counted. Nothing else is collected: not where you are, not when you opened the app, not how long you looked at anything.</p>
     <ul id="knows-list" class="knows"></ul>
     <p id="knows-where" class="hint-line"></p>
     <div class="lock-actions">
       <button id="btn-export" class="big ghost" type="button" data-t="knows.export">Give me a copy of everything</button>
     </div>
     <p id="export-msg" class="link-msg" hidden></p>
+    <!-- P23. The consent notice promises out loud that everything the family
+         does is written down where she can read it. That list existed only in
+         the family app until now, which made the promise true of the data and
+         false of her interface. -->
+    <h3 data-t="seen.heading">What your family has done</h3>
+    <p class="hint-line" data-t="seen.hint">Everything the people helping you have done, most recent first. They cannot see the same list about you: what you do on this phone is nobody else's business.</p>
+    <ul id="seen-list" class="seen"></ul>
+    <p id="seen-msg" class="hint-line"></p>
+
     <p><a class="link" href="privacy.html" data-t="knows.policy">Read the whole privacy notice</a></p>
 
     <h3 data-t="help.family">For family</h3>
@@ -356,9 +386,9 @@
     </div>
 
     <h3 data-t="voice.heading">The voice</h3>
-    <p class="hint-line" data-t="voice.hint">Phones come with several. Try them and leave the one she
-      likes: it is the voice she will hear every day. Only voices that speak on
-      the phone itself are offered, so a letter is never sent away to be read.</p>
+    <p class="hint-line" data-t="voice.hint">Phones come with several. Try them and leave the one that suits best: it is the voice
+      heard every day. Only voices that speak on the phone itself are offered, so a letter
+      is never sent away to be read.</p>
     <label class="field">
       <span class="label" data-t="voice.label">Voice</span>
       <select id="voice-pick"></select>
@@ -376,10 +406,9 @@
     </div>
 
     <h3 data-t="code.heading">A code to unlock this phone</h3>
-    <p class="hint-line" data-t="code.hint">Only if it is wanted. She has to be able to use this
-      phone alone, so nothing here is compulsory, and the code never locks her
-      out for good: you can always unlock the phone with a fresh phone code from
-      the family app.</p>
+    <p class="hint-line" data-t="code.hint">Only if it is wanted. The person has to be able to use this device alone, so nothing
+      here is compulsory, and the code never locks anybody out for good: you can always
+      unlock the device with a fresh code from the family app.</p>
     <p id="lock-state" class="hint-line"></p>
     <form id="form-setcode">
       <label class="field">
@@ -402,6 +431,18 @@
   </div>
 </dialog>
 
-<script type="module" src="js/app.js?v=33"></script>
+<!-- The neural voice library imports the ONNX runtime by bare name, which
+     normally only a bundler resolves, and this app deliberately has no build
+     step. So the name is resolved here. Pinning the version here as well is on
+     purpose: the library's own default points at a runtime build that does not
+     carry the files it asks for, which is a bug we would otherwise inherit. -->
+<script type="importmap">
+{
+  "imports": {
+    "onnxruntime-web/wasm": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.wasm.min.mjs"
+  }
+}
+</script>
+<script type="module" src="js/app.js?v=35"></script>
 </body>
 </html>

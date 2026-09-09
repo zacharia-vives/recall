@@ -7,8 +7,8 @@
 <meta name="description" content="What Recall keeps, why, where, and what you can do about it.">
 <meta name="theme-color" content="#F0692B">
 <link rel="icon" href="favicon.ico" sizes="any">
-<link rel="stylesheet" href="css/style.css?v=33">
-<link rel="stylesheet" href="css/privacy.css?v=33">
+<link rel="stylesheet" href="css/style.css?v=35">
+<link rel="stylesheet" href="css/privacy.css?v=35">
 </head>
 <body class="policy">
 
@@ -119,6 +119,23 @@
     content delivery network, which means their browser tells that network its own IP
     address. Both are written down as open findings in our assessment, and both are
     on the list to fix before any real household uses this.</p>
+
+  <h2>If a care organisation is involved</h2>
+  <p>A household can invite a care organisation's software in, so their scheduling
+    system can put an appointment straight onto a card instead of somebody retyping
+    it. Only a helper in the household can do that, and only for that one household:
+    the key their software gets reaches no other household, and there is no key that
+    reaches all of them.</p>
+  <p>What their software may do is deliberately small. It can add a card, set a
+    reminder, see which reminders are coming and mark one as done. It <b>cannot</b>
+    read what is on a card, cannot see photos, cannot read a letter or a document,
+    and cannot delete anything. When it asks what is coming, it is told titles and
+    times and nothing else.</p>
+  <p>Everything their software does is written into the same list of activity the
+    person using Recall can read, named as a connected system, at the time it
+    happened. And if consent is withdrawn, their software stops being able to write
+    anything at all, the same moment the family does. Nobody keeps a way in that
+    outlasts the yes.</p>
 
   <h2>How long</h2>
   <p>A card stays until somebody deletes it. A deleted card sits in a bin for thirty
@@ -237,6 +254,24 @@
     content delivery network gehaald, waardoor de browser dat netwerk het IP-adres
     vertelt. Beide staan als openstaande bevindingen in onze effectbeoordeling, en
     beide moeten opgelost zijn voordat een echt huishouden dit gebruikt.</p>
+
+  <h2>Als er een zorgorganisatie bij komt</h2>
+  <p>Een huishouden kan de software van een zorgorganisatie binnenlaten, zodat hun
+    planningssysteem een afspraak rechtstreeks op een kaart zet in plaats van dat
+    iemand die opnieuw moet intypen. Alleen een helper in het huishouden kan dat
+    doen, en enkel voor dat ene huishouden: de sleutel die hun software krijgt komt
+    bij geen enkel ander huishouden, en er bestaat geen sleutel die bij allemaal
+    komt.</p>
+  <p>Wat hun software mag doen is met opzet klein. Een kaart toevoegen, een
+    herinnering zetten, zien welke herinneringen er aankomen en er een als gedaan
+    aanduiden. Hun software kan <b>niet</b> lezen wat er op een kaart staat, ziet
+    geen foto's, kan geen brief of document lezen en kan niets verwijderen. Wie
+    vraagt wat er aankomt, krijgt titels en tijdstippen te horen en niets anders.</p>
+  <p>Alles wat hun software doet komt in dezelfde activiteitenlijst die de gebruiker
+    van Recall zelf kan lezen, benoemd als een aangesloten systeem, met het moment
+    erbij. En wordt de toestemming ingetrokken, dan kan hun software vanaf datzelfde
+    moment niets meer bijschrijven, net zoals de familie. Niemand houdt een ingang
+    over die het ja overleeft.</p>
 
   <h2>Hoe lang</h2>
   <p>Een kaart blijft tot iemand ze verwijdert. Een verwijderde kaart zit dertig dagen
@@ -359,6 +394,23 @@
     consignés comme constats ouverts dans notre analyse d'impact, et les deux doivent
     être réglés avant qu'un vrai foyer utilise ceci.</p>
 
+  <h2>Si une organisation de soins entre en jeu</h2>
+  <p>Un ménage peut laisser entrer le logiciel d'une organisation de soins, pour que
+    leur système de planification pose un rendez-vous directement sur une carte au
+    lieu que quelqu'un doive le retaper. Seul un aidant du ménage peut le faire, et
+    uniquement pour ce ménage: la clé que leur logiciel reçoit n'atteint aucun autre
+    ménage, et aucune clé n'atteint tous les ménages.</p>
+  <p>Ce que leur logiciel peut faire est volontairement limité. Ajouter une carte,
+    poser un rappel, voir quels rappels arrivent et en marquer un comme fait. Il ne
+    peut <b>pas</b> lire ce qui se trouve sur une carte, ne voit aucune photo, ne
+    peut lire ni lettre ni document, et ne peut rien supprimer. Quand il demande ce
+    qui arrive, il reçoit des titres et des heures, rien d'autre.</p>
+  <p>Tout ce que fait leur logiciel est inscrit dans la même liste d'activité que la
+    personne qui utilise Recall peut lire, nommé comme un système connecté, avec le
+    moment. Et si le consentement est retiré, leur logiciel ne peut plus rien écrire
+    dès cet instant, exactement comme la famille. Personne ne garde une entrée qui
+    survit au oui.</p>
+
   <h2>Combien de temps</h2>
   <p>Une fiche reste jusqu'à ce que quelqu'un la supprime. Une fiche supprimée reste
     trente jours à la corbeille puis disparaît définitivement. Ce qui est sur le
@@ -394,7 +446,7 @@
 <script type="module">
   // The page shows one language and remembers the same choice as the app, so
   // somebody who set the app to Dutch does not land on English here.
-  import * as i18n from "./js/i18n.js?v=33";
+  import * as i18n from "./js/i18n.js?v=35";
 
   const pick = document.getElementById("lang-pick");
 

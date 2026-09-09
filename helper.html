@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#231710">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=33">
-<link rel="stylesheet" href="css/helper.css?v=33">
+<link rel="stylesheet" href="css/style.css?v=35">
+<link rel="stylesheet" href="css/helper.css?v=35">
 </head>
 <body class="helper">
 
@@ -34,7 +34,7 @@
       once in the SQL editor.</p>
     <p>Until then the keeper app keeps working on its own, entirely on the phone,
       which is how it is meant to be.</p>
-    <p><a class="link" href="index.html" data-t="h.backtokeeper">Back to the keeper app</a></p>
+    <p><a class="link" href="index.html" data-t="h.backtokeeper">Back to the Recall app</a></p>
   </section>
 
   <!-- sign in -->
@@ -63,7 +63,7 @@
           <input id="hh-name" required placeholder="At my mother, Godelieve" data-t-ph="h.hhnameph">
         </label>
         <label class="field">
-          <span class="label" data-t="h.myname">Your own name, so she can see who helps</span>
+          <span class="label" data-t="h.myname">Your own name, so they can see who helps</span>
           <input id="hh-me" required placeholder="Marie">
         </label>
         <button class="btn" type="submit" data-t="h.create">Create it</button>
@@ -140,7 +140,7 @@
         </label>
         <div class="two">
           <label class="field">
-            <span class="label" data-t="h.remindher">Remind her</span>
+            <span class="label" data-t="h.remindher">Send a reminder</span>
             <select id="c-repeat">
               <option value="" data-t="h.rep.none">no reminder</option>
               <option value="none" data-t="h.rep.once">once, the day before</option>
@@ -167,9 +167,9 @@
             </select>
           </label>
         </div>
-        <p class="hint" data-t="h.remindhint">A reminder waits on her Today screen and is read out loud
-          when she opens Recall. Recall cannot make a closed phone ring, so for
-          something that really matters, call her as well.</p>
+        <p class="hint" data-t="h.remindhint">A reminder waits on the Today screen and is read out loud when Recall is opened.
+          Recall cannot make a closed phone ring, so for something that really matters, call
+          as well.</p>
         <div class="form-actions">
           <button class="btn" type="submit" data-t="h.savecard">Save the card</button>
           <button class="btn ghost" type="button" id="btn-cancel-card" data-t="app.cancel">Cancel</button>
@@ -187,26 +187,25 @@
       <h2 data-t="h.access">Who has access</h2>
       <div id="members-list" class="rows"></div>
 
-      <h2 data-t="h.phones">Her phones</h2>
+      <h2 data-t="h.phones">Their devices</h2>
       <div id="devices-list" class="rows"></div>
-      <button id="btn-wizard" class="btn" type="button" data-t="h.setupphone">Set up a phone</button>
+      <button id="btn-wizard" class="btn" type="button" data-t="h.setupphone">Set up a device</button>
 
       <!-- R7.1, R7.2. The same three steps whether this is the first phone or a
            replacement, because the family should not have to know the difference. -->
       <div id="wizard" class="wizard" hidden>
         <ol class="steps">
           <li id="step-1" class="step" aria-current="step" data-t="h.step1">1. What happens</li>
-          <li id="step-2" class="step" data-t="h.step2">2. Show her the square</li>
+          <li id="step-2" class="step" data-t="h.step2">2. Show the square</li>
           <li id="step-3" class="step" data-t="h.step3">3. Finish</li>
         </ol>
 
         <div id="w-1" class="wstep">
-          <p data-t="h.w1">Her cards live in the household, not on the phone, so a new phone has
-            everything the moment it is linked. Nothing is copied and nothing is lost.
-            The old phone keeps working until you remove it here, which is the last
-            step.</p>
+          <p data-t="h.w1">The cards live in the household, not on the device, so a new device has
+            everything the moment it is linked. Nothing is copied and nothing is lost. The
+            old device keeps working until you remove it here, which is the last step.</p>
           <label class="field">
-            <span class="label" data-t="h.phonename">What to call this phone</span>
+            <span class="label" data-t="h.phonename">What to call this device</span>
             <input id="w-name" placeholder="Godelieve, new phone" data-t-ph="h.phonenameph">
           </label>
           <div class="form-actions">
@@ -216,9 +215,9 @@
         </div>
 
         <div id="w-2" class="wstep" hidden>
-          <p data-t="h.w2">On her phone, open the camera and point it at this square. It opens
-            Recall and links the phone. If the camera will not cooperate, she can
-            type the six letters instead. Both are good for fifteen minutes.</p>
+          <p data-t="h.w2">On their device, open the camera and point it at this square. It opens Recall
+            and links the device. If the camera will not cooperate, the six letters can be
+            typed instead. Both are good for fifteen minutes.</p>
           <div class="linkbox">
             <output id="link-code" class="code"></output>
           </div>
@@ -226,7 +225,7 @@
             <div id="qr-holder"></div>
             <p class="hint" id="qr-url"></p>
           </div>
-          <p id="w-waiting" class="msg" data-t="h.waiting">Waiting for her phone.</p>
+          <p id="w-waiting" class="msg" data-t="h.waiting">Waiting for the device.</p>
           <div class="form-actions">
             <button id="btn-w-again" class="btn ghost" type="button" data-t="h.newcode">Make a new code</button>
             <button id="btn-w-stop" class="btn ghost" type="button" data-t="h.stopwaiting">Stop waiting</button>
@@ -258,7 +257,7 @@
       <p class="hint"><a class="link" href="privacy.html" data-t="knows.policy">Read the whole privacy notice</a></p>
 
       <h2 data-t="h.whathappened">What has happened</h2>
-      <p class="hint" data-t="h.logthepoint">She can read this list too. That is the point of it.</p>
+      <p class="hint" data-t="h.logthepoint">They can read this list too. That is the point of it.</p>
       <div id="activity-list" class="rows"></div>
     </div>
   </section>
@@ -276,6 +275,18 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script type="module" src="js/helper.js?v=33"></script>
+<!-- The neural voice library imports the ONNX runtime by bare name, which
+     normally only a bundler resolves, and this app deliberately has no build
+     step. So the name is resolved here. Pinning the version here as well is on
+     purpose: the library's own default points at a runtime build that does not
+     carry the files it asks for, which is a bug we would otherwise inherit. -->
+<script type="importmap">
+{
+  "imports": {
+    "onnxruntime-web/wasm": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.wasm.min.mjs"
+  }
+}
+</script>
+<script type="module" src="js/helper.js?v=35"></script>
 </body>
 </html>

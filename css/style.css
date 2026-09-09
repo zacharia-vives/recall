@@ -709,6 +709,29 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
   font-variant-numeric: tabular-nums;
 }
 
+/* P23. What the family has done, on her phone. Two lines per entry rather than
+   a count in the corner, because what matters here is the sentence and the
+   sentence is longer than a number. */
+.seen {
+  list-style: none;
+  margin: 0.5rem 0 0.75rem;
+  padding: 0;
+}
+
+.seen li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--rule, #e5ddd3);
+  font-size: 1.125rem;
+}
+
+.seen .s {
+  font-size: 1rem;
+  color: var(--muted, #6b6257);
+}
+
 /* The three switches on Everything. Big enough to hit, and the state is a tick
    plus a heavier frame, never colour on its own. R4.6. */
 .filters {
@@ -1067,4 +1090,44 @@ a.big.map:focus-visible {
   font-size: 1.0625rem;
   min-height: 3.25rem;
   margin-bottom: 0.35rem;
+}
+
+/* ------------------------------------------- the better voice, N16 */
+
+/* Sixty megabytes deserves a real progress bar rather than a spinner: on a
+   kitchen wifi this runs for a while, and a bar is the difference between
+   waiting and wondering whether it is stuck. */
+.voice-bar {
+  height: 0.75rem;
+  margin: 0.5rem 0 0.25rem;
+  border: 2px solid var(--ink, #231710);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--card, #fff);
+}
+
+.voice-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent, #f0692b);
+  transition: width 0.2s linear;
+}
+
+/* A plain button that reads as a link, for the one action here nobody should
+   press by accident. */
+button.link {
+  font: inherit;
+  font-size: 1rem;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ink, #231710);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+button.link:focus-visible {
+  outline: 3px solid var(--accent, #f0692b);
+  outline-offset: 2px;
 }

@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=33";
+import * as i18n from "./i18n.js?v=35";
 
 // Store: everything is kept on the device in IndexedDB.
 // Requirement P1: local only by default, nothing leaves the phone unless a

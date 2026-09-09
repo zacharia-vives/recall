@@ -191,6 +191,9 @@ out.
 | P20 | What Recall knows about you, counted, in the help screen: article 15 in a form she can use without writing anybody a letter | Must |
 | P21 | A copy of everything in one press, cards, reminders and photos: article 20, in the product rather than in a promise | Must |
 | P22 | A privacy notice in all three languages, built around care, security, respect and transparency, each one a claim with a mechanism behind it | Must |
+| N16 | A neural voice that runs on the device, for Dutch, English and French, chosen once and downloaded once. Off until somebody turns it on, because it is a sixty megabyte download, and every failure path ends with the phone's own voice reading the same words | Should |
+| N17 | Dutch gets a Belgian voice, not a Netherlands one. The keeper we are building for is Flemish and nl_BE exists, so settling for nl_NL would be a choice rather than a limitation | Should |
+| P23 | The list of what the family has done is readable in her own app, in her own language, because the notice she hears out loud promises exactly that. Actions are looked up in the dictionary, never shown as the English they were stored in | Must |
 | R2.7 | Choose a photo opens the gallery and not the camera. The two buttons do different things and the file input must not carry a capture hint | Must |
 | R6.4 | A reminder counts as missed an hour after it was due, not twelve, because a morning appointment reading as coming all day defeats the follow up screen | Must |
 | F14 | Any card with an address offers the way there: one big button for the map app the phone actually has, with the other two smaller behind it. Ordinary https links, so the app opens when it is installed and the website when it is not | Should |

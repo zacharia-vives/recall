@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recall, the better voices</title>
+
+<!-- The Piper package imports "onnxruntime-web/wasm" by name, which only a
+     bundler resolves. This app has no bundler, so the name is resolved here
+     instead. It also lets us pick the runtime version: the package's own
+     default points at a build that does not carry the .mjs files it asks for,
+     which is why loading it straight from a CDN fails. -->
+<script type="importmap">
+{
+  "imports": {
+    "onnxruntime-web/wasm": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.wasm.min.mjs"
+  }
+}
+</script>
+
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 1.25rem;
+         max-width: 46rem; background: #fbf7f1; color: #241f19; }
+  h1 { font-size: 1.5rem; }
+  li { padding: 0.35rem 0; border-bottom: 1px solid #e5ddd3; font-size: 1rem; }
+  .p { color: #14622f; font-weight: 600; }
+  .f { color: #a2231d; font-weight: 600; }
+  button { font-size: 1.0625rem; padding: 0.7rem 1rem; margin: 0.25rem 0.25rem 0.25rem 0;
+           border: 2px solid #241f19; background: #fff; border-radius: 0.5rem; }
+  #bar { height: 0.6rem; background: #e5ddd3; border-radius: 1rem; overflow: hidden; margin: 0.5rem 0; }
+  #bar i { display: block; height: 100%; width: 0; background: #f0692b; }
+  .note { font-size: 0.95rem; color: #6b6257; }
+</style>
+
+<h1>The better voices, on this device</h1>
+<p class="note">This page is for the Thursday pass. It downloads a real voice and
+  speaks a real sentence, so it answers the only question that matters: does this
+  sound good enough on the phone we are demonstrating on, and how long does it take.
+  Nothing here is sent anywhere. Every voice is downloaded once and then runs on
+  the device.</p>
+
+<p>
+  <button id="nl">Dutch, Belgian (20 MB)</button>
+  <button id="en">English (60 MB)</button>
+  <button id="fr">French (60 MB)</button>
+  <button id="dev">The device's own voice, for comparison</button>
+</p>
+<div id="bar"><i></i></div>
+<p id="msg" class="note"></p>
+<ul id="out"></ul>
+
+<script type="module">
+const PIPER = "https://cdn.jsdelivr.net/npm/@mintplex-labs/piper-tts-web@1.0.5/dist/piper-tts-web.js";
+const ORT_DIST = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/";
+const PHONEMES = "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/";
+
+const SAY = {
+  nl: ["nl_BE-nathalie-medium", "U hebt kinesitherapie op dinsdag om half tien in AZ Groeninge."],
+  en: ["en_GB-alba-medium", "You have physiotherapy on Tuesday at half past nine."],
+  fr: ["fr_FR-siwis-medium", "Vous avez de la kinésithérapie mardi à neuf heures et demie."]
+};
+
+const out = document.getElementById("out");
+const msg = document.getElementById("msg");
+const bar = document.querySelector("#bar i");
+
+function line(ok, text) {
+  const li = document.createElement("li");
+  li.innerHTML = '<span class="' + (ok ? "p" : "f") + '">' + (ok ? "PASS" : "FAIL") + "</span> " + text;
+  out.appendChild(li);
+}
+
+async function speak(which) {
+  const [voiceId, text] = SAY[which];
+  msg.textContent = "Loading " + voiceId + ". The first time, this downloads the voice.";
+  bar.style.width = "0";
+  const started = performance.now();
+  try {
+    const tts = await import(PIPER);
+    const already = await tts.stored();
+    const cached = already.indexOf(voiceId) >= 0;
+
+    const session = await tts.TtsSession.create({
+      voiceId: voiceId,
+      wasmPaths: {
+        onnxWasm: ORT_DIST,
+        piperData: PHONEMES + "piper_phonemize.data",
+        piperWasm: PHONEMES + "piper_phonemize.wasm"
+      },
+      progress: (p) => {
+        if (p && p.total) bar.style.width = Math.round(p.loaded * 100 / p.total) + "%";
+      }
+    });
+    const loaded = Math.round((performance.now() - started) / 100) / 10;
+    line(true, voiceId + " loaded in " + loaded + "s" + (cached ? ", already on the device" : ", downloaded now"));
+
+    const t1 = performance.now();
+    const wav = await session.predict(text);
+    const spoke = Math.round((performance.now() - t1) / 100) / 10;
+    line(true, "made " + Math.round(wav.size / 1024) + " KB of audio in " + spoke + "s");
+
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const decoded = await ctx.decodeAudioData(await wav.arrayBuffer());
+    line(decoded.duration > 1,
+      "it is real audio: " + (Math.round(decoded.duration * 100) / 100) + "s long at " +
+      decoded.sampleRate + " Hz");
+    line(spoke < decoded.duration * 3,
+      "fast enough to be worth it: " + spoke + "s of work for " +
+      (Math.round(decoded.duration * 10) / 10) + "s of speech");
+
+    const audio = new Audio(URL.createObjectURL(wav));
+    audio.play();
+    msg.textContent = "Speaking. Listen to it: is this better than the device's own voice?";
+  } catch (err) {
+    line(false, voiceId + " did not work: " + String(err && err.message || err).slice(0, 140));
+    msg.textContent = "That is what the fallback is for. The app would have used the device voice here.";
+  }
+}
+
+document.getElementById("nl").addEventListener("click", () => speak("nl"));
+document.getElementById("en").addEventListener("click", () => speak("en"));
+document.getElementById("fr").addEventListener("click", () => speak("fr"));
+
+document.getElementById("dev").addEventListener("click", () => {
+  const u = new SpeechSynthesisUtterance("U hebt kinesitherapie op dinsdag om half tien in AZ Groeninge.");
+  u.lang = "nl-BE";
+  const voices = window.speechSynthesis.getVoices();
+  const dutch = voices.filter((v) => v.lang && v.lang.toLowerCase().indexOf("nl") === 0);
+  line(dutch.length > 0, "the device has " + dutch.length + " Dutch voice(s): " +
+    (dutch.map((v) => v.name + " (" + v.lang + ")").join(", ") || "none, so it will not sound Dutch"));
+  window.speechSynthesis.speak(u);
+  msg.textContent = "That is the voice the app uses today.";
+});
+</script>
+</html>

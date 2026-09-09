@@ -25,6 +25,7 @@ is the only way to find out whether it could.
 | **Processor: Supabase** | Postgres, authentication and file storage. Project in Frankfurt, `eu-central-1` | Article 28 processor. A data processing agreement and the standard contractual clauses are needed before this is real, and today they are not signed. See section 8 |
 | **Partner organisation with an API key** | A care organisation whose scheduling software puts cards in one household, through the API added on 9 September | Controller of their own scheduling data, and our joint concern for the part that lands in Recall. Article 28 again: a written agreement before any real organisation gets a key, which is why the API is licensed and not open to sign up. `docs/api.md` |
 | **Processor: GitHub Pages** | Serves the two pages and the scripts | Sees IP addresses in its request logs. Same paperwork gap |
+| **Third country recipient: Hugging Face and jsDelivr** | Where the neural voice and its runtime are downloaded from, once, if somebody turns that voice on | The browser's request carries her IP address to them at the moment a voice is downloaded, and never again: the model is then kept on the device and the voice works with no network at all. Nothing she has Recall read is ever sent anywhere. Same finding as Cloudflare, same fix. See section 8 |
 | **Third country recipient: Cloudflare** | `cdnjs.cloudflare.com` serves the OCR library, and the language data comes from a second host | The browser's request carries her IP address to a US company. This is a real transfer and a real finding. See section 8 |
 
 ## 2. What is processed, and what is refused
@@ -190,7 +191,7 @@ paperwork as Supabase, same conclusion.
 | Right | State |
 | --- | --- |
 | Information, Articles 12 to 14 | The consent screen, read out loud, in short sentences. This is the strongest part |
-| Access, Article 15 | She can see every card and the whole activity log in the app, and the help screen counts exactly what Recall holds about her and says where it is. P20 |
+| Access, Article 15 | She can see every card, and since 9 September the whole activity log in her own app and her own language rather than only in the family's, which is what the spoken notice had been promising. P23. Also and the help screen counts exactly what Recall holds about her and says where it is. P20 |
 | Rectification, Article 16 | Family can edit any card. She cannot, by design, because an accidental edit is worse for her than a wrong field; she can ask, and the log shows what changed |
 | Erasure, Article 17 | Family can bin a card and the bin empties after thirty days. Deleting a whole household deletes everything in it, cascaded, and that works |
 | Portability, Article 20 | **Done, 9 September.** The help screen has a copy of everything: one file with every card, the reminders, the checklist items, the phone numbers and the photos as text, in one press. P21 |
@@ -247,11 +248,13 @@ what happens if nobody ever links the phone.
 | Risk | Who is hurt | Before | What is done | After |
 | --- | --- | --- | --- | --- |
 | One household can read another's cards or photos | The keeper | High | Row level security in Postgres, a security definer function behind every policy, twenty five automated checks run against the live database | Low |
+| The app promises a transparency its own interface does not provide | The keeper | Medium | The spoken notice says everything the family does is written down where she can read it. It was, in the database and in the family app, and not in the only interface she opens. The log is now in her help screen, in her language, most recent first, and a partner's software appears in it as a connected system. Found by checking each claim in the notice against the code that would have to answer it | Low |
 | The family uses the app to watch rather than to help | The keeper | High | Three reminder states and no more, no location, no usage times, no read receipts, and every family action in a log she can read | Medium, because it is a social risk and code can only shape it |
 | She is asked for a yes she does not understand | The keeper | High | The notice is read out loud, in short sentences, on her own phone, with a real no that keeps the app working. Where a bewindvoerder exists, they consent | Medium |
 | A phone is lost or picked up in a waiting room | The keeper | Medium | An optional code and Face ID, and the family can move Recall to a new phone and remove the old one in three steps | Medium, and honest about it: a screen lock, not encryption |
 | The national register number ends up stored | The keeper | Medium | Stripped before storage, with a test that reads a letter carrying one and checks the stored text | Low |
 | A hospital letter reaches a third party | The keeper | High | The reading runs on the device. Cloud OCR was rejected for this reason | Low, except for the IP address leak in section 8 |
+| A nicer voice is bought by sending her letters to a server | The keeper | Medium | The neural voice added on 9 September runs on the device, in WebAssembly, and the model is downloaded once and then kept locally. So the app now sounds better without giving up the rule below. The download itself is the only network call, and it is opt in with the size stated first | Low |
 | The letter is sent away to be read out loud in a nicer voice | The keeper | Medium | The best sounding voices on Windows and Android are online ones, and those post the text to a server. Refused, by name and by the localService flag. Only voices that speak on the device are offered, and the help screen says so where family picks one | Low |
 | Her local store breaks and she thinks her cards are lost | The keeper | Medium | A screen of its own that says what happened and what to do, rather than an empty Today screen | Low |
 | No processor paperwork | Everyone | High for a real deployment | Nothing yet. Section 8, and now also for any care organisation holding an API key | High, and the first thing to fix before a real household |
