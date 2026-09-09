@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=28";
+import * as i18n from "./i18n.js?v=29";
 
 // Store: everything is kept on the device in IndexedDB.
 // Requirement P1: local only by default, nothing leaves the phone unless a
@@ -6,7 +6,8 @@ import * as i18n from "./i18n.js?v=28";
 // loaded unless js/config.js is filled in.
 
 const DB_NAME = "recall";
-const DB_VERSION = 2;
+// 3 added the files store, for a card that holds a document. F1.
+const DB_VERSION = 3;
 
 // Bump this when the example cards change. Anyone who already used the app then
 // loses the old examples and gets the new ones, while their own cards are left
@@ -47,6 +48,13 @@ function open() {
       }
       if (!d.objectStoreNames.contains("photos")) {
         d.createObjectStore("photos", { keyPath: "id" });
+      }
+      // A card can hold one document as well as one photo. Kept in its own
+      // store for the same reason photos are: a card is read constantly and
+      // a file is read rarely, and nobody wants to drag a docx through every
+      // list render. F1.
+      if (!d.objectStoreNames.contains("files")) {
+        d.createObjectStore("files", { keyPath: "id" });
       }
       if (!d.objectStoreNames.contains("reminders")) {
         const r = d.createObjectStore("reminders", { keyPath: "id" });
@@ -121,9 +129,12 @@ export async function saveRecord(record) {
 export async function deleteRecord(id) {
   const store = await tx("records", "readwrite");
   await ask(store.delete(id));
-  // Requirement P8: the photo and the reminders go too, not only the row.
+  // Requirement P8: the photo, the document and the reminders go too, not
+  // only the row. A card that is deleted leaves nothing behind.
   const photos = await tx("photos", "readwrite");
   await ask(photos.delete(id));
+  const files = await tx("files", "readwrite");
+  await ask(files.delete(id));
   const rems = await remindersFor(id);
   for (const r of rems) await deleteReminder(r.id);
 }
@@ -143,6 +154,27 @@ export async function hasPhotoStored(id) {
 
 // The export needs the picture itself rather than a link to it, because a
 // blob url dies with the page and a copy of your things should not. P21.
+export async function saveFile(id, blob, name, type) {
+  const store = await tx("files", "readwrite");
+  await ask(store.put({ id: id, blob: blob, name: name || "", type: type || "" }));
+}
+
+export async function fileRow(id) {
+  const store = await tx("files", "readonly");
+  const row = await ask(store.get(id));
+  return row || null;
+}
+
+export async function hasFileStored(id) {
+  const row = await fileRow(id);
+  return Boolean(row);
+}
+
+export async function deleteFile(id) {
+  const store = await tx("files", "readwrite");
+  await ask(store.delete(id));
+}
+
 export async function photoBlob(id) {
   const store = await tx("photos", "readonly");
   const row = await ask(store.get(id));

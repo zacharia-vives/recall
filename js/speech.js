@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=28";
+import * as i18n from "./i18n.js?v=29";
 
 // Reading out loud, with the Web Speech API. Free, and on the voices we allow
 // it also works with no network. Requirement S2: we speak the text as it is, we
@@ -204,14 +204,42 @@ export function canSpeak() {
   return "speechSynthesis" in window;
 }
 
+// iPhones and iPads are fussy about this in two ways that Android is not, and
+// both of them bit us.
+//
+// First, cancel() followed by speak() in the same turn leaves iOS silent. So
+// nothing is cancelled unless something is actually being said.
+//
+// Second, iOS often plays only the first of a queue of utterances, or none of
+// them. Splitting a letter into one utterance per sentence is what makes the
+// reading sound like a person taking a breath, and it is also what stopped iOS
+// from reading at all. So on iOS the sentences are joined back into one
+// utterance: the punctuation still produces the pauses, the voice just breathes
+// a little less.
+function isApple() {
+  const ua = window.navigator.userAgent || "";
+  if (/iPhone|iPad|iPod/.test(ua)) return true;
+  // An iPad on recent iOS reports itself as a Mac, and the touch points are
+  // what tells the two apart.
+  return /Macintosh/.test(ua) && window.navigator.maxTouchPoints > 1;
+}
+
 export function speak(text, lang, options) {
   if (!canSpeak() || !text) return false;
-  stop();
+
+  // Only clear the queue when there is something in it.
+  if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+    window.speechSynthesis.cancel();
+  }
+  // A tab that was hidden can leave the queue paused on some browsers, and a
+  // paused queue never starts.
+  if (window.speechSynthesis.paused) window.speechSynthesis.resume();
 
   const useLang = lang || i18n.spokenLang();
   const plain = (options && options.raw) ? String(text) : humanise(text, useLang);
-  const parts = sentences(plain);
+  let parts = sentences(plain);
   if (!parts.length) return false;
+  if (isApple()) parts = [parts.join(" ")];
 
   const voice = pickVoice(useLang);
   parts.forEach((part, i) => {

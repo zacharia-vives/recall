@@ -10,7 +10,7 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css?v=28">
+<link rel="stylesheet" href="css/style.css?v=29">
 </head>
 <body>
 
@@ -167,6 +167,9 @@
       <button class="chip" type="button" data-filter="place" aria-pressed="true">
         <span class="tick" aria-hidden="true">&#10003;</span><span data-t="filter.places">Places</span>
       </button>
+      <button class="chip" type="button" data-filter="list" aria-pressed="true">
+        <span class="tick" aria-hidden="true">&#10003;</span><span data-t="filter.lists">Lists</span>
+      </button>
     </div>
     <div id="records-list" class="list"></div>
   </section>
@@ -207,10 +210,18 @@
     <h1 id="new-title" data-t="new.title">What are we keeping?</h1>
     <img id="shot" class="shot" alt="The photo you just took" data-t-alt="new.shotalt">
     <p id="ocr-state" class="ocr-state" hidden></p>
+    <div class="doc-add">
+      <span class="label" data-t="file.heading">A document</span>
+      <p class="hint-line" data-t="file.hint">A letter that arrived by email, as a text file, a Word document or a pdf. It is read on this phone and never sent anywhere.</p>
+      <button id="btn-file" class="big ghost" type="button" data-t="file.choose">Add a document</button>
+      <input id="file-doc" type="file" hidden>
+      <div id="file-preview" hidden></div>
+    </div>
     <div id="ocr-found" hidden>
       <span class="label" data-t="ocr.found">What Recall read</span>
       <p id="ocr-text" class="ocr-text"></p>
       <button id="btn-read-again" class="big" type="button" data-t="ocr.readagain">Read it out loud</button>
+      <button id="btn-make-list" class="big ghost" type="button" hidden data-t="list.fromphoto">Make a checklist out of this</button>
     </div>
     <form id="new-form" novalidate>
       <fieldset class="kinds">
@@ -218,10 +229,16 @@
         <label><input type="radio" name="kind" value="letter" checked> <span data-t="kind.letter">A letter</span></label>
         <label><input type="radio" name="kind" value="person"> <span data-t="kind.person">A person</span></label>
         <label><input type="radio" name="kind" value="place"> <span data-t="kind.place">A place</span></label>
+        <label><input type="radio" name="kind" value="list"> <span data-t="kind.list">A checklist</span></label>
       </fieldset>
       <label class="field">
         <span class="label" data-t="field.name">Name of the card</span>
         <input id="f-title" name="title" required>
+      </label>
+      <label class="field" id="items-field" hidden>
+        <span class="label" data-t="list.items">The things on the list</span>
+        <span class="hint-line" data-t="list.itemshint">One on each line.</span>
+        <textarea id="f-items" rows="6"></textarea>
       </label>
       <label class="field">
         <span class="label" data-t="field.who">Who</span>
@@ -236,12 +253,24 @@
         <input id="f-when" name="when" type="datetime-local">
       </label>
       <label class="field">
+        <span class="label" data-t="phone.label">Phone number</span>
+        <span class="hint-line" data-t="phone.hint">So a reminder can be a call, with a button that rings the number.</span>
+        <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0475 12 34 56" data-t-ph="phone.ph">
+      </label>
+      <label class="field">
         <span class="label" data-t="field.remind">Remind me</span>
         <select id="f-remind" name="remind">
           <option value="" data-t="remind.never">do not remind me</option>
           <option value="day-before" selected data-t="remind.daybefore">the day before</option>
           <option value="daily" data-t="remind.daily">every day</option>
           <option value="twice" data-t="remind.twice">twice a day</option>
+        </select>
+      </label>
+      <label class="field" id="remind-kind-field">
+        <span class="label" data-t="remind.what">What kind of reminder</span>
+        <select id="f-remind-kind">
+          <option value="normal" data-t="remind.normal">Just remind me</option>
+          <option value="call" data-t="remind.call">Remind me to call</option>
         </select>
       </label>
       <div class="actions">
@@ -257,6 +286,15 @@
   <a href="#/capture" class="tab tab-main" data-tab="capture"><span class="tab-icon" aria-hidden="true">&#9635;</span><span data-t="tabs.camera">Camera</span></a>
   <a href="#/records" class="tab" data-tab="records"><span class="tab-icon" aria-hidden="true">&#9776;</span><span data-t="tabs.records">Everything</span></a>
 </nav>
+
+<!-- F5. Anything worth looking at closely: a photo, or the words out of a
+     document at a size that can actually be read. Its own dialog so Escape
+     closes it and the rest of the page is out of the way. -->
+<dialog id="big" aria-labelledby="big-title">
+  <h2 id="big-title" class="sr-only" data-t="big.open">Make this bigger</h2>
+  <div id="big-body" class="big-body"></div>
+  <button id="big-close" class="big" type="button" data-t="big.close">Close</button>
+</dialog>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
@@ -364,6 +402,6 @@
   </div>
 </dialog>
 
-<script type="module" src="js/app.js?v=28"></script>
+<script type="module" src="js/app.js?v=29"></script>
 </body>
 </html>

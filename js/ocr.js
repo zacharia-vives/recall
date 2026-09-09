@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=28";
+import * as i18n from "./i18n.js?v=29";
 
 // OCR and date reading.
 // Requirement P2: this runs on the device. A hospital letter never leaves the
@@ -109,21 +109,71 @@ function tessLangs() {
   return "nld+eng";
 }
 
-// Which voice should read this text back? A Belgian letter is usually Dutch or
-// French whatever the interface is set to, and hearing Dutch read by an English
-// voice is unpleasant. Deliberately crude, and good enough.
+// Which language is this text in? A Belgian letter is Dutch or French whatever
+// the interface is set to, and hearing Dutch read by an English voice is
+// unpleasant enough that guessing is worth doing properly.
+//
+// The method is the boring one that works: count the little words that carry no
+// meaning but appear in every sentence, score each language per hundred words
+// so a long letter is not automatically more Dutch than a short one, and add a
+// point for letters that only one of the three uses. If nothing wins clearly,
+// say so rather than guessing, and the caller falls back to the language she
+// chose.
+
+const COMMON = {
+  nl: ["de", "het", "een", "en", "van", "is", "op", "te", "dat", "die", "in",
+       "niet", "met", "voor", "bij", "uw", "u", "wij", "ook", "aan", "om",
+       "naar", "wordt", "zijn", "heeft", "kan", "maar", "als", "dan", "door"],
+  fr: ["le", "la", "les", "de", "des", "du", "et", "un", "une", "est", "vous",
+       "votre", "avec", "pour", "nous", "dans", "sur", "que", "qui", "au",
+       "aux", "ce", "cette", "par", "plus", "sera", "avez", "sont", "pas", "ne"],
+  en: ["the", "and", "of", "to", "is", "you", "your", "for", "with", "on",
+       "at", "this", "that", "will", "are", "have", "from", "not", "please",
+       "we", "our", "it", "be", "as", "by", "an", "if", "can", "has", "was"]
+};
+
+// Letters that give a language away on their own.
+const MARKS = {
+  nl: /\b(ij|zijn|uw)\b|ĳ/i,
+  fr: /[àâçéèêëîïôûùœ]/i,
+  en: /\b(the|through|thought)\b/i
+};
+
+// Exported so the tests and the language page can look at the working, not
+// just the answer.
+export function scoreLangs(text) {
+  const clean = String(text || "").toLowerCase();
+  const words = clean.split(/[^a-zàâçéèêëîïôûùüÿœij]+/).filter(Boolean);
+  const scores = { nl: 0, fr: 0, en: 0 };
+  if (!words.length) return { scores: scores, best: "", words: 0 };
+
+  words.forEach((word) => {
+    Object.keys(COMMON).forEach((code) => {
+      if (COMMON[code].includes(word)) scores[code] += 1;
+    });
+  });
+
+  // Per hundred words, so length does not decide it.
+  Object.keys(scores).forEach((code) => {
+    scores[code] = (scores[code] * 100) / words.length;
+    if (MARKS[code].test(clean)) scores[code] += 4;
+  });
+
+  const ranked = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+  const top = ranked[0];
+  const second = ranked[1];
+
+  // A clear win means the top language is both above the floor and ahead of
+  // the next one. Anything else is a shrug.
+  const clear = scores[top] >= 6 && scores[top] >= scores[second] * 1.4;
+  return { scores: scores, best: clear ? top : "", words: words.length };
+}
+
+const SPOKEN = { nl: "nl-BE", fr: "fr-BE", en: "en-GB" };
+
 export function guessLang(text) {
-  const words = text.toLowerCase().split(/[^a-zàâçéèêëîïôûùüÿœ]+/);
-  const dutch = ["de", "het", "een", "uw", "van", "niet", "met", "voor", "bij", "wij"];
-  const french = ["le", "la", "les", "des", "vous", "votre", "avec", "pour", "nous", "est"];
-  let nl = 0;
-  let fr = 0;
-  for (const word of words) {
-    if (dutch.includes(word)) nl += 1;
-    if (french.includes(word)) fr += 1;
-  }
-  if (fr >= 3 && fr > nl) return "fr-BE";
-  if (nl >= 3) return "nl-BE";
+  const found = scoreLangs(text).best;
+  if (found) return SPOKEN[found];
   // Nothing obvious, so read it in the language she has chosen.
   return i18n.spokenLang();
 }

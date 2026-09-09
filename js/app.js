@@ -1,14 +1,15 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=28";
-import * as speech from "./speech.js?v=28";
-import * as camera from "./camera.js?v=28";
-import * as ocr from "./ocr.js?v=28";
-import { isConfigured, NOTICE_VERSION } from "./config.js?v=28";
-import * as install from "./install.js?v=28";
-import * as lock from "./lock.js?v=28";
-import * as i18n from "./i18n.js?v=28";
+import * as store from "./store.js?v=29";
+import * as speech from "./speech.js?v=29";
+import * as camera from "./camera.js?v=29";
+import * as ocr from "./ocr.js?v=29";
+import { isConfigured, NOTICE_VERSION } from "./config.js?v=29";
+import * as install from "./install.js?v=29";
+import * as lock from "./lock.js?v=29";
+import * as i18n from "./i18n.js?v=29";
+import * as docs from "./docs.js?v=29";
 
 // Short, because it is used on nearly every line that says something.
 const t = i18n.t;
@@ -18,7 +19,8 @@ const HOUSEHOLD_KEY = "recall.householdId";
 const KINDS = {
   letter: { key: "kind.letter", badge: "L" },
   person: { key: "kind.person", badge: "P" },
-  place: { key: "kind.place", badge: "●" }
+  place: { key: "kind.place", badge: "●" },
+  list: { key: "kind.list", badge: "☑" }
 };
 
 function kindLabel(kind) {
@@ -82,10 +84,20 @@ function isDueSoon(record) {
 
 function sentenceFor(record) {
   if (record.spokenText) return record.spokenText;
+  // A checklist reads as what is still to do, which is the question somebody
+  // holding a list is actually asking. F9.
+  if (record.kind === "list") return listSentence(record);
   const parts = [record.title];
   if (record.happensAt) parts.push(readableDate(record.happensAt));
   if (record.place) parts.push(record.place);
   return parts.filter(Boolean).join(". ") + ".";
+}
+
+// The words of the letter itself, wherever they came from: a photograph that
+// was read, or a document that was attached. Read in the language of the text
+// rather than the language of the app.
+function longTextOf(record) {
+  return record.fileText || record.ocrText || "";
 }
 
 /* rendering */
@@ -123,7 +135,11 @@ async function paintThumbs(container) {
 function todayItemHtml(reminder, record) {
   const kind = KINDS[record.kind] || KINDS.letter;
   const status = store.reminderStatus(reminder);
-  const spoken = reminder.spokenText || record.spokenText || record.title;
+  let spoken = reminder.spokenText || record.spokenText || record.title;
+  if (reminder.kind === "call") {
+    const who = (record.people && record.people.length) ? record.people[0] : record.title;
+    spoken = t("remind.timetocall", { who: who });
+  }
 
   return '<div class="today-item ' + (status === "missed" ? "missed" : "") + '">' +
     '<button class="today-main" data-open="' + esc(record.id) + '">' +
@@ -135,6 +151,9 @@ function todayItemHtml(reminder, record) {
       "</span>" +
     "</button>" +
     '<div class="today-acts">' +
+      // A call reminder puts the call first: it is the thing being asked for,
+      // and a number somebody has to remember is not much of a reminder. F11.
+      (reminder.kind === "call" ? callButtonHtml(record, { short: true }) : "") +
       '<button class="big" type="button" data-say="' + esc(spoken) + '">' + t("record.read") + "</button>" +
       '<button class="big ghost" type="button" data-done="' + esc(reminder.id) + '">' + t("run.markdone") + "</button>" +
     "</div>" +
@@ -176,7 +195,7 @@ async function renderToday() {
 
 // Which of the three kinds are switched on. All three to begin with, because
 // the screen is called Everything.
-const showing = { letter: true, person: true, place: true };
+const showing = { letter: true, person: true, place: true, list: true };
 
 function renderRecords(filter) {
   const list = document.getElementById("records-list");
@@ -190,7 +209,7 @@ function renderRecords(filter) {
     : kept;
 
   if (rows.length === 0) {
-    const nothingOn = !showing.letter && !showing.person && !showing.place;
+    const nothingOn = !showing.letter && !showing.person && !showing.place && !showing.list;
     list.innerHTML = '<p class="empty">' +
       (nothingOn ? t("filter.noneon") : needle ? t("records.nohits") : t("records.none")) +
       "</p>";
@@ -228,15 +247,33 @@ async function renderRecord(id) {
     [t("run.lastdone"), reminder && reminder.lastDoneAt ? readableDate(reminder.lastDoneAt) : ""]
   ].filter((row) => row[1]);
 
+  const words = longTextOf(record);
+  const wantsCall = mine.some((one) => one.kind === "call");
+  const canCall = Boolean(dialable(record.phone));
+
   box.innerHTML =
-    (record.hasPhoto ? '<img class="detail-photo" id="detail-photo" alt="' + esc(t("run.photoalt")) + '">' : "") +
+    (wantsCall && !canCall ? '<p class="warn-line">' + t("phone.nonumber") + "</p>" : "") +
+    // F5. A photo is a button, because the first thing anybody wants to do
+    // with a photograph of a letter is see it bigger.
+    (record.hasPhoto
+      ? '<button class="photo-button" type="button" id="detail-photo-btn">' +
+        '<img class="detail-photo" id="detail-photo" alt="' + esc(t("run.photoalt")) + '">' +
+        '<span class="photo-hint">' + t("big.open") + "</span></button>"
+      : "") +
+    (record.kind === "list" ? checklistHtml(record) : "") +
+    '<div id="file-here"></div>' +
     '<div class="fields">' +
       rows.map((row) =>
         '<div class="row"><span class="k">' + esc(row[0]) + '</span><span class="v">' + esc(row[1]) + "</span></div>"
       ).join("") +
     "</div>" +
     '<div class="actions">' +
-      '<button class="big" type="button" id="btn-say">' + t("record.read") + "</button>" +
+      callButtonHtml(record) +
+      '<button class="big" type="button" id="btn-say">' +
+        (record.kind === "list" ? t("list.readaloud") : t("record.read")) + "</button>" +
+      (words
+        ? '<button class="big ghost" type="button" id="btn-say-long">' + t("file.read") + "</button>"
+        : "") +
       (reminder && store.reminderStatus(reminder) !== "done"
         ? '<button class="big ghost" type="button" data-done="' + esc(reminder.id) +
           '">' + t("run.markdone") + "</button>"
@@ -247,7 +284,85 @@ async function renderRecord(id) {
 
   if (record.hasPhoto) {
     const url = await store.photoUrl(record.id);
-    if (url) document.getElementById("detail-photo").src = url;
+    if (url) {
+      document.getElementById("detail-photo").src = url;
+      document.getElementById("detail-photo-btn").addEventListener("click", () => {
+        showBig({ image: url, alt: t("run.photoalt") });
+      });
+    }
+  }
+
+  // The document, if this card has one. F2.
+  if (record.hasFile) {
+    const row = await store.fileRow(record.id);
+    const here = document.getElementById("file-here");
+    if (row && here) {
+      const shape = (row.type || "").startsWith("application/pdf") ||
+        /\.pdf$/i.test(row.name || "") ? "pdf" : "";
+      const url = URL.createObjectURL(row.blob);
+      here.innerHTML = filePreviewHtml(row.name || t("file.attached"),
+        shape || (record.fileText ? "text" : "other"), record.fileText, url) +
+        '<p><a class="link" href="' + esc(url) + '" download="' + esc(row.name || "document") +
+        '">' + t("file.open") + "</a></p>";
+      const wordsButton = here.querySelector("[data-big-words]");
+      if (wordsButton) {
+        wordsButton.addEventListener("click", () => showBig({ words: record.fileText }));
+      }
+    }
+  }
+
+  // Reading the letter itself, in the language the letter is in. F4.
+  const longButton = document.getElementById("btn-say-long");
+  if (longButton) {
+    longButton.addEventListener("click", () => {
+      if (speech.speaking()) {
+        speech.stop();
+        return;
+      }
+      speech.speak(words, ocr.guessLang(words));
+    });
+  }
+
+  // Ticking things off. F7.
+  if (record.kind === "list") {
+    box.querySelectorAll("[data-drop]").forEach((drop) => {
+      drop.addEventListener("click", async () => {
+        const at = Number(drop.dataset.drop);
+        const items = (record.items || []).slice();
+        items.splice(at, 1);
+        record.items = items;
+        await store.saveRecord(record);
+        records = await store.allRecords();
+        await renderRecord(record.id);
+      });
+    });
+
+    box.querySelectorAll("[data-tick]").forEach((tick) => {
+      tick.addEventListener("click", async () => {
+        const at = Number(tick.dataset.tick);
+        const items = (record.items || []).slice();
+        if (!items[at]) return;
+        items[at] = { text: items[at].text, done: !items[at].done };
+        record.items = items;
+        await store.saveRecord(record);
+        records = await store.allRecords();
+        await renderRecord(record.id);
+      });
+    });
+
+    const adder = document.getElementById("add-item");
+    if (adder) {
+      adder.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const field = document.getElementById("new-item");
+        const text = field.value.trim();
+        if (!text) return;
+        record.items = (record.items || []).concat([{ text: text.slice(0, 120), done: false }]);
+        await store.saveRecord(record);
+        records = await store.allRecords();
+        await renderRecord(record.id);
+      });
+    }
   }
 
   document.getElementById("btn-say").addEventListener("click", () => {
@@ -314,7 +429,7 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=28");
+    const cloud = await import("./cloud.js?v=29");
     const people = await cloud.members(id);
     const helpers = people
       .filter((m) => m.role === "helper")
@@ -399,6 +514,210 @@ function drawVoices() {
   } else {
     msg.hidden = true;
   }
+}
+
+/* looking at something closely, F5 */
+
+const bigBox = document.getElementById("big");
+
+// A photo at the size of the screen, or the words of a document at a size
+// somebody with failing near vision can actually read. Both go through here so
+// there is one way to close it and one place that gets the type size right.
+function showBig(what) {
+  const body = document.getElementById("big-body");
+  if (what.image) {
+    body.innerHTML = '<img src="' + esc(what.image) + '" alt="' + esc(what.alt || "") + '">';
+  } else {
+    body.innerHTML = '<div class="big-words">' + esc(what.words || "").replace(/\n/g, "<br>") + "</div>";
+  }
+  bigBox.showModal();
+}
+
+/* a document on a card, F1 to F4 */
+
+let pendingFile = null;       // the File the helper just chose
+let pendingFileText = "";     // the words Recall got out of it
+let pendingItems = [];        // a checklist, if this card is one
+
+const BIGGEST_FILE = 10 * 1024 * 1024;
+
+function fileUrlFor(row) {
+  return URL.createObjectURL(row.blob);
+}
+
+// What a document looks like on the screen: the words if there are any, the
+// pdf itself if the browser can draw it, and always something to press.
+function filePreviewHtml(name, shape, words, url) {
+  const parts = ['<div class="doc-card">'];
+  parts.push('<p class="doc-name">' + esc(name) + "</p>");
+
+  if (shape === "pdf" && url) {
+    parts.push('<iframe class="doc-pdf" src="' + esc(url) + '" title="' + esc(name) + '"></iframe>');
+    parts.push('<p class="hint-line">' + t("file.pdfnote") + "</p>");
+  } else if (words) {
+    parts.push('<button class="doc-words" type="button" data-big-words="1">' +
+      esc(words.slice(0, 900)) + (words.length > 900 ? " ..." : "") + "</button>");
+    parts.push('<p class="hint-line">' + t("big.hint") + "</p>");
+  } else {
+    parts.push('<p class="hint-line">' + t("file.cannotread") + "</p>");
+  }
+  parts.push("</div>");
+  return parts.join("");
+}
+
+async function chooseFile(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const box = document.getElementById("file-preview");
+
+  if (file.size > BIGGEST_FILE) {
+    say(t("file.toobig"));
+    event.target.value = "";
+    return;
+  }
+
+  pendingFile = file;
+  box.hidden = false;
+  box.innerHTML = '<p class="hint-line">' + t("file.reading") + "</p>";
+
+  pendingFileText = await docs.readWords(file);
+  const shape = docs.shapeOf(file);
+  const url = shape === "pdf" ? URL.createObjectURL(file) : "";
+  box.innerHTML = filePreviewHtml(file.name, shape, pendingFileText, url) +
+    '<div class="lock-actions">' +
+      (docs.canBeReadAloud(file) && pendingFileText
+        ? '<button class="big ghost" type="button" id="btn-file-say">' + t("record.read") + "</button>"
+        : "") +
+      '<button class="big ghost" type="button" id="btn-file-off">' + t("file.remove") + "</button>" +
+    "</div>";
+
+  const sayIt = document.getElementById("btn-file-say");
+  if (sayIt) {
+    sayIt.addEventListener("click", () => {
+      if (speech.speaking()) {
+        speech.stop();
+        return;
+      }
+      speech.speak(pendingFileText, ocr.guessLang(pendingFileText));
+    });
+  }
+  document.getElementById("btn-file-off").addEventListener("click", () => {
+    pendingFile = null;
+    pendingFileText = "";
+    document.getElementById("file-doc").value = "";
+    box.hidden = true;
+    box.innerHTML = "";
+  });
+
+  // A document that reads like a list is probably a list.
+  if (pendingFileText && docs.looksLikeList(pendingFileText)) offerChecklist(pendingFileText);
+}
+
+/* checklists, F6 to F9 */
+
+// Offered rather than done: Recall guessing wrong and silently turning a letter
+// into a list would be worse than asking once.
+async function offerChecklist(text) {
+  const yes = await ask(t("list.lookslike"), t("list.yesmake"));
+  if (!yes) return;
+  makeChecklistFrom(text);
+}
+
+function makeChecklistFrom(text) {
+  const made = docs.listFromText(text);
+  if (!made.items.length) return;
+  pendingItems = made.items;
+
+  const title = document.getElementById("f-title");
+  if (made.title && !title.value.trim()) title.value = made.title;
+
+  const kind = document.querySelector('input[name="kind"][value="list"]');
+  if (kind) {
+    kind.checked = true;
+    showItemsField();
+  }
+  document.getElementById("f-items").value = pendingItems.map((one) => one.text).join("\n");
+  say(t("list.madefromphoto"));
+}
+
+function showItemsField() {
+  const picked = document.querySelector('input[name="kind"]:checked');
+  const isList = picked && picked.value === "list";
+  document.getElementById("items-field").hidden = !isList;
+}
+
+function itemsFromForm() {
+  const raw = document.getElementById("f-items").value;
+  const lines = raw.split("\n").map((one) => one.trim()).filter(Boolean);
+  // Keep the done flags for lines that were already there, so editing the
+  // text of a list does not untick everything.
+  return lines.map((line) => {
+    const had = pendingItems.find((one) => one.text === line);
+    return { text: line.slice(0, 120), done: had ? had.done : false };
+  });
+}
+
+function listProgressHtml(items) {
+  const done = items.filter((one) => one.done).length;
+  if (!items.length) return '<p class="hint-line">' + t("list.empty") + "</p>";
+  return '<p class="list-progress">' +
+    (done === items.length ? t("list.alldone")
+      : t("list.progress", { done: done, total: items.length })) +
+    "</p>";
+}
+
+function checklistHtml(record) {
+  const items = record.items || [];
+  return listProgressHtml(items) +
+    '<ul class="checklist">' +
+    items.map((one, at) =>
+      "<li>" +
+        '<button class="tickbox" type="button" data-tick="' + at + '"' +
+        ' aria-pressed="' + (one.done ? "true" : "false") + '">' +
+          '<span class="mark" aria-hidden="true">' + (one.done ? "\u2713" : "") + "</span>" +
+          "<span class=\"what\">" + esc(one.text) + "</span>" +
+        "</button>" +
+        '<button class="drop-item" type="button" data-drop="' + at + '"' +
+        ' aria-label="' + esc(t("list.remove")) + '">&times;</button>' +
+      "</li>"
+    ).join("") +
+    "</ul>" +
+    '<form class="add-item" id="add-item">' +
+      '<label class="field"><span class="label">' + t("list.additem") + "</span>" +
+      '<input id="new-item" autocomplete="off"></label>' +
+      '<button class="big ghost" type="submit">' + t("list.add") + "</button>" +
+    "</form>";
+}
+
+// What the list sounds like: what is still to do, because that is the question
+// somebody holding a list is actually asking.
+function listSentence(record) {
+  const items = record.items || [];
+  const left = items.filter((one) => !one.done);
+  if (!items.length) return record.title;
+  if (!left.length) return record.title + ". " + t("list.alldone");
+  return record.title + ". " + t("list.stillto") + " " +
+    left.map((one) => one.text).join(", ") + ".";
+}
+
+/* calling somebody, F10 to F13 */
+
+// Belgian numbers are written half a dozen ways. Keep the digits, keep a
+// leading plus, and let the phone deal with the rest.
+function dialable(phone) {
+  const cleaned = String(phone || "").replace(/[^\d+]/g, "");
+  if (cleaned.replace(/\D/g, "").length < 6) return "";
+  return cleaned;
+}
+
+function callButtonHtml(record, options) {
+  const number = dialable(record.phone);
+  if (!number) return "";
+  const who = (record.people && record.people.length) ? record.people[0] : record.title;
+  // On a card there is room for the name. In a row on the today screen, next
+  // to two other buttons, there is not.
+  const label = (options && options.short) ? t("phone.callnow") : t("phone.call", { who: who });
+  return '<a class="big call" href="tel:' + esc(number) + '">' + esc(label) + "</a>";
 }
 
 /* the language, L1 to L6 */
@@ -537,7 +856,7 @@ async function consentNeeded() {
   if (!isConfigured() || !linkedHousehold()) return false;
   if (consentRemembered()) return false;
   try {
-    const cloud = await import("./cloud.js?v=28");
+    const cloud = await import("./cloud.js?v=29");
     const latest = await cloud.latestConsent(linkedHousehold());
     if (latest && !latest.withdrawn_at) {
       rememberConsent(true);
@@ -564,7 +883,7 @@ async function consentYes() {
   msg.hidden = false;
   msg.textContent = t("consent.thanks");
   try {
-    const cloud = await import("./cloud.js?v=28");
+    const cloud = await import("./cloud.js?v=29");
     const where = await cloud.recordConsent(linkedHousehold(), noticeVersion());
     window.console.info("Recall: consent recorded in the " + where + " table.");
     rememberConsent(true);
@@ -598,7 +917,7 @@ async function stopSharing() {
   msg.textContent = t("share.stopping");
   const id = linkedHousehold();
   try {
-    const cloud = await import("./cloud.js?v=28");
+    const cloud = await import("./cloud.js?v=29");
     await cloud.withdrawConsent(id);
   } catch (err) {
     // Even if the note cannot be written, the sharing still stops here.
@@ -716,7 +1035,7 @@ async function rescueWithCode(event) {
   }
 
   try {
-    const cloud = await import("./cloud.js?v=28");
+    const cloud = await import("./cloud.js?v=29");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
@@ -825,7 +1144,7 @@ async function linkThisPhone(event) {
   msg.hidden = false;
   msg.textContent = t("run.onemoment");
   try {
-    const cloud = await import("./cloud.js?v=28");
+    const cloud = await import("./cloud.js?v=29");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     msg.textContent = t("run.linkedfetch");
@@ -850,7 +1169,7 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=28");
+    cloud = await import("./cloud.js?v=29");
   } catch (err) {
     if (loud) say(t("run.unreachable"));
     return false;
@@ -876,6 +1195,15 @@ async function syncHousehold(options) {
           ocrText: row.ocr_text || "",
           hasPhoto: Boolean(row.photo_path),
           photoPath: row.photo_path || "",
+          // Patch 003: the checklist, the number to ring, and the words out
+          // of a document. The document itself stays where it is; what is
+          // needed to read it out loud is the text.
+          items: Array.isArray(row.items) ? row.items : [],
+          phone: row.phone || "",
+          fileName: row.file_name || "",
+          fileType: row.file_type || "",
+          fileText: row.file_text || "",
+          filePath: row.file_path || "",
           createdAt: row.created_at,
           cloudAt: new Date().toISOString()
         });
@@ -932,6 +1260,7 @@ async function syncHousehold(options) {
           recordId: row.record_id,
           dueAt: row.due_at,
           repeat: row.repeat,
+          kind: row.kind || "normal",
           spokenText: row.spoken_text || "",
           lastDoneAt: row.done_at || null
         });
@@ -1123,6 +1452,14 @@ async function readTheFrame() {
 async function usePhoto(blob) {
   pendingPhoto = blob;
   pendingText = "";
+  pendingFile = null;
+  pendingFileText = "";
+  pendingItems = [];
+  document.getElementById("file-preview").hidden = true;
+  document.getElementById("file-preview").innerHTML = "";
+  document.getElementById("file-doc").value = "";
+  document.getElementById("f-items").value = "";
+  document.getElementById("f-phone").value = "";
   const shot = document.getElementById("shot");
   shot.src = URL.createObjectURL(blob);
 
@@ -1171,6 +1508,13 @@ async function usePhoto(blob) {
       textBox.textContent = text;
       foundBox.hidden = false;
       speech.speak(text.slice(0, 600), ocr.guessLang(text));
+
+      const makeList = document.getElementById("btn-make-list");
+      makeList.hidden = false;
+      makeList.onclick = () => makeChecklistFrom(text);
+
+      // If it reads like a list, ask rather than wait to be asked.
+      if (docs.looksLikeList(text)) offerChecklist(text);
     }
   } catch (err) {
     state.textContent = t("run.letterfailed");
@@ -1201,10 +1545,20 @@ async function saveNew(event) {
     spokenText: "",
     ocrText: pendingText,
     hasPhoto: Boolean(pendingPhoto),
+    // F1, F6, F10: a document, a checklist, and a number to ring.
+    hasFile: Boolean(pendingFile),
+    fileName: pendingFile ? pendingFile.name : "",
+    fileType: pendingFile ? pendingFile.type : "",
+    fileText: pendingFileText,
+    items: form.kind.value === "list" ? itemsFromForm() : [],
+    phone: document.getElementById("f-phone").value.trim(),
     createdAt: new Date().toISOString()
   };
 
   if (pendingPhoto) await store.savePhoto(id, pendingPhoto);
+  if (pendingFile) {
+    await store.saveFile(id, pendingFile, pendingFile.name, pendingFile.type);
+  }
   await store.saveRecord(record);
 
   // R3.1. A reminder never stands alone, it hangs on the card it belongs to.
@@ -1218,11 +1572,13 @@ async function saveNew(event) {
     if (choice === "twice") repeat = "twice_daily";
     if (dueAt < Date.now()) dueAt = Date.now() + 3600 * 1000;
 
+    const asks = document.getElementById("f-remind-kind").value;
     await store.saveReminder({
       id: store.newId(),
       recordId: id,
       dueAt: new Date(dueAt).toISOString(),
       repeat: repeat,
+      kind: asks === "call" && dialable(record.phone) ? "call" : "normal",
       spokenText: record.spokenText || record.title,
       lastDoneAt: null
     });
@@ -1232,6 +1588,9 @@ async function saveNew(event) {
   reminders = await store.allReminders();
   syncHousehold();
   pendingPhoto = null;
+  pendingFile = null;
+  pendingFileText = "";
+  pendingItems = [];
   say(t("new.kept"));
   go("#/record/" + id);
 }
@@ -1303,6 +1662,25 @@ function wire() {
   });
 
   document.getElementById("new-form").addEventListener("submit", saveNew);
+
+  // A document on the card, F1.
+  const docInput = document.getElementById("file-doc");
+  docInput.setAttribute("accept", docs.ACCEPTS);
+  document.getElementById("btn-file").addEventListener("click", () => docInput.click());
+  docInput.addEventListener("change", chooseFile);
+
+  // The things on a checklist are only asked for when the card is one, F6.
+  document.querySelectorAll('input[name="kind"]').forEach((radio) => {
+    radio.addEventListener("change", showItemsField);
+  });
+
+  // F5. One way in and one way out of looking at something closely.
+  document.getElementById("big-close").addEventListener("click", () => bigBox.close());
+  bigBox.addEventListener("click", (event) => {
+    // Anywhere outside the picture closes it, which is what a photo viewer
+    // does everywhere else and therefore what a thumb expects.
+    if (event.target === bigBox) bigBox.close();
+  });
 
   document.getElementById("btn-welcome-read").addEventListener("click", () => {
     if (speech.speaking()) speech.stop();
@@ -1469,7 +1847,7 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=28");
+    const cloud = await import("./cloud.js?v=29");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     say(t("run.linkedfamily"));

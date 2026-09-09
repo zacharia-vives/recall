@@ -34,6 +34,7 @@ FILES = [
     "js/lock.js",
     "js/config.js",
     "js/i18n.js",
+    "js/docs.js",
     "privacy.html",
 ]
 

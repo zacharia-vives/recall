@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#231710">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=28">
-<link rel="stylesheet" href="css/helper.css?v=28">
+<link rel="stylesheet" href="css/style.css?v=29">
+<link rel="stylesheet" href="css/helper.css?v=29">
 </head>
 <body class="helper">
 
@@ -102,6 +102,7 @@
               <option value="letter" data-t="kind.letter">A letter</option>
               <option value="person" data-t="kind.person">A person</option>
               <option value="place" data-t="kind.place">A place</option>
+              <option value="list" data-t="kind.list">A checklist</option>
             </select>
           </label>
           <label class="field">
@@ -129,6 +130,10 @@
             <input id="c-photo" type="file" accept="image/*">
           </label>
         </div>
+        <label class="field" id="c-items-field" hidden>
+          <span class="label" data-t="h.items">The things on the list, one per line</span>
+          <textarea id="c-items" rows="5"></textarea>
+        </label>
         <label class="field">
           <span class="label" data-t="h.spoken">What Recall should say out loud</span>
           <input id="c-spoken" placeholder="Your appointment with the cardiologist is tomorrow at ten." data-t-ph="h.spokenph">
@@ -147,6 +152,19 @@
           <label class="field">
             <span class="label" data-t="h.remindat">Reminder time</span>
             <input id="c-remind-at" type="datetime-local">
+          </label>
+        </div>
+        <div class="two">
+          <label class="field">
+            <span class="label" data-t="h.phone">Phone number, for a call reminder</span>
+            <input id="c-phone" type="tel" inputmode="tel" placeholder="0475 12 34 56" data-t-ph="phone.ph">
+          </label>
+          <label class="field">
+            <span class="label" data-t="h.remindkind">What kind</span>
+            <select id="c-remind-kind">
+              <option value="normal" data-t="remind.normal">Just remind me</option>
+              <option value="call" data-t="remind.call">Remind me to call</option>
+            </select>
           </label>
         </div>
         <p class="hint" data-t="h.remindhint">A reminder waits on her Today screen and is read out loud
@@ -258,6 +276,6 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script type="module" src="js/helper.js?v=28"></script>
+<script type="module" src="js/helper.js?v=29"></script>
 </body>
 </html>

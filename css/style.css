@@ -762,3 +762,275 @@ dialog::backdrop { background: rgba(35, 23, 16, 0.6); }
   outline: 3px solid var(--accent, #f0692b);
   outline-offset: 2px;
 }
+
+/* ------------------------------------------------ a document on a card, F1 */
+
+.doc-add {
+  margin: 1rem 0 1.5rem;
+  padding: 1rem;
+  border: 2px dashed var(--rule, #e5ddd3);
+  border-radius: 12px;
+}
+
+.doc-card {
+  margin: 0.75rem 0;
+}
+
+.doc-name {
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  word-break: break-word;
+}
+
+/* The words out of a document. A button, because pressing it opens the same
+   words at a size that can actually be read. F5. */
+.doc-words {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  max-height: 14rem;
+  overflow: hidden;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--rule, #e5ddd3);
+  border-radius: 10px;
+  background: var(--card, #fff);
+  color: inherit;
+  white-space: pre-wrap;
+  cursor: pointer;
+  position: relative;
+}
+
+.doc-words::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3rem;
+  background: linear-gradient(transparent, var(--card, #fff));
+}
+
+.doc-pdf {
+  width: 100%;
+  height: 26rem;
+  border: 1px solid var(--rule, #e5ddd3);
+  border-radius: 10px;
+  background: #fff;
+}
+
+/* ------------------------------------------- looking at something closely */
+
+#big {
+  border: 0;
+  padding: 0;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(20, 14, 10, 0.94);
+}
+
+#big::backdrop {
+  background: rgba(20, 14, 10, 0.94);
+}
+
+.big-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: calc(100vh - 6rem);
+  overflow: auto;
+  padding: 0.75rem;
+}
+
+.big-body img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* The point of enlarging words is that they are bigger, so they are properly
+   bigger and not politely bigger. */
+.big-words {
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1.5;
+  max-width: 34rem;
+  padding: 0.5rem;
+}
+
+#big-close {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 1rem;
+  width: auto;
+  min-width: 12rem;
+}
+
+.photo-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.photo-hint {
+  display: block;
+  font-size: 1rem;
+  color: var(--mid, #6b5b4d);
+  padding: 0.4rem 0 0;
+}
+
+/* ------------------------------------------------------- checklists, F6, F7 */
+
+.list-progress {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+}
+
+.checklist {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+}
+
+.checklist li {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* One tap target for the whole line, because aiming at a small box is exactly
+   what somebody with shaky hands cannot do. */
+.tickbox {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 3.75rem;
+  padding: 0.6rem 1rem;
+  font: inherit;
+  font-size: 1.125rem;
+  text-align: left;
+  border: 2px solid var(--ink, #231710);
+  border-radius: 12px;
+  background: var(--card, #fff);
+  color: inherit;
+  cursor: pointer;
+}
+
+.tickbox .mark {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  line-height: 1.9rem;
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 700;
+  border: 2px solid var(--ink, #231710);
+  border-radius: 6px;
+}
+
+/* Done is shown by the tick, the frame and the line through the words, so it
+   does not rely on colour alone. R4.6. */
+.tickbox[aria-pressed="true"] {
+  background: var(--ink, #231710);
+  color: #fff;
+}
+
+.tickbox[aria-pressed="true"] .mark {
+  border-color: #fff;
+}
+
+.tickbox[aria-pressed="true"] .what {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.drop-item {
+  flex: 0 0 auto;
+  width: 3.25rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  border: 2px solid var(--rule, #e5ddd3);
+  border-radius: 12px;
+  background: var(--card, #fff);
+  color: var(--mid, #6b5b4d);
+  cursor: pointer;
+}
+
+.add-item {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.add-item .field {
+  flex: 1 1 12rem;
+  margin: 0;
+}
+
+.add-item .big {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+/* --------------------------------------------------------- calling, F10, F11 */
+
+/* A link and not a button, because it is a tel: link, but it has to look and
+   feel exactly like the other big buttons. */
+a.big.call {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  background: #1d6b3f;
+  color: #fff;
+  border-color: #1d6b3f;
+}
+
+a.big.call:focus-visible {
+  outline: 3px solid var(--accent, #f0692b);
+  outline-offset: 2px;
+}
+
+.warn-line {
+  font-size: 1.0625rem;
+  padding: 0.6rem 0.85rem;
+  border-left: 4px solid var(--accent, #f0692b);
+  background: rgba(240, 105, 43, 0.09);
+  margin: 0 0 1rem;
+}
+
+/* For a heading that a screen reader should read but nobody needs to see. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+textarea {
+  font: inherit;
+  font-size: 1.125rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 2px solid var(--rule, #e5ddd3);
+  border-radius: 10px;
+  background: var(--card, #fff);
+  color: inherit;
+}

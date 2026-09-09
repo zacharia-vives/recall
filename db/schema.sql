@@ -63,7 +63,7 @@ create table if not exists public.records (
   id            uuid primary key default gen_random_uuid(),
   household_id  uuid not null references public.households (id) on delete cascade,
   created_by    uuid references auth.users (id) on delete set null,
-  kind          text not null check (kind in ('person', 'letter', 'place')),
+  kind          text not null check (kind in ('person', 'letter', 'place', 'list')),
   title         text not null check (char_length(title) between 1 and 200),
   people        text[] not null default '{}',
   place         text default '',
@@ -72,6 +72,16 @@ create table if not exists public.records (
   photo_path    text,
   ocr_text      text default '',
   spoken_text   text default '',
+  -- A card can hold one document as well as one photo. Patch 003.
+  file_path     text,
+  file_name     text default '',
+  file_type     text default '',
+  file_text     text default '',
+  -- A checklist is a card with items. Read and written as a whole list, so
+  -- jsonb rather than a table of its own.
+  items         jsonb not null default '[]'::jsonb,
+  -- Who to call, on the card because it is a fact about the person on it.
+  phone         text default '',
   deleted_at    timestamptz,                     -- R5.7, the 30 day bin
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
@@ -88,6 +98,8 @@ create table if not exists public.reminders (
   repeat        text not null default 'none'
                 check (repeat in ('none', 'daily', 'twice_daily', 'weekly')),
   spoken_text   text default '',
+  -- A reminder can ask for a call rather than just say something. Patch 003.
+  kind          text not null default 'normal' check (kind in ('normal', 'call')),
   done_at       timestamptz,
   done_by       uuid references auth.users (id) on delete set null,
   created_at    timestamptz not null default now()

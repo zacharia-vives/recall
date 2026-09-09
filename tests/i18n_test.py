@@ -83,7 +83,10 @@ check("no language is left blank", not empty, empty[:5])
 SAME_IS_FINE = {
     "tabs.camera", "help.code", "lock.face", "code.faceon", "code.faceoff",
     "h.cards", "h.cardnameph", "field.whereph", "h.whoph", "field.whoph",
-    "lang.label", "lang.heading", "h.photo", "app.cancel"
+    "lang.label", "lang.heading", "h.photo", "app.cancel",
+    # Document is the same word in all three, and a phone number example is
+    # a phone number example.
+    "file.attached", "phone.ph", "h.phone"
 }
 untranslated = [k for k in words
                 if k not in SAME_IS_FINE

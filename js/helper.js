@@ -1,9 +1,9 @@
 // The family side. Everything here needs a signed in helper and a household, so
 // unlike the keeper app this one does nothing until the cloud is configured.
 
-import * as cloud from "./cloud.js?v=28";
-import { NOTICE_VERSION } from "./config.js?v=28";
-import * as i18n from "./i18n.js?v=28";
+import * as cloud from "./cloud.js?v=29";
+import { NOTICE_VERSION } from "./config.js?v=29";
+import * as i18n from "./i18n.js?v=29";
 
 const panes = {
   unconfigured: document.getElementById("s-unconfigured"),
@@ -230,6 +230,9 @@ async function renderCards() {
   document.getElementById("bin-wrap").hidden = binned.length === 0;
 }
 
+// The ticks a card already had, so editing its text does not lose them.
+let editingItems = [];
+
 function openCardForm(record) {
   const form = document.getElementById("form-card");
   form.hidden = false;
@@ -243,7 +246,31 @@ function openCardForm(record) {
   document.getElementById("c-photo").value = "";
   document.getElementById("c-repeat").value = "";
   document.getElementById("c-remind-at").value = "";
+  document.getElementById("c-phone").value = record ? record.phone || "" : "";
+  document.getElementById("c-remind-kind").value = "normal";
+  editingItems = record && Array.isArray(record.items) ? record.items : [];
+  document.getElementById("c-items").value =
+    editingItems.map((one) => one.text).join("\n");
+  showItemsBox();
   document.getElementById("c-title").focus();
+}
+
+// The things on a checklist, one per line, keeping the ticks that are
+// already there so editing the text does not untick everything. F6.
+function itemsFromBox() {
+  const box = document.getElementById("c-items");
+  if (!box) return [];
+  const before = (editingItems || []);
+  return box.value.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
+    const had = before.find((one) => one.text === line);
+    return { text: line.slice(0, 120), done: had ? Boolean(had.done) : false };
+  });
+}
+
+function showItemsBox() {
+  const field = document.getElementById("c-items-field");
+  if (!field) return;
+  field.hidden = document.getElementById("c-kind").value !== "list";
 }
 
 async function saveCard(event) {
@@ -256,7 +283,9 @@ async function saveCard(event) {
     people: document.getElementById("c-people").value.split(",").map((s) => s.trim()).filter(Boolean),
     place: document.getElementById("c-place").value.trim(),
     happensAt: whenValue ? new Date(whenValue).toISOString() : null,
-    spokenText: document.getElementById("c-spoken").value.trim()
+    spokenText: document.getElementById("c-spoken").value.trim(),
+    phone: document.getElementById("c-phone").value.trim(),
+    items: itemsFromBox()
   };
 
   if (!payload.title) {
@@ -273,7 +302,9 @@ async function saveCard(event) {
         people: payload.people,
         place: payload.place,
         happens_at: payload.happensAt,
-        spoken_text: payload.spokenText
+        spoken_text: payload.spokenText,
+        phone: payload.phone,
+        items: payload.items
       }, payload.title + " was changed");
     } else {
       record = await cloud.addRecord(household.id, payload);
@@ -294,7 +325,12 @@ async function saveCard(event) {
         : payload.happensAt
           ? new Date(new Date(payload.happensAt).getTime() - 24 * 3600 * 1000).toISOString()
           : new Date(Date.now() + 3600 * 1000).toISOString();
-      await cloud.setReminder(household.id, record.id, due, repeat || "none", payload.spokenText);
+      // A call reminder needs something to ring, so it is only a call when
+      // there is a number on the card. F12.
+      const asks = document.getElementById("c-remind-kind").value;
+      const isCall = asks === "call" && payload.phone.replace(/\D/g, "").length >= 6;
+      await cloud.setReminder(household.id, record.id, due, repeat || "none",
+        payload.spokenText, undefined, isCall ? "call" : "normal");
     }
 
     document.getElementById("form-card").hidden = true;
@@ -570,6 +606,9 @@ function drawLanguages() {
 }
 
 function wire() {
+  const kindPicker = document.getElementById("c-kind");
+  if (kindPicker) kindPicker.addEventListener("change", showItemsBox);
+
   const picker = document.getElementById("lang-pick");
   if (picker) {
     picker.addEventListener("change", () => {

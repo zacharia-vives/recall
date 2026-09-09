@@ -5,7 +5,7 @@
 // Two roles live here: a helper signs in with an emailed link, a keeper phone
 // signs in anonymously once and is claimed into a household with a code.
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from "./config.js?v=28";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from "./config.js?v=29";
 
 const LIB = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
@@ -229,7 +229,14 @@ export async function addRecord(householdId, record) {
     tags: record.tags || [],
     photo_path: record.photoPath || null,
     ocr_text: record.ocrText || "",
-    spoken_text: record.spokenText || ""
+    spoken_text: record.spokenText || "",
+    // Patch 003: a document, a checklist and a number to ring.
+    file_path: record.filePath || null,
+    file_name: record.fileName || "",
+    file_type: record.fileType || "",
+    file_text: record.fileText || "",
+    items: record.items || [],
+    phone: record.phone || ""
   };
   const { data, error } = await db.from("records").insert(row).select().single();
   if (error) throw error;
@@ -313,7 +320,7 @@ export async function listReminders(householdId) {
   return data || [];
 }
 
-export async function setReminder(householdId, recordId, dueAt, repeat, spokenText, id) {
+export async function setReminder(householdId, recordId, dueAt, repeat, spokenText, id, kind) {
   const db = await getClient();
   const { data, error } = await db
     .from("reminders")
@@ -323,6 +330,7 @@ export async function setReminder(householdId, recordId, dueAt, repeat, spokenTe
       record_id: recordId,
       due_at: dueAt,
       repeat: repeat || "none",
+      kind: kind || "normal",
       spoken_text: spokenText || ""
     })
     .select()
@@ -343,15 +351,45 @@ export async function markDone(householdId, reminderId, recordId) {
   await logActivity(householdId, "marked_done", recordId, "marked as done");
 }
 
-// P17. Three values, and no more than three.
+// How long between one time and the next. The same table as the keeper's side,
+// because the two must never disagree about whether something is due.
+export function periodMs(repeat) {
+  if (repeat === "daily") return 24 * 3600 * 1000;
+  if (repeat === "twice_daily") return 12 * 3600 * 1000;
+  if (repeat === "weekly") return 7 * 24 * 3600 * 1000;
+  return 0;
+}
+
+// Which time this reminder is asking about right now. For something that does
+// not repeat that is simply when it was due. For something that does, it is
+// the most recent time that has come around, so a daily reminder set three
+// weeks ago is asking about today and not about three weeks ago.
+export function currentDue(reminder) {
+  const due = new Date(reminder.due_at).getTime();
+  const step = periodMs(reminder.repeat);
+  if (!step || due >= Date.now()) return due;
+  const rounds = Math.floor((Date.now() - due) / step);
+  return due + rounds * step;
+}
+
 // Long enough for a clock that is off by a few minutes, and for somebody who
 // is at the appointment while it is happening. Short enough that a morning
 // appointment shows as missed the same afternoon rather than the next day.
 const GRACE_MS = 60 * 60 * 1000;
 
+// P17. Three values, and no more than three.
 export function reminderStatus(reminder) {
-  if (reminder.done_at) return "done";
-  if (new Date(reminder.due_at).getTime() < Date.now() - GRACE_MS) return "missed";
+  const asking = currentDue(reminder);
+
+  // Done, but only for the time it is asking about. A daily reminder ticked
+  // off yesterday is not ticked off today, which was the whole bug.
+  if (reminder.done_at) {
+    const done = new Date(reminder.done_at).getTime();
+    if (!periodMs(reminder.repeat)) return "done";
+    if (done >= asking) return "done";
+  }
+
+  if (asking < Date.now() - GRACE_MS) return "missed";
   return "coming";
 }
 
