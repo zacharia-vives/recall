@@ -195,6 +195,54 @@ check("and it always says how many it is holding back",
   /look\.rest/.test(app) && /total - 1/.test(app));
 check("the count is a button that reveals them", /data-open-all/.test(app));
 
+/* ------------------------------------------------- what the Pixel photo showed
+
+   A photograph from a real phone showed the button labels spilling out of
+   their own colour on a tiles skin: "Read it out loud" wrapped to two lines
+   and the second line sat outside the button. The cause was flex-basis 0,
+   which is right for sharing width in a row and wrong in the column that the
+   tiles and one-thing layouts create, because it makes the button's base
+   HEIGHT zero and a short screen then shrinks it under its own text.
+
+   Measured before the fix: buttons 54 to 60px tall needing 72. R2.8. */
+const style = read("css/style.css");
+check("a row button shares width but never shrinks under its label",
+  /\.today-acts \.big \{[^}]*flex: 1 0 auto;/.test(style));
+check("and its height follows the words",
+  /\.today-acts \.big \{[^}]*height: auto;/.test(style));
+check("no button anywhere may be shrunk by a flex parent",
+  /\.big \{[^}]*flex-shrink: 0;/.test(style));
+check("the button's min width can never exceed what holds it",
+  /min-width: min\(8rem, 100%\)/.test(style));
+
+/* Long words. Dutch and French are longer than the English these boxes were
+   sized against, and a narrow column makes it worse. R2.9. */
+check("a long title wraps rather than pushing past the edge",
+  /\.today-main \.title \{[^}]*overflow-wrap: anywhere;/.test(style));
+check("so does a long second line",
+  /\.today-main \.meta \{[^}]*overflow-wrap: anywhere;/.test(style));
+check("the text half of a row is allowed to be narrow",
+  /\.today-main > span,\s*\.card-body \{ min-width: 0; \}/.test(style) ||
+  /min-width: 0;/.test(style));
+check("no card is wider than the list holding it", /\.card \{\s*max-width: 100%;/.test(style));
+
+/* The three ways in, as one pill. */
+check("the tab bar is a floating pill, not a slab welded to the edge",
+  /\.tabs \{[^}]*border-radius: 999px;/.test(style) &&
+  /\.tabs \{[^}]*bottom: max\(14px/.test(style));
+check("it keeps clear of the phone's own gesture bar",
+  /env\(safe-area-inset-bottom/.test(style));
+check("its border follows the skin, so it belongs to whichever is on",
+  /\.tabs \{[^}]*border: var\(--edge\) solid var\(--ink\);/.test(style));
+check("each of the three is still a comfortable target",
+  /\.tab \{[^}]*min-height: 72px;/.test(style));
+check("the current one is not shown by colour alone",
+  /\.tab\[aria-current="page"\] \{[^}]*box-shadow: inset 0 0 0 3px/.test(style));
+check("a long tab label wraps instead of widening the pill",
+  /\.tab \{[^}]*overflow-wrap: anywhere;/.test(style));
+check("the page leaves room for the pill to float over",
+  /padding-bottom: calc\(122px \+ env\(safe-area-inset-bottom/.test(style));
+
 /* ---------------------------------------------------------------- the markup */
 const index = read("index.html");
 check("the skin stylesheet is linked after the base one",

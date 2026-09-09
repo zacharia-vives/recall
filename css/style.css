@@ -43,7 +43,9 @@ html, body {
 }
 
 body {
-  padding-bottom: 108px; /* room for the tab bar */
+  /* Room for the floating pill, plus its gap from the bottom edge, plus
+     whatever the phone reserves for its own gesture bar. */
+  padding-bottom: calc(122px + env(safe-area-inset-bottom, 0px));
 }
 
 .skip {
@@ -135,6 +137,7 @@ h1 {
   gap: 14px;
 }
 .card {
+  max-width: 100%;
   display: flex;
   gap: 16px;
   align-items: center;
@@ -177,6 +180,7 @@ h1 {
   font-weight: 700;
   color: var(--ink);
   margin: 0 0 4px;
+  overflow-wrap: anywhere;
 }
 .card .meta,
 .today-main .meta {
@@ -184,7 +188,15 @@ h1 {
   font-size: 18px;
   color: var(--mid);
   margin: 0;
+  overflow-wrap: anywhere;
 }
+
+/* The text half of a row must be allowed to be narrow. A flex or grid child
+   defaults to its content width, so without this a long word makes the row
+   wider than the screen instead of wrapping inside it. */
+.card > span,
+.today-main > span,
+.card-body { min-width: 0; }
 .card.due {
   border-color: var(--orange);
   background: var(--orange-soft);
@@ -248,6 +260,9 @@ h1 {
 }
 .big {
   min-height: 68px;
+  /* Never shorter than the label, whatever a flex parent would prefer. */
+  flex-shrink: 0;
+  height: auto;
   border: none;
   border-radius: var(--radius);
   background: var(--orange);
@@ -437,7 +452,7 @@ body.on-camera #screen-capture .actions .big.ghost { font-size: 20px; }
 /* The tab bar is generous on purpose, but on a short screen it is taking
    room the camera needs more than it does. */
 @media (max-height: 560px) {
-  .tab { min-height: 64px; font-size: 16px; }
+  .tab { min-height: 62px; font-size: 15px; }
   .tab-icon { font-size: 22px; }
 }
 
@@ -496,10 +511,22 @@ body.on-camera #screen-capture .actions .big.ghost { font-size: 20px; }
 }
 .today-acts {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   padding: 0 16px 16px;
 }
-.today-acts .big { flex: 1 1 0; font-size: 20px; min-height: 60px; }
+/* Share the width, never shrink below the words. flex-shrink stays 0 because
+   a squashed button on a short screen was spilling its label outside its own
+   background, which a photograph from a Pixel showed plainly. R2.8. */
+.today-acts .big {
+  flex: 1 0 auto;
+  /* Wide enough not to squeeze the label onto four lines, but never wider
+     than what holds it: a tile is about half the screen. */
+  min-width: min(8rem, 100%);
+  font-size: 20px;
+  min-height: 60px;
+  height: auto;
+}
 .status {
   display: inline-block;
   font-size: 16px;
@@ -630,36 +657,56 @@ body.is-locked #main { display: none; }
 }
 
 /* tabs */
+/* The three ways in, as one pill floating above the bottom of the screen.
+
+   It was a full width bar welded to the bottom edge, which on a skin whose
+   card colour differs from its paper read as a white slab stuck under the
+   page. A pill sits on the paper instead, so it belongs to whatever skin is
+   on, and it keeps its distance from the very bottom edge where a thumb and
+   the phone's own gesture bar compete. */
 .tabs {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: max(14px, env(safe-area-inset-bottom, 0px));
+  width: calc(100% - 24px);
+  max-width: 34rem;
   display: flex;
+  gap: 4px;
+  padding: 5px;
   background: var(--card);
-  border-top: 3px solid var(--ink);
-  box-shadow: 0 -6px 18px rgba(35, 23, 16, 0.08);
+  border: var(--edge) solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
   z-index: 20;
 }
 .tab {
   flex: 1 1 0;
-  min-height: 88px;
+  min-height: 72px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   text-decoration: none;
   color: var(--ink);
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
-  padding: 8px 4px;
+  padding: 6px 4px;
+  border-radius: 999px;
+  /* Long words in Dutch and French have to wrap rather than push the pill
+     wider than the screen. */
+  text-align: center;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
-.tab-icon { font-size: 28px; }
+.tab-icon { font-size: 26px; line-height: 1; }
+/* The current tab is a filled lozenge inside the pill. Never colour alone:
+   it is also the only one with a solid background and a heavier frame. */
 .tab[aria-current="page"] {
   color: var(--on-soft);
-  box-shadow: inset 0 4px 0 var(--orange);
   background: var(--orange-soft);
+  box-shadow: inset 0 0 0 3px var(--orange);
 }
 .tab-main { color: var(--ink); }
 

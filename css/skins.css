@@ -637,7 +637,11 @@
 :root[data-layout="one"]:not([data-open-all]) .today-item:not(:first-child),
 :root[data-layout="one"]:not([data-open-all]) .card:not(:first-child) { display: none; }
 :root[data-layout="one"] .list .today-item,
-:root[data-layout="one"] .list .card { padding: 20px 16px; text-align: center; }
+:root[data-layout="one"] .list .card {
+  padding: 20px 14px;
+  text-align: center;
+  max-width: 100%;
+}
 :root[data-layout="one"] .list .today-main,
 :root[data-layout="one"] .list .card > .card-main {
   flex-direction: column;
