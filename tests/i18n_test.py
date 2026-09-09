@@ -148,6 +148,13 @@ for name in ["js/app.js", "js/helper.js", "js/i18n.js", "js/ocr.js",
     unknown = sorted(set(k for k in keys if k not in words))
     check(name + ": every key it asks for exists", not unknown, unknown[:6])
 
+# Marking the html up is only half of it: something has to apply the
+# dictionary to it. The family app had every data-t attribute in place and
+# never called apply, so it sat in English however the language was set.
+for name in ["js/app.js", "js/helper.js"]:
+    code = read(name)
+    check(name + ": applies the dictionary to the page", "i18n.apply(" in code)
+
 # English still hard coded where the user can see it.
 LEFTOVERS = []
 for name in ["js/app.js", "js/helper.js"]:

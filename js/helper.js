@@ -1,9 +1,9 @@
 // The family side. Everything here needs a signed in helper and a household, so
 // unlike the keeper app this one does nothing until the cloud is configured.
 
-import * as cloud from "./cloud.js?v=31";
-import { NOTICE_VERSION } from "./config.js?v=31";
-import * as i18n from "./i18n.js?v=31";
+import * as cloud from "./cloud.js?v=32";
+import { NOTICE_VERSION } from "./config.js?v=32";
+import * as i18n from "./i18n.js?v=32";
 
 const panes = {
   unconfigured: document.getElementById("s-unconfigured"),
@@ -723,6 +723,12 @@ function wire() {
 }
 
 async function init() {
+  // Before anything else, including the not connected pane, because that pane
+  // has words on it too. This was missing, so the whole family app sat in
+  // English however the language was set. Found by the browser test.
+  i18n.apply();
+  drawLanguages();
+
   if (!cloud.configured()) {
     showPane("unconfigured");
     return;
