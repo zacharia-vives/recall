@@ -5,7 +5,7 @@
 // Two roles live here: a helper signs in with an emailed link, a keeper phone
 // signs in anonymously once and is claimed into a household with a code.
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from "./config.js?v=29";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from "./config.js?v=30";
 
 const LIB = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
@@ -229,19 +229,58 @@ export async function addRecord(householdId, record) {
     tags: record.tags || [],
     photo_path: record.photoPath || null,
     ocr_text: record.ocrText || "",
-    spoken_text: record.spokenText || "",
-    // Patch 003: a document, a checklist and a number to ring.
-    file_path: record.filePath || null,
-    file_name: record.fileName || "",
-    file_type: record.fileType || "",
-    file_text: record.fileText || "",
-    items: record.items || [],
-    phone: record.phone || ""
+    spoken_text: record.spokenText || ""
   };
+  // Patch 003 adds these three. Left off when the database has not had it.
+  if (!record.patch003Missing) {
+    row.file_path = record.filePath || null;
+    row.file_name = record.fileName || "";
+    row.file_type = record.fileType || "";
+    row.file_text = record.fileText || "";
+    row.items = record.items || [];
+    row.phone = record.phone || "";
+  }
   const { data, error } = await db.from("records").insert(row).select().single();
-  if (error) throw error;
+  if (error) {
+    if (patchNeeded(error)) {
+      throw new Error("A checklist needs db/patch-003 to be run first.");
+    }
+    // Patch 003 adds the columns for a document, a checklist and a phone
+    // number. If it has not been run yet, the insert fails on a column the
+    // database does not have. Adding the card without those three is much
+    // better than refusing to add it at all, so try again plainly and say
+    // so in the console for whoever has to run the patch.
+    if (isMissingColumn(error)) {
+      window.console.warn("Recall: db/patch-003 has not been run, so this card " +
+        "is saved without its document, checklist or phone number.");
+      return addRecord(householdId, withoutPatch003(record));
+    }
+    throw error;
+  }
   await logActivity(householdId, "added", data.id, record.title);
   return data;
+}
+
+// Postgres says 42703 for a column that is not there; the api layer in front
+// of it says PGRST204 for the same thing.
+function isMissingColumn(error) {
+  const code = String(error && error.code ? error.code : "");
+  const message = String(error && error.message ? error.message : "").toLowerCase();
+  return code === "42703" || code === "PGRST204" ||
+    (message.includes("column") && message.includes("does not exist")) ||
+    message.includes("could not find");
+}
+
+function withoutPatch003(record) {
+  const copy = Object.assign({}, record);
+  delete copy.filePath;
+  delete copy.fileName;
+  delete copy.fileType;
+  delete copy.fileText;
+  delete copy.items;
+  delete copy.phone;
+  copy.patch003Missing = true;
+  return copy;
 }
 
 // Used by the keeper phone to push its own captures up. Upsert rather than
@@ -276,6 +315,14 @@ export async function pushRecord(householdId, record) {
   return data;
 }
 
+// A checklist is a kind the database only knows about after patch 003, and a
+// check constraint says so in a way nobody can read. Say the useful thing.
+function patchNeeded(error) {
+  const code = String(error && error.code ? error.code : "");
+  const message = String(error && error.message ? error.message : "");
+  return code === "23514" && message.includes("kind");
+}
+
 export async function updateRecord(householdId, id, changes, what) {
   const db = await getClient();
   const { data, error } = await db
@@ -284,7 +331,22 @@ export async function updateRecord(householdId, id, changes, what) {
     .eq("id", id)
     .select()
     .single();
-  if (error) throw error;
+  if (error) {
+    if (patchNeeded(error)) {
+      throw new Error("A checklist needs db/patch-003 to be run first.");
+    }
+    // The same forgiveness as adding: an edit should not be refused because
+    // the database has not had patch 003 yet.
+    if (isMissingColumn(error)) {
+      window.console.warn("Recall: db/patch-003 has not been run, so the " +
+        "document, checklist and phone number are not saved.");
+      const plain = Object.assign({}, changes);
+      ["file_path", "file_name", "file_type", "file_text", "items", "phone"]
+        .forEach((column) => delete plain[column]);
+      return updateRecord(householdId, id, plain, what);
+    }
+    throw error;
+  }
   await logActivity(householdId, "edited", id, what || "a card was changed");
   return data;
 }
