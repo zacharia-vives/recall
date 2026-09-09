@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Not meant to be found by searching for it. A project page cannot serve a
+     robots.txt that crawlers read, so the instruction goes on the page. -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../../favicon.ico">
+<title>Recall, the funding models</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ink: #1c1714; --body: #45382f; --mid: #7c6b5e;
+    --paper: #fbf7f2; --card: #ffffff; --rule: #e6dcd0;
+    --accent: #d1541a; --accent-soft: #fdeadf;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #f6efe8; --body: #ddd0c4; --mid: #a2907f;
+      --paper: #17130f; --card: #211a15; --rule: #3a2f26;
+      --accent: #ff8b4d; --accent-soft: #3a2116;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #f6efe8; --body: #ddd0c4; --mid: #a2907f;
+    --paper: #17130f; --card: #211a15; --rule: #3a2f26;
+    --accent: #ff8b4d; --accent-soft: #3a2116;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--body);
+    font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 15px; line-height: 1.55;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 44px 22px 64px; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 10px;
+  }
+  h1 {
+    font-family: "Fraunces", Georgia, serif; font-weight: 700;
+    font-size: clamp(28px, 5vw, 40px); line-height: 1.05; letter-spacing: -.015em;
+    margin: 0 0 12px; color: var(--ink); text-wrap: balance;
+  }
+  .lede { font-size: 16.5px; margin: 0 0 30px; }
+  .lede b { color: var(--ink); }
+  a.model {
+    display: block; text-decoration: none; color: inherit;
+    border: 1px solid var(--rule); border-radius: 12px; background: var(--card);
+    padding: 18px 20px; margin-bottom: 14px;
+  }
+  a.model:hover { border-color: var(--accent); }
+  a.model h2 {
+    font-family: "Fraunces", Georgia, serif; font-size: 21px; color: var(--ink);
+    margin: 0 0 5px;
+  }
+  a.model p { margin: 0; color: var(--mid); font-size: 14px; }
+  a.model .go { color: var(--accent); font-weight: 600; font-size: 13.5px; display: block; margin-top: 9px; }
+  .note {
+    border-left: 3px solid var(--accent); background: var(--accent-soft);
+    padding: 13px 16px; border-radius: 0 10px 10px 0; margin-top: 26px; font-size: 14px;
+  }
+  .note b { color: var(--ink); }
+  footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--rule); color: var(--mid); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Recall &middot; internal &middot; September 2026</p>
+  <h1>Two models for the funding question</h1>
+  <p class="lede">Nine routes were researched on 8 September 2026, and these are the two
+    pictures that come out of it. Both are live: tick routes on and off, drag the
+    assumptions, and every figure follows. <b>The odds are our own estimate for this
+    team as it stands</b>, not published success rates.</p>
+
+  <a class="model" href="funding-map.html">
+    <h2>The funding map</h2>
+    <p>Money up the side, honest odds along the bottom, and the size of each circle is
+      the days of work an application costs. Top right is where you want to be, and
+      nothing lives there.</p>
+    <span class="go">Open the map</span>
+  </a>
+
+  <a class="model" href="money-over-time.html">
+    <h2>Money over time</h2>
+    <p>Cumulative cash across 36 months, one small chart per route, and break even in
+      households: 536 while nobody takes a salary, 1,429 once somebody does. Only one
+      route on the list reaches launch on its own.</p>
+    <span class="go">Open the model</span>
+  </a>
+
+  <p class="note"><b>This link is not secret, only hard to guess.</b> It sits in a public
+    repository, so the address is visible to anyone who goes looking through the project
+    files. Fine for sending to each other. Not the place for anything that would hurt to
+    have read.</p>
+
+  <footer>
+    Sources and the written research are in the team workspace. Costs come from the
+    business plan: 65,000 to build, 45,000 a year lean, 120,000 a year with one salary,
+    7 euro per household per month. A model is an argument, not a forecast.
+  </footer>
+</div>
+</body>
+</html>

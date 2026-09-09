@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The link is not meant to be found by searching for it. A project page
+     cannot serve a useful robots.txt, so the instruction goes on the page. -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../../favicon.ico">
+<style>
+  html { color-scheme: light dark; }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<title>Recall Funding Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ink: #1c1714;
+    --body: #45382f;
+    --mid: #7c6b5e;
+    --faint: #b9a998;
+    --paper: #fbf7f2;
+    --card: #ffffff;
+    --rule: #e6dcd0;
+    --accent: #d1541a;
+    --accent-soft: #fdeadf;
+    --good: #2c6a4a;
+    --good-soft: #dbece1;
+    --maybe: #9a6a12;
+    --maybe-soft: #f8ecd2;
+    --far: #a8402c;
+    --far-soft: #f8e0d9;
+    --grey: #6f6f6f;
+    --grey-soft: #eae6e1;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #f6efe8;
+      --body: #ddd0c4;
+      --mid: #a2907f;
+      --faint: #6b5c4e;
+      --paper: #17130f;
+      --card: #211a15;
+      --rule: #3a2f26;
+      --accent: #ff8b4d;
+      --accent-soft: #3a2116;
+      --good: #7fc79b;
+      --good-soft: #1c3428;
+      --maybe: #e0b055;
+      --maybe-soft: #362a13;
+      --far: #f0907a;
+      --far-soft: #3a1f19;
+      --grey: #9c9c9c;
+      --grey-soft: #2a2521;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #f6efe8;
+    --body: #ddd0c4;
+    --mid: #a2907f;
+    --faint: #6b5c4e;
+    --paper: #17130f;
+    --card: #211a15;
+    --rule: #3a2f26;
+    --accent: #ff8b4d;
+    --accent-soft: #3a2116;
+    --good: #7fc79b;
+    --good-soft: #1c3428;
+    --maybe: #e0b055;
+    --maybe-soft: #362a13;
+    --far: #f0907a;
+    --far-soft: #3a1f19;
+    --grey: #9c9c9c;
+    --grey-soft: #2a2521;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--body);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    font-variant-numeric: tabular-nums;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 34px 22px 60px; }
+
+  header { border-bottom: 2px solid var(--ink); padding-bottom: 18px; margin-bottom: 22px; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 10px;
+  }
+  h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(30px, 4.4vw, 46px);
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    margin: 0 0 10px;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+  .lede { max-width: 66ch; margin: 0; color: var(--body); font-size: 16.5px; }
+  .lede b { color: var(--ink); }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 26px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .panel h2, .side h2 {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 19px; font-weight: 600; color: var(--ink);
+    margin: 0 0 4px;
+  }
+  .panel .hint, .side .hint { color: var(--mid); font-size: 13px; margin: 0 0 14px; }
+
+  /* the map */
+  .chart-holder { overflow-x: auto; }
+  svg { display: block; width: 100%; height: auto; min-width: 620px; }
+  .axis-line { stroke: var(--rule); stroke-width: 1; }
+  .grid-line { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 3 4; }
+  .axis-text { fill: var(--mid); font-size: 11px; font-family: "IBM Plex Sans", sans-serif; }
+  .axis-title { fill: var(--ink); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .bubble { cursor: pointer; transition: opacity .15s ease, stroke-width .15s ease; }
+  .bubble-label { font-size: 11.5px; font-weight: 500; pointer-events: none; }
+  .zone-text { fill: var(--faint); font-size: 11px; font-style: italic; }
+
+  /* controls */
+  .band-group { margin-bottom: 14px; }
+  .band-title {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 600; margin: 0 0 7px; display: flex; align-items: center; gap: 7px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .pick {
+    display: flex; gap: 9px; align-items: flex-start;
+    padding: 7px 9px; border-radius: 8px; cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .pick:hover { background: var(--grey-soft); }
+  .pick input { margin: 3px 0 0; accent-color: var(--accent); width: 16px; height: 16px; }
+  .pick .name { color: var(--ink); font-weight: 500; font-size: 14px; display: block; }
+  .pick .meta { color: var(--mid); font-size: 12.5px; }
+
+  /* totals */
+  .side { position: sticky; top: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .figure { border: 1px solid var(--rule); border-radius: 12px; background: var(--card); padding: 15px 16px; }
+  .figure .k { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); }
+  .figure .v { font-family: "Fraunces", Georgia, serif; font-size: 30px; font-weight: 700; color: var(--ink); line-height: 1.1; }
+  .figure .v.accent { color: var(--accent); }
+  .figure .n { font-size: 12.5px; color: var(--mid); margin-top: 3px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 9px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid); font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.off td { opacity: 0.42; }
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px;
+    border-radius: 20px; white-space: nowrap;
+  }
+  .t-good { background: var(--good-soft); color: var(--good); }
+  .t-maybe { background: var(--maybe-soft); color: var(--maybe); }
+  .t-far { background: var(--far-soft); color: var(--far); }
+  .t-grey { background: var(--grey-soft); color: var(--grey); }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 14px 16px; border-radius: 0 10px 10px 0; margin: 24px 0 0;
+  }
+  .callout h3 { font-family: "Fraunces", Georgia, serif; margin: 0 0 6px; color: var(--ink); font-size: 17px; }
+  .callout ol { margin: 0; padding-left: 20px; }
+  .callout li { margin-bottom: 6px; }
+  .callout li b { color: var(--ink); }
+  footer { margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--rule); color: var(--mid); font-size: 12.5px; }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 30px 0 12px; }
+  .section-head h2 { font-family: "Fraunces", Georgia, serif; font-size: 22px; color: var(--ink); margin: 0; }
+  .section-head p { margin: 0; color: var(--mid); font-size: 13px; }
+</style>
+</head>
+<body>
+<nav style="font:500 13px/1.5 system-ui,sans-serif;padding:10px 22px;
+  border-bottom:1px solid rgba(128,110,90,.28);display:flex;gap:16px;flex-wrap:wrap">
+  <a href="./" style="color:#d1541a">Both models</a>
+  <a href="funding-map.html" style="color:inherit">The funding map</a>
+  <a href="money-over-time.html" style="color:inherit">Money over time</a>
+</nav>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Recall &middot; funding &middot; checked 8 September 2026</p>
+    <h1>Nine ways to fund this, and only one of them closes this month</h1>
+    <p class="lede">Money on the vertical, honest odds across the bottom, and the size of each circle is
+      the days of work an application costs. <b>Top right is where you want to be.</b> Tick and untick
+      to build your own picture: everything on this page follows what is selected.</p>
+  </header>
+
+  <div class="layout">
+    <div>
+      <div class="panel">
+        <h2>The map</h2>
+        <p class="hint">Money is on a log scale, because the EIC is twenty five times anything else and
+          would otherwise flatten the rest into a line. Click a circle to select or drop it.</p>
+        <div class="chart-holder"><svg id="map" viewBox="0 0 900 520" role="img"
+          aria-label="Scatter chart of funding routes: money against chance of success, circle size showing days of work"></svg></div>
+      </div>
+
+      <div class="section-head">
+        <h2>Every route, in full</h2>
+        <p>Sorted by money times chance</p>
+      </div>
+      <div class="panel" style="padding: 4px 6px;">
+        <table id="table">
+          <thead>
+            <tr>
+              <th>Route</th><th>Odds</th><th class="num">If it lands</th><th class="num">Chance</th>
+              <th class="num">Worth</th><th class="num">Days</th><th>Closes</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <h3>If you only do three things</h3>
+        <ol>
+          <li><b>imec.istart, before 30 September.</b> Three days of writing for a one in six shot at
+            100,000 with no upfront equity, and they ask for exactly what you already have: a working
+            proof of concept. The product is not the question here, the full-time commitment is.</li>
+          <li><b>VLAIO Innovatieve starterssteun, the day after you incorporate.</b> 50,000, no deadline,
+            written for a young company doing something nobody else in the sector does. Best odds on the
+            board.</li>
+          <li><b>Erasmus+ KA210 through VIVES, October conversation for the March 2027 call.</b> 30,000 as
+            a lump sum with almost no reporting, and you already have the second country. It funds
+            digital inclusion work around Recall, never the app itself, which is the part you cannot
+            do alone anyway.</li>
+        </ol>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="figure">
+        <div class="k">If everything selected lands</div>
+        <div class="v" id="sum-best">&mdash;</div>
+        <div class="n" id="sum-best-note"></div>
+      </div>
+      <div class="figure">
+        <div class="k">Worth, money times chance</div>
+        <div class="v accent" id="sum-expected">&mdash;</div>
+        <div class="n">The number to plan on, not the one in the brochure</div>
+      </div>
+      <div class="figure">
+        <div class="k">Work to apply</div>
+        <div class="v" id="sum-effort">&mdash;</div>
+        <div class="n" id="sum-next"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Pick your routes</h2>
+        <p class="hint">Grouped by how likely they are for this team as it is today.</p>
+        <div id="picks"></div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    Sources checked 8 September 2026: imec.istart call terms, VLAIO subsidy database, Erasmus+ 2026
+    programme guide and Epos Vlaanderen, Horizon Europe Health Cluster 1 work programme, EIB Institute,
+    King Baudouin Foundation. Odds are our own estimate for this team as it stands, not published
+    success rates. Deadlines move: check the source before writing anything.
+  </footer>
+</div>
+
+<script>
+  var ROUTES = [
+    { id: "istart", name: "imec.istart", full: "imec.istart, Belgium call", money: 100000, chance: 0.15,
+      effort: 3, band: "maybe", deadline: "30 Sep 2026", days: 22, on: true,
+      note: "100,000 as a convertible loan, no upfront equity" },
+    { id: "vlaio", name: "VLAIO starterssteun", full: "VLAIO Innovatieve starterssteun", money: 50000,
+      chance: 0.5, effort: 5, band: "good", deadline: "no deadline", days: null, on: true,
+      note: "50,000, company under two years old" },
+    { id: "ka210", name: "Erasmus+ KA210", full: "Erasmus+ KA210, through VIVES", money: 30000,
+      chance: 0.4, effort: 8, band: "maybe", deadline: "Mar 2027", days: 175, on: true,
+      note: "30,000 lump sum, applicant is VIVES" },
+    { id: "coninck", name: "De Coninck fund", full: "Fonds Dr. Daniel De Coninck", money: 30000,
+      chance: 0.2, effort: 6, band: "maybe", deadline: "watch for a call", days: null, on: true,
+      note: "Belgian care foundation, best fit on substance" },
+    { id: "ka220", name: "Erasmus+ KA220", full: "Erasmus+ KA220 cooperation partnership", money: 120000,
+      chance: 0.15, effort: 20, band: "far", deadline: "Mar 2027", days: 175, on: false,
+      note: "Four times the money, more than twice the work" },
+    { id: "sit", name: "EIB tournament", full: "EIB Social Innovation Tournament", money: 40000,
+      chance: 0.05, effort: 4, band: "far", deadline: "date unconfirmed", days: null, on: false,
+      note: "Prizes of 100,000 and 40,000, takes individuals" },
+    { id: "horizon", name: "Horizon Europe", full: "Horizon Europe, independent living topic", money: 300000,
+      chance: 0.05, effort: 15, band: "far", deadline: "13 Apr 2027", days: 215, on: false,
+      note: "As a consortium partner, not as the lead" },
+    { id: "digital", name: "Digital Europe", full: "Digital Europe, digital health", money: 200000,
+      chance: 0.03, effort: 25, band: "grey", deadline: "consortium only", days: null, on: false,
+      note: "Written for multi country consortia" },
+    { id: "eic", name: "EIC Accelerator", full: "EIC Accelerator", money: 2500000, chance: 0.02,
+      effort: 30, band: "grey", deadline: "year two or three", days: null, on: false,
+      note: "The right ambition in the wrong year" }
+  ];
+
+  var BANDS = {
+    good: { label: "Good odds", colour: "var(--good)", soft: "var(--good-soft)", tag: "t-good" },
+    maybe: { label: "Possible", colour: "var(--maybe)", soft: "var(--maybe-soft)", tag: "t-maybe" },
+    far: { label: "Long shot", colour: "var(--far)", soft: "var(--far-soft)", tag: "t-far" },
+    grey: { label: "Not this year", colour: "var(--grey)", soft: "var(--grey-soft)", tag: "t-grey" }
+  };
+
+  var euro = function (n) {
+    if (n >= 1000000) return "€" + (n / 1000000).toFixed(n % 1000000 ? 1 : 0) + "M";
+    if (n >= 1000) return "€" + Math.round(n / 1000) + "k";
+    return "€" + n;
+  };
+
+  /* ---------- the map ---------- */
+  var PAD = { l: 74, r: 26, t: 26, b: 62 };
+  var W = 900, H = 520;
+  var TICKS = [10000, 30000, 100000, 300000, 1000000, 3000000];
+  var yMin = Math.log10(10000), yMax = Math.log10(3000000);
+  var xMax = 0.55;
+
+  function xOf(chance) { return PAD.l + (chance / xMax) * (W - PAD.l - PAD.r); }
+  function yOf(money) {
+    var t = (Math.log10(money) - yMin) / (yMax - yMin);
+    return H - PAD.b - t * (H - PAD.t - PAD.b);
+  }
+  function rOf(effort) { return 9 + Math.sqrt(effort) * 3.4; }
+
+  function el(tag, attrs, text) {
+    var node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    Object.keys(attrs).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function drawMap() {
+    var svg = document.getElementById("map");
+    svg.innerHTML = "";
+
+    TICKS.forEach(function (t) {
+      var y = yOf(t);
+      svg.appendChild(el("line", { x1: PAD.l, x2: W - PAD.r, y1: y, y2: y, class: "grid-line" }));
+      svg.appendChild(el("text", { x: PAD.l - 10, y: y + 4, class: "axis-text", "text-anchor": "end" }, euro(t)));
+    });
+    [0, 0.1, 0.2, 0.3, 0.4, 0.5].forEach(function (c) {
+      var x = xOf(c);
+      svg.appendChild(el("line", { x1: x, x2: x, y1: PAD.t, y2: H - PAD.b, class: "grid-line" }));
+      svg.appendChild(el("text", { x: x, y: H - PAD.b + 20, class: "axis-text", "text-anchor": "middle" },
+        Math.round(c * 100) + "%"));
+    });
+    svg.appendChild(el("line", { x1: PAD.l, x2: W - PAD.r, y1: H - PAD.b, y2: H - PAD.b, class: "axis-line" }));
+    svg.appendChild(el("line", { x1: PAD.l, x2: PAD.l, y1: PAD.t, y2: H - PAD.b, class: "axis-line" }));
+    svg.appendChild(el("text", { x: PAD.l, y: H - 16, class: "axis-title" }, "Chance of getting it"));
+    svg.appendChild(el("text", { x: 16, y: PAD.t + 6, class: "axis-title",
+      transform: "rotate(-90 16 " + (PAD.t + 6) + ")" }, "Money if it lands"));
+    svg.appendChild(el("text", { x: W - PAD.r - 6, y: PAD.t + 14, class: "zone-text", "text-anchor": "end" },
+      "big and likely: nothing lives here, which is the point"));
+
+    ROUTES.forEach(function (r) {
+      var cx = xOf(r.chance), cy = yOf(r.money), rad = rOf(r.effort);
+      var colour = BANDS[r.band].colour;
+      var g = el("g", { class: "bubble", role: "button", tabindex: "0",
+        "aria-label": r.full + ", " + euro(r.money) + ", " + Math.round(r.chance * 100) + " per cent, "
+          + r.effort + " days of work" });
+      g.appendChild(el("circle", { cx: cx, cy: cy, r: rad, fill: colour,
+        "fill-opacity": r.on ? 0.26 : 0.07, stroke: colour, "stroke-width": r.on ? 2.5 : 1.2 }));
+      var right = cx < W - 210;
+      var label = el("text", {
+        x: right ? cx + rad + 8 : cx - rad - 8,
+        y: cy + 4, class: "bubble-label", fill: r.on ? "var(--ink)" : "var(--faint)",
+        "text-anchor": right ? "start" : "end"
+      }, r.name + "  " + euro(r.money));
+      g.appendChild(label);
+      g.addEventListener("click", function () { toggle(r.id); });
+      g.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(r.id); }
+      });
+      svg.appendChild(g);
+    });
+
+    // Bottom left: the only corner nothing plots in, because the cheapest route
+    // on the list is 30k and the axis starts at 10k. It used to sit top left and
+    // collided with the EIC bubble.
+    var lx = PAD.l + 14, ly = H - PAD.b - 58;
+    svg.appendChild(el("text", { x: lx, y: ly, class: "axis-text" }, "circle size = days of work to apply"));
+    [3, 15, 30].forEach(function (d, i) {
+      var cx = lx + 22 + i * 76, cy = ly + 28;
+      svg.appendChild(el("circle", { cx: cx, cy: cy, r: rOf(d), fill: "none",
+        stroke: "var(--faint)", "stroke-width": 1.2 }));
+      svg.appendChild(el("text", { x: cx, y: cy + 4, class: "axis-text", "text-anchor": "middle" }, d));
+    });
+  }
+
+  /* ---------- controls, table, totals ---------- */
+  function drawPicks() {
+    var host = document.getElementById("picks");
+    host.innerHTML = "";
+    Object.keys(BANDS).forEach(function (band) {
+      var mine = ROUTES.filter(function (r) { return r.band === band; });
+      if (!mine.length) return;
+      var group = document.createElement("div");
+      group.className = "band-group";
+      var title = document.createElement("p");
+      title.className = "band-title";
+      title.style.color = BANDS[band].colour;
+      title.innerHTML = '<span class="dot" style="background:' + BANDS[band].colour + '"></span>'
+        + BANDS[band].label;
+      group.appendChild(title);
+      mine.forEach(function (r) {
+        var row = document.createElement("label");
+        row.className = "pick";
+        var box = document.createElement("input");
+        box.type = "checkbox";
+        box.checked = r.on;
+        box.addEventListener("change", function () { toggle(r.id); });
+        var text = document.createElement("span");
+        text.innerHTML = '<span class="name">' + r.full + '</span><span class="meta">'
+          + euro(r.money) + " &middot; " + Math.round(r.chance * 100) + "% &middot; "
+          + r.effort + " days &middot; " + r.deadline + "</span>";
+        row.appendChild(box);
+        row.appendChild(text);
+        group.appendChild(row);
+      });
+      host.appendChild(group);
+    });
+  }
+
+  function drawTable() {
+    var body = document.querySelector("#table tbody");
+    body.innerHTML = "";
+    ROUTES.slice().sort(function (a, b) {
+      return (b.money * b.chance) - (a.money * a.chance);
+    }).forEach(function (r) {
+      var tr = document.createElement("tr");
+      if (!r.on) tr.className = "off";
+      tr.innerHTML =
+        "<td><b style='color:var(--ink)'>" + r.full + "</b><br><span style='color:var(--mid);font-size:12.5px'>"
+          + r.note + "</span></td>" +
+        '<td><span class="tag ' + BANDS[r.band].tag + '">' + BANDS[r.band].label + "</span></td>" +
+        '<td class="num">' + euro(r.money) + "</td>" +
+        '<td class="num">' + Math.round(r.chance * 100) + "%</td>" +
+        '<td class="num"><b style="color:var(--ink)">' + euro(Math.round(r.money * r.chance)) + "</b></td>" +
+        '<td class="num">' + r.effort + "</td>" +
+        "<td>" + r.deadline + (r.days !== null ? '<br><span style="color:var(--mid);font-size:12px">in '
+          + r.days + " days</span>" : "") + "</td>";
+      tr.addEventListener("click", function () { toggle(r.id); });
+      tr.style.cursor = "pointer";
+      body.appendChild(tr);
+    });
+  }
+
+  function drawTotals() {
+    var on = ROUTES.filter(function (r) { return r.on; });
+    var best = on.reduce(function (s, r) { return s + r.money; }, 0);
+    var expected = on.reduce(function (s, r) { return s + r.money * r.chance; }, 0);
+    var effort = on.reduce(function (s, r) { return s + r.effort; }, 0);
+    document.getElementById("sum-best").textContent = on.length ? euro(best) : "nothing picked";
+    document.getElementById("sum-best-note").textContent = on.length
+      ? on.length + " route" + (on.length === 1 ? "" : "s") + " selected, all landing at once"
+      : "tick something on the right";
+    document.getElementById("sum-expected").textContent = on.length ? euro(Math.round(expected)) : "€0";
+    document.getElementById("sum-effort").textContent = effort + " days";
+    var dated = on.filter(function (r) { return r.days !== null; })
+      .sort(function (a, b) { return a.days - b.days; });
+    document.getElementById("sum-next").textContent = dated.length
+      ? "next deadline: " + dated[0].full + ", " + dated[0].deadline
+      : "nothing selected has a date";
+  }
+
+  function toggle(id) {
+    var route = ROUTES.filter(function (r) { return r.id === id; })[0];
+    if (!route) return;
+    route.on = !route.on;
+    render();
+  }
+
+  function render() { drawMap(); drawPicks(); drawTable(); drawTotals(); }
+  render();
+</script>
+</body>
+</html>

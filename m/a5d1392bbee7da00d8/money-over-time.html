@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The link is not meant to be found by searching for it. A project page
+     cannot serve a useful robots.txt, so the instruction goes on the page. -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../../favicon.ico">
+<style>
+  html { color-scheme: light dark; }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<title>Recall Money Over Time</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ink: #1c1714; --body: #45382f; --mid: #7c6b5e; --faint: #b9a998;
+    --paper: #fbf7f2; --card: #ffffff; --rule: #e6dcd0;
+    --accent: #d1541a; --accent-soft: #fdeadf;
+    --up: #2c6a4a; --up-soft: rgba(44,106,74,.16);
+    --down: #a8402c; --down-soft: rgba(168,64,44,.16);
+    --line: #3a2f26;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #f6efe8; --body: #ddd0c4; --mid: #a2907f; --faint: #6b5c4e;
+      --paper: #17130f; --card: #211a15; --rule: #3a2f26;
+      --accent: #ff8b4d; --accent-soft: #3a2116;
+      --up: #7fc79b; --up-soft: rgba(127,199,155,.18);
+      --down: #f0907a; --down-soft: rgba(240,144,122,.18);
+      --line: #e7dcd2;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #f6efe8; --body: #ddd0c4; --mid: #a2907f; --faint: #6b5c4e;
+    --paper: #17130f; --card: #211a15; --rule: #3a2f26;
+    --accent: #ff8b4d; --accent-soft: #3a2116;
+    --up: #7fc79b; --up-soft: rgba(127,199,155,.18);
+    --down: #f0907a; --down-soft: rgba(240,144,122,.18);
+    --line: #e7dcd2;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--body);
+    font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 15px; line-height: 1.55;
+    font-variant-numeric: tabular-nums;
+  }
+  .wrap { max-width: 1150px; margin: 0 auto; padding: 34px 22px 64px; }
+  header { border-bottom: 2px solid var(--ink); padding-bottom: 18px; margin-bottom: 24px; }
+  .eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin: 0 0 10px; }
+  h1 {
+    font-family: "Fraunces", Georgia, serif; font-weight: 700;
+    font-size: clamp(29px, 4.2vw, 44px); line-height: 1.03; letter-spacing: -.015em;
+    margin: 0 0 10px; color: var(--ink); text-wrap: balance;
+  }
+  .lede { max-width: 68ch; margin: 0; font-size: 16.5px; }
+  .lede b { color: var(--ink); }
+
+  .panel { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 18px; }
+  h2 { font-family: "Fraunces", Georgia, serif; font-size: 22px; color: var(--ink); margin: 0 0 4px; }
+  h3 { font-family: "Fraunces", Georgia, serif; font-size: 17px; color: var(--ink); margin: 0 0 3px; }
+  .hint { color: var(--mid); font-size: 13px; margin: 0 0 14px; }
+  .section-head { margin: 32px 0 12px; }
+
+  .layout { display: grid; grid-template-columns: minmax(0,1fr) 286px; gap: 24px; align-items: start; }
+  @media (max-width: 940px) { .layout { grid-template-columns: 1fr; } }
+
+  svg { display: block; width: 100%; height: auto; }
+  .chart-holder { overflow-x: auto; }
+  #big { min-width: 620px; }
+  .grid-line { stroke: var(--rule); stroke-width: 1; }
+  .zero-line { stroke: var(--line); stroke-width: 1.5; }
+  .axis-text { fill: var(--mid); font-size: 11px; }
+  .axis-title { fill: var(--ink); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+  .note-text { fill: var(--ink); font-size: 11.5px; font-weight: 600; }
+  .marker { stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 4 3; }
+
+  .side { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 13px; }
+  .figure { border: 1px solid var(--rule); border-radius: 12px; background: var(--card); padding: 14px 15px; }
+  .figure .k { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--mid); }
+  .figure .v { font-family: "Fraunces", Georgia, serif; font-size: 27px; font-weight: 700; color: var(--ink); line-height: 1.12; }
+  .figure .v.good { color: var(--up); }
+  .figure .v.bad { color: var(--down); }
+  .figure .n { font-size: 12.5px; color: var(--mid); margin-top: 2px; }
+
+  .pick { display: flex; gap: 9px; align-items: flex-start; padding: 6px 8px; border-radius: 8px; cursor: pointer; }
+  .pick:hover { background: var(--accent-soft); }
+  .pick input { margin: 3px 0 0; accent-color: var(--accent); width: 16px; height: 16px; }
+  .pick .name { color: var(--ink); font-weight: 500; font-size: 13.5px; display: block; }
+  .pick .meta { color: var(--mid); font-size: 12px; }
+
+  .knobs { display: grid; gap: 12px; }
+  .knob label { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink); font-weight: 500; }
+  .knob output { color: var(--accent); font-weight: 600; }
+  .knob input[type=range] { width: 100%; accent-color: var(--accent); }
+  .toggle { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink); cursor: pointer; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 14px; }
+  .card { border: 1px solid var(--rule); border-radius: 12px; background: var(--card); padding: 14px; }
+  .card.dead { border-color: var(--down); }
+  .card .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+  .card .amount { font-family: "Fraunces", Georgia, serif; font-weight: 700; color: var(--accent); font-size: 17px; white-space: nowrap; }
+  .card .verdict { font-size: 12.5px; margin: 6px 0 8px; }
+  .card .verdict b { color: var(--ink); }
+  .card dl { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin: 0; font-size: 12.5px; }
+  .card dt { color: var(--mid); }
+  .card dd { margin: 0; text-align: right; color: var(--ink); font-weight: 500; }
+  .spark { margin: 8px 0 4px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 9px; border-bottom: 1px solid var(--rule); }
+  th { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--mid); font-weight: 600; }
+  td.num { text-align: right; white-space: nowrap; }
+  .callout { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 14px 16px; border-radius: 0 10px 10px 0; margin: 26px 0 0; }
+  .callout h3 { margin-bottom: 6px; }
+  .callout p { margin: 0 0 8px; }
+  .callout p:last-child { margin: 0; }
+  footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--rule); color: var(--mid); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<nav style="font:500 13px/1.5 system-ui,sans-serif;padding:10px 22px;
+  border-bottom:1px solid rgba(128,110,90,.28);display:flex;gap:16px;flex-wrap:wrap">
+  <a href="./" style="color:#d1541a">Both models</a>
+  <a href="funding-map.html" style="color:inherit">The funding map</a>
+  <a href="money-over-time.html" style="color:inherit">Money over time</a>
+</nav>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Recall &middot; money over time &middot; 36 months from launch</p>
+    <h1>What each grant buys is months, and the price is households</h1>
+    <p class="lede">Every route below is plotted the same way: money in when it arrives, costs out every
+      month, subscriptions building up underneath. <b>Below the line you are spending somebody's
+      money, above it you are a business.</b> The one number that decides where the line ends up is how
+      many households pay, and that number is the same for everyone: the grant only decides how long
+      you have to find them.</p>
+  </header>
+
+  <div class="layout">
+    <div>
+      <div class="panel">
+        <h2>Everything you have selected, together</h2>
+        <p class="hint">Cumulative cash, month by month. Red below the line is money spent that nobody
+          has paid back yet, green above it is a business that funds itself.</p>
+        <div class="chart-holder"><svg id="big" viewBox="0 0 920 430" role="img"
+          aria-label="Cumulative cash over 36 months for the selected funding routes"></svg></div>
+      </div>
+
+      <div class="section-head">
+        <h2>One at a time</h2>
+        <p class="hint">Each card asks the same question: if this is the only money we get, on top of
+          the 10,000 we put in ourselves, does it reach launch, does it survive the first year, and how
+          many households does it need? The clock starts the month the money lands, the build takes six
+          months, and nobody subscribes before there is something to subscribe to.</p>
+      </div>
+      <div class="cards" id="cards"></div>
+
+      <div class="section-head">
+        <h2>Break even, in households</h2>
+        <p class="hint">This is the part no grant changes.</p>
+      </div>
+      <div class="panel" style="padding:4px 6px">
+        <table id="be"><thead><tr>
+          <th>Phase</th><th class="num">Costs a year</th><th class="num">A month</th>
+          <th class="num">Households needed</th><th>What that means</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+
+      <div class="callout">
+        <h3>The finding, and it is not the one in the business plan</h3>
+        <p><b>Only one route on this list can pay for the build.</b> Development is 65,000 and the lean
+          year costs 45,000 on top, so a 30,000 or 50,000 grant does not get you to launch on its own,
+          however good its odds are. imec.istart at 100,000 does, and it is the only single source that
+          does.</p>
+        <p><b>So the plan is not one grant, it is a stack.</b> imec.istart to build, VLAIO to breathe,
+          Erasmus+ to do the part that is not the app. Tick them together in the panel and watch the
+          trough get shallower and the crossing come earlier.</p>
+        <p><b>And break even never moves.</b> 536 households while nobody takes a salary, 1,429 once
+          somebody does. Every grant is time to reach that, not a way around it.</p>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="figure">
+        <div class="k">Deepest point</div>
+        <div class="v bad" id="f-trough">&mdash;</div>
+        <div class="n" id="f-trough-note"></div>
+      </div>
+      <div class="figure">
+        <div class="k">Cash runs out</div>
+        <div class="v" id="f-runway">&mdash;</div>
+        <div class="n" id="f-runway-note"></div>
+      </div>
+      <div class="figure">
+        <div class="k">Paying its own way from</div>
+        <div class="v good" id="f-breakeven">&mdash;</div>
+        <div class="n" id="f-breakeven-note"></div>
+      </div>
+      <div class="figure">
+        <div class="k">Cash at month 36</div>
+        <div class="v" id="f-end">&mdash;</div>
+        <div class="n">Everything in, everything out, subscriptions included</div>
+      </div>
+
+      <div class="panel">
+        <h3>Money in</h3>
+        <p class="hint">Own investment of 10,000 is always in.</p>
+        <div id="picks"></div>
+        <label class="toggle" style="margin-top:6px">
+          <input type="checkbox" id="odds"> Multiply each by its odds
+        </label>
+        <p class="hint" style="margin:6px 0 0">The sober version: 100,000 at one in six becomes 16,667.</p>
+      </div>
+
+      <div class="panel">
+        <h3>Assumptions</h3>
+        <p class="hint">Drag them. Everything on the page follows.</p>
+        <div class="knobs">
+          <div class="knob">
+            <label for="price">Per household a month <output id="price-out"></output></label>
+            <input type="range" id="price" min="4" max="15" step="0.5" value="7">
+          </div>
+          <div class="knob">
+            <label for="h12">Households by month 12 <output id="h12-out"></output></label>
+            <input type="range" id="h12" min="0" max="2000" step="50" value="750">
+          </div>
+          <div class="knob">
+            <label for="h36">Households by month 36 <output id="h36-out"></output></label>
+            <input type="range" id="h36" min="500" max="8000" step="100" value="3000">
+          </div>
+          <div class="knob">
+            <label for="build">Cost to build <output id="build-out"></output></label>
+            <input type="range" id="build" min="20000" max="100000" step="5000" value="65000">
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    Costs from the business plan: 65,000 to build, spread over the first six months, then 45,000 a year
+    while nobody takes a salary and 120,000 a year from month thirteen when somebody does. Revenue is
+    households times the price, and households grow in a straight line to each milestone. Grant money
+    lands in the month an application would realistically pay out, not the month it is submitted.
+    Odds are our own estimate for this team. A model is an argument, not a forecast.
+  </footer>
+</div>
+
+<script>
+  var MONTHS = 36;
+  var OWN = 10000;
+  var LEAN_YEAR = 45000;
+  var SALARY_YEAR = 120000;
+
+  var ROUTES = [
+    { id: "istart", name: "imec.istart", money: 100000, chance: .15, pays: 2, on: true,
+      kind: "convertible loan" },
+    { id: "vlaio", name: "VLAIO starterssteun", money: 50000, chance: .5, pays: 4, on: true,
+      kind: "grant" },
+    { id: "ka210", name: "Erasmus+ KA210", money: 30000, chance: .4, pays: 10, on: true, kind: "lump sum" },
+    { id: "coninck", name: "De Coninck fund", money: 30000, chance: .2, pays: 9, on: false, kind: "grant" },
+    { id: "ka220", name: "Erasmus+ KA220", money: 120000, chance: .15, pays: 12, on: false, kind: "grant" },
+    { id: "sit", name: "EIB tournament", money: 40000, chance: .05, pays: 6, on: false, kind: "prize" },
+    { id: "horizon", name: "Horizon Europe", money: 300000, chance: .05, pays: 14, on: false, kind: "grant" },
+    { id: "digital", name: "Digital Europe", money: 200000, chance: .03, pays: 16, on: false, kind: "grant" },
+    { id: "eic", name: "EIC Accelerator", money: 2500000, chance: .02, pays: 20, on: false,
+      kind: "grant plus equity" }
+  ];
+
+  var knobs = { price: 7, h12: 750, h36: 3000, build: 65000, odds: false };
+
+  function euro(n) {
+    var sign = n < 0 ? "-" : "";
+    var v = Math.abs(n);
+    if (v >= 1000000) return sign + "€" + (v / 1000000).toFixed(v % 1000000 ? 1 : 0) + "M";
+    if (v >= 1000) return sign + "€" + Math.round(v / 1000) + "k";
+    return sign + "€" + Math.round(v);
+  }
+
+  // Nothing is spent and nothing is earned before there is money to build with,
+  // and nobody subscribes to an app that does not exist yet. So the clock starts
+  // when the first money lands, the build takes six months, and the first
+  // household arrives the month after that.
+  function firstMoney(routes) {
+    var months = routes.map(function (r) { return r.pays; });
+    return months.length ? Math.min.apply(null, months) : 1;
+  }
+
+  function households(m, launch) {
+    if (m < launch) return 0;
+    var since = m - launch;
+    if (since <= 12) return (knobs.h12 / 12) * since;
+    return knobs.h12 + ((knobs.h36 - knobs.h12) / 24) * Math.min(since - 12, 24);
+  }
+
+  function costOf(m, start, launch) {
+    if (m < start) return 0;
+    var build = (m < start + 6) ? knobs.build / 6 : 0;
+    var salaried = m >= launch + 12;
+    var base = (salaried ? SALARY_YEAR : LEAN_YEAR) / 12;
+    return base + build;
+  }
+
+  function moneyIn(m, routes, start) {
+    var sum = m === start ? OWN : 0;
+    routes.forEach(function (r) {
+      if (r.pays === m) sum += knobs.odds ? r.money * r.chance : r.money;
+    });
+    return sum;
+  }
+
+  // The whole model, in one place: cash month by month.
+  function run(routes) {
+    var start = firstMoney(routes);
+    var launch = start + 6;
+    var cash = 0, series = [], trough = { cash: 0, month: 0 }, ranOut = null, crossed = null;
+    for (var m = 1; m <= MONTHS; m += 1) {
+      var revenue = households(m, launch) * knobs.price;
+      var cost = costOf(m, start, launch);
+      var monthly = revenue - cost;
+      cash += moneyIn(m, routes, start) + monthly;
+      series.push({ month: m, cash: cash, revenue: revenue, cost: cost, monthly: monthly,
+        households: households(m, launch) });
+      if (cash < trough.cash) trough = { cash: cash, month: m };
+      // Out of money means out of money after it arrived, not the rounding of
+      // one month's hosting bill before it did.
+      if (m > start && cash < 0 && ranOut === null) ranOut = m;
+      if (crossed === null && m >= launch && monthly >= 0) crossed = m;
+    }
+    return { series: series, trough: trough, ranOut: ranOut, crossed: crossed, end: cash,
+      start: start, launch: launch };
+  }
+
+  function breakEvenHouseholds(yearly) {
+    return Math.ceil((yearly / 12) / knobs.price);
+  }
+
+  /* ---------------- the big chart ---------------- */
+  function el(tag, attrs, text) {
+    var n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  function drawBig(model) {
+    var svg = document.getElementById("big");
+    svg.innerHTML = "";
+    var W = 920, H = 430, P = { l: 76, r: 20, t: 18, b: 46 };
+    var lo = Math.min(0, model.trough.cash), hi = Math.max(0, model.end,
+      model.series.reduce(function (a, p) { return Math.max(a, p.cash); }, 0));
+    var span = (hi - lo) || 1;
+    var pad = span * 0.12;
+    lo -= pad; hi += pad;
+
+    var x = function (m) { return P.l + ((m - 1) / (MONTHS - 1)) * (W - P.l - P.r); };
+    var y = function (v) { return H - P.b - ((v - lo) / (hi - lo)) * (H - P.t - P.b); };
+
+    // grid and money labels
+    var steps = 6;
+    for (var i = 0; i <= steps; i += 1) {
+      var v = lo + ((hi - lo) / steps) * i;
+      svg.appendChild(el("line", { x1: P.l, x2: W - P.r, y1: y(v), y2: y(v), class: "grid-line" }));
+      svg.appendChild(el("text", { x: P.l - 9, y: y(v) + 4, class: "axis-text", "text-anchor": "end" }, euro(v)));
+    }
+    [1, 6, 12, 18, 24, 30, 36].forEach(function (m) {
+      svg.appendChild(el("text", { x: x(m), y: H - P.b + 18, class: "axis-text", "text-anchor": "middle" },
+        m === 1 ? "launch" : "month " + m));
+    });
+
+    // areas above and below zero
+    var zero = y(0);
+    var above = "M " + x(1) + " " + zero, below = "M " + x(1) + " " + zero;
+    model.series.forEach(function (p) {
+      above += " L " + x(p.month) + " " + y(Math.max(0, p.cash));
+      below += " L " + x(p.month) + " " + y(Math.min(0, p.cash));
+    });
+    above += " L " + x(MONTHS) + " " + zero + " Z";
+    below += " L " + x(MONTHS) + " " + zero + " Z";
+    svg.appendChild(el("path", { d: below, fill: "var(--down-soft)", stroke: "none" }));
+    svg.appendChild(el("path", { d: above, fill: "var(--up-soft)", stroke: "none" }));
+
+    // the line itself
+    var line = "";
+    model.series.forEach(function (p, i) {
+      line += (i ? " L " : "M ") + x(p.month) + " " + y(p.cash);
+    });
+    svg.appendChild(el("path", { d: line, fill: "none", stroke: "var(--line)", "stroke-width": 2.4,
+      "stroke-linejoin": "round" }));
+    svg.appendChild(el("line", { x1: P.l, x2: W - P.r, y1: zero, y2: zero, class: "zero-line" }));
+
+    // where the money lands
+    ROUTES.filter(function (r) { return r.on; }).forEach(function (r, idx) {
+      var p = model.series[r.pays - 1];
+      if (!p) return;
+      svg.appendChild(el("line", { x1: x(r.pays), x2: x(r.pays), y1: P.t, y2: H - P.b, class: "marker" }));
+      svg.appendChild(el("circle", { cx: x(r.pays), cy: y(p.cash), r: 4.5, fill: "var(--accent)" }));
+      svg.appendChild(el("text", { x: x(r.pays) + 6, y: P.t + 12 + (idx % 3) * 13, class: "axis-text",
+        fill: "var(--accent)" }, r.name));
+    });
+
+    // the trough and the crossing, the two numbers that matter
+    if (model.trough.month) {
+      var t = model.series[model.trough.month - 1];
+      svg.appendChild(el("circle", { cx: x(t.month), cy: y(t.cash), r: 5, fill: "var(--down)" }));
+      svg.appendChild(el("text", { x: Math.max(x(t.month), P.l + 48), y: y(t.cash) + 20,
+        class: "note-text", fill: "var(--down)", "text-anchor": "middle" },
+        "deepest " + euro(t.cash)));
+    }
+    var up = model.series.filter(function (p) { return p.cash >= 0; })[0];
+    var wasNegative = model.series.some(function (p) { return p.cash < 0; });
+    if (up && wasNegative && up.month > 1) {
+      svg.appendChild(el("circle", { cx: x(up.month), cy: zero, r: 5, fill: "var(--up)" }));
+      svg.appendChild(el("text", { x: x(up.month), y: zero - 12, class: "note-text", fill: "var(--up)",
+        "text-anchor": "middle" }, "back to zero, month " + up.month));
+    }
+    svg.appendChild(el("text", { x: P.l, y: H - 8, class: "axis-title" }, "months from launch"));
+    var ty = P.t + 130;
+    svg.appendChild(el("text", { x: 16, y: ty, class: "axis-title",
+      transform: "rotate(-90 16 " + ty + ")" }, "cash in the bank"));
+  }
+
+  /* ---------------- one card per route ---------------- */
+  function spark(model, dead) {
+    var W = 232, H = 60, lo = 0, hi = 0;
+    model.series.forEach(function (p) { lo = Math.min(lo, p.cash); hi = Math.max(hi, p.cash); });
+    if (hi === lo) hi = lo + 1;
+    var x = function (m) { return ((m - 1) / (MONTHS - 1)) * W; };
+    var y = function (v) { return H - ((v - lo) / (hi - lo)) * H; };
+    var zero = y(0);
+    var line = "", area = "M 0 " + zero;
+    model.series.forEach(function (p, i) {
+      line += (i ? " L " : "M ") + x(p.month) + " " + y(p.cash);
+      area += " L " + x(p.month) + " " + y(p.cash);
+    });
+    area += " L " + W + " " + zero + " Z";
+    return '<svg class="spark" viewBox="0 0 ' + W + " " + H + '" aria-hidden="true">' +
+      '<path d="' + area + '" fill="' + (dead ? "var(--down-soft)" : "var(--up-soft)") + '"/>' +
+      '<line x1="0" x2="' + W + '" y1="' + zero + '" y2="' + zero + '" stroke="var(--line)" stroke-width="1"/>' +
+      '<path d="' + line + '" fill="none" stroke="' + (dead ? "var(--down)" : "var(--up)") +
+      '" stroke-width="2"/></svg>';
+  }
+
+  function drawCards() {
+    var host = document.getElementById("cards");
+    host.innerHTML = "";
+    ROUTES.forEach(function (r) {
+      var alone = run([{ id: r.id, money: r.money, chance: r.chance, pays: r.pays, on: true }]);
+      var dead = alone.ranOut !== null;
+      var brokeDuringBuild = dead && alone.ranOut < alone.launch;
+      // The month it runs out decides which line it had to clear: the lean one
+      // while nobody takes a salary, the bigger one after that. imec.istart
+      // runs dry in the salaried phase, and saying 536 there would be a lie.
+      var salariedByThen = alone.ranOut !== null && alone.ranOut >= alone.launch + 12;
+      var needed = breakEvenHouseholds(salariedByThen ? SALARY_YEAR : LEAN_YEAR);
+      var at = alone.ranOut ? Math.round(alone.series[alone.ranOut - 1].households) : null;
+      var card = document.createElement("div");
+      card.className = "card" + (dead ? " dead" : "");
+
+      var verdict;
+      if (brokeDuringBuild) {
+        verdict = "<b>Does not reach launch.</b> The money runs out in month " + alone.ranOut +
+          ", " + (alone.launch - alone.ranOut) + " months before there is anything to sell.";
+      } else if (dead) {
+        verdict = "<b>Reaches launch, then runs dry in month " + alone.ranOut + ".</b> " +
+          at + " households by then, and " + needed + " needed to cover that month" +
+          (salariedByThen ? ", because a salary has started" : "") + ".";
+      } else {
+        verdict = "<b>Carries the build and holds.</b> Cash never goes below zero" +
+          (alone.crossed ? ", and from month " + alone.crossed +
+            " the subscriptions cover the month on their own" : "") + ".";
+      }
+
+      card.innerHTML =
+        '<div class="top"><h3>' + r.name + '</h3><span class="amount">' + euro(r.money) + "</span></div>" +
+        '<p class="hint" style="margin:0 0 2px">' + r.kind + ", lands month " + r.pays +
+        ", launch month " + alone.launch + "</p>" +
+        spark(alone, dead) +
+        '<p class="verdict">' + verdict + "</p>" +
+        "<dl>" +
+        "<dt>Deepest point</dt><dd>" + euro(alone.trough.cash) + "</dd>" +
+        "<dt>Money runs out</dt><dd>" + (alone.ranOut ? "month " + alone.ranOut : "it does not") + "</dd>" +
+        "<dt>Pays for itself from</dt><dd>" + (alone.crossed ? "month " + alone.crossed : "not in 36") + "</dd>" +
+        "<dt>Households to break even</dt><dd>" + needed + "</dd>" +
+        "<dt>Month 36 balance</dt><dd>" + euro(alone.series[MONTHS - 1].cash) + "</dd>" +
+        "</dl>";
+      host.appendChild(card);
+    });
+  }
+
+  /* ---------------- break even table ---------------- */
+  function drawBreakEven() {
+    var rows = [
+      { phase: "Year one, nobody on a salary", yearly: LEAN_YEAR,
+        means: "Hosting, monitoring, maintenance and the marketing budget. This is the number the first year is judged against" },
+      { phase: "Year two, one salary", yearly: SALARY_YEAR,
+        means: "The plan's own figure, and where the business plan's 1,429 comes from" },
+      { phase: "Year two, and the build paid back", yearly: SALARY_YEAR + knobs.build,
+        means: "Only if the money was a loan rather than a grant. imec.istart is a convertible loan, so this is its real line" }
+    ];
+    var body = document.querySelector("#be tbody");
+    body.innerHTML = "";
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td><b style='color:var(--ink)'>" + r.phase + "</b></td>" +
+        '<td class="num">' + euro(r.yearly) + "</td>" +
+        '<td class="num">' + euro(r.yearly / 12) + "</td>" +
+        '<td class="num"><b style="color:var(--accent)">' + breakEvenHouseholds(r.yearly) + "</b></td>" +
+        "<td>" + r.means + "</td>";
+      body.appendChild(tr);
+    });
+  }
+
+  /* ---------------- controls and totals ---------------- */
+  function drawPicks() {
+    var host = document.getElementById("picks");
+    host.innerHTML = "";
+    ROUTES.forEach(function (r) {
+      var row = document.createElement("label");
+      row.className = "pick";
+      var box = document.createElement("input");
+      box.type = "checkbox";
+      box.checked = r.on;
+      box.addEventListener("change", function () { r.on = box.checked; render(); });
+      var text = document.createElement("span");
+      text.innerHTML = '<span class="name">' + r.name + '</span><span class="meta">' +
+        euro(knobs.odds ? r.money * r.chance : r.money) + " &middot; month " + r.pays +
+        " &middot; " + Math.round(r.chance * 100) + "%</span>";
+      row.appendChild(box); row.appendChild(text);
+      host.appendChild(row);
+    });
+  }
+
+  function drawTotals(model) {
+    document.getElementById("f-trough").textContent = euro(model.trough.cash);
+    document.getElementById("f-trough-note").textContent = model.trough.month
+      ? "month " + model.trough.month + ", the most you ever owe" : "never goes below zero";
+    var runway = document.getElementById("f-runway");
+    runway.textContent = model.ranOut ? "month " + model.ranOut : "it does not";
+    runway.className = "v " + (model.ranOut ? "bad" : "good");
+    document.getElementById("f-runway-note").textContent = model.ranOut
+      ? Math.round(model.series[model.ranOut - 1].households) + " households by then, and "
+        + breakEvenHouseholds(LEAN_YEAR) + " are needed"
+      : "the funding covers the build and the first year";
+    document.getElementById("f-breakeven").textContent = model.crossed ? "month " + model.crossed : "not in 36";
+    document.getElementById("f-breakeven-note").textContent = model.crossed
+      ? Math.round(model.series[model.crossed - 1].households) + " households, covering that month on their own"
+      : "subscriptions never catch the monthly costs at these settings";
+    var end = document.getElementById("f-end");
+    end.textContent = euro(model.end);
+    end.className = "v " + (model.end >= 0 ? "good" : "bad");
+  }
+
+  function readKnobs() {
+    knobs.price = Number(document.getElementById("price").value);
+    knobs.h12 = Number(document.getElementById("h12").value);
+    knobs.h36 = Math.max(Number(document.getElementById("h36").value), knobs.h12);
+    knobs.build = Number(document.getElementById("build").value);
+    knobs.odds = document.getElementById("odds").checked;
+    document.getElementById("price-out").textContent = "€" + knobs.price.toFixed(2);
+    document.getElementById("h12-out").textContent = knobs.h12;
+    document.getElementById("h36-out").textContent = knobs.h36;
+    document.getElementById("build-out").textContent = euro(knobs.build);
+  }
+
+  function render() {
+    readKnobs();
+    var model = run(ROUTES.filter(function (r) { return r.on; }));
+    drawBig(model);
+    drawTotals(model);
+    drawCards();
+    drawBreakEven();
+    drawPicks();
+  }
+
+  ["price", "h12", "h36", "build"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", render);
+  });
+  document.getElementById("odds").addEventListener("change", render);
+  render();
+</script>
+</body>
+</html>
