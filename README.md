@@ -40,6 +40,23 @@ out in <https://claude.ai/code/artifact/a6b6aec6-b408-4d5a-9fe3-858225129e9e>
   ID or a fingerprint on top where the phone has them. Family can always
   unlock the phone again with a fresh phone code, so nobody is locked out
 
+## Three languages
+
+Dutch, French and English, in `js/i18n.js`: one key with its three translations
+side by side, so anybody adding a string can see which language is missing. The
+English also stays in the markup as the fallback.
+
+What follows the language is the half that is easy to forget: the voice, dates
+and month names, how a time is read out loud, which language data the letter
+reader downloads, and the words of the consent notice. A recorded consent says
+which language was read.
+
+Switch it in the help screen, in the family app's top bar, or with `?lang=fr`
+on any link.
+
+Checked by `python tests/i18n_test.py`, 38 static checks, and by opening
+`tests/lang.html` on the device under test, 21 checks in the browser.
+
 ## Data protection
 
 `docs/dpia.md` is the article 35 assessment: who is who, what is processed and

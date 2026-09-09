@@ -182,6 +182,18 @@ out.
 | N11 | The camera screen fits the device it is running on, so it never has to be scrolled while she is holding the phone up to a letter |
 | N12 | Every file the browser can cache is asked for with the same version on it, so a phone can never run a new page against modules from an older release |
 | N13 | The voice is the best one that speaks on the device itself. A voice that sends the text away to be read is refused, by name and by the localService flag, however much better it sounds |
+| L1 | Dutch, French and English across both apps, one key with its three translations side by side | Must |
+| L2 | Everything that follows the language follows it: the voice, dates, month names, how a time is read out, and which language data the letter reader downloads | Must |
+| L3 | The consent notice exists in three languages, and the recorded consent says which one was read, because article 7 asks which words were agreed to | Must |
+| L4 | The language of a letter is guessed separately from the language of the interface, because a French letter in a Dutch household is still French | Should |
+| L5 | A link can carry the language, and it sets the choice on arrival rather than overriding it, so the picker still works afterwards | Should |
+| L6 | The English text stays in the markup as the fallback, so a page read before the module runs still says something sensible | Must |
+| P20 | What Recall knows about you, counted, in the help screen: article 15 in a form she can use without writing anybody a letter | Must |
+| P21 | A copy of everything in one press, cards, reminders and photos: article 20, in the product rather than in a promise | Must |
+| P22 | A privacy notice in all three languages, built around care, security, respect and transparency, each one a claim with a mechanism behind it | Must |
+| R2.7 | Choose a photo opens the gallery and not the camera. The two buttons do different things and the file input must not carry a capture hint | Must |
+| R6.4 | A reminder counts as missed an hour after it was due, not twelve, because a morning appointment reading as coming all day defeats the follow up screen | Must |
+| R4.6 | The three kinds are switches on Everything, all on to begin with, and the state is shown by a tick and a frame rather than by colour alone | Should |
 | N15 | Where the device has no voice for the language of a letter, say so and say where to install one, rather than reading Dutch with an English accent and leaving family to wonder |
 | N14 | Text is shaped into speech before it is spoken: dates as words, times as times, abbreviations expanded, redaction markers read as a sentence, one utterance per sentence so there is a breath between them. Nothing is added and nothing is left out, which is S2 |
 
