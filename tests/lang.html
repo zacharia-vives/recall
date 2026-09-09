@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recall, the three languages</title>
+<style>
+  body {
+    margin: 0;
+    padding: 1.25rem;
+    font: 16px/1.5 system-ui, sans-serif;
+    background: #fbf7f2;
+    color: #2a211a;
+  }
+  h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+  p.lead { margin: 0 0 1.25rem; color: #6b5b4d; }
+  h2 { font-size: 1.15rem; margin: 1.75rem 0 0.5rem; }
+  #summary { font-weight: 700; font-size: 1.15rem; padding: 0.75rem; border-radius: 8px; }
+  #summary.good { background: #dbece1; color: #1d4d33; }
+  #summary.bad { background: #f8ded7; color: #86301f; }
+  ol.checks { margin: 0.5rem 0; padding-left: 1.25rem; }
+  ol.checks li { margin-bottom: 0.2rem; }
+  .pass { color: #1d4d33; }
+  .fail { color: #86301f; font-weight: 700; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { text-align: left; vertical-align: top; padding: 0.35rem 0.5rem; border-bottom: 1px solid #e6dcd0; }
+  th { position: sticky; top: 0; background: #fbf7f2; }
+  td.key { font-family: ui-monospace, monospace; color: #6b5b4d; white-space: nowrap; }
+  .bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .bar a { padding: 0.5rem 0.9rem; border: 1px solid #2a211a; border-radius: 6px; text-decoration: none; color: inherit; }
+</style>
+</head>
+<body>
+
+<h1>The three languages, checked in a browser</h1>
+<p class="lead">Open this on the phone you are testing with. It checks the things
+  that only a browser can answer: whether the words come out in the right
+  language, whether a date and a time are read the way a person would say them,
+  whether the letter reader guesses the right language, and whether the phone
+  actually has a voice for each language. Nothing here touches her cards.</p>
+
+<div class="bar">
+  <a href="?lang=nl">Nederlands</a>
+  <a href="?lang=fr">Français</a>
+  <a href="?lang=en">English</a>
+  <a href="../index.html">Back to Recall</a>
+</div>
+
+<p id="summary">running</p>
+
+<h2>Checks</h2>
+<ol class="checks" id="checks"></ol>
+
+<h2>Voices this device has</h2>
+<div id="voices"></div>
+
+<h2>Every word, side by side</h2>
+<table id="words">
+  <thead><tr><th>Key</th><th>English</th><th>Nederlands</th><th>Français</th></tr></thead>
+  <tbody></tbody>
+</table>
+
+<script type="module">
+import * as i18n from "../js/i18n.js?v=27";
+import * as speech from "../js/speech.js?v=27";
+import * as ocr from "../js/ocr.js?v=27";
+
+const checks = [];
+
+function check(name, ok, detail) {
+  checks.push({ name, ok: Boolean(ok), detail: detail === undefined ? "" : String(detail) });
+}
+
+/* the dictionary, from the browser's side */
+check("the module loaded and has a language", ["nl", "fr", "en"].includes(i18n.lang()), i18n.lang());
+check("a link can ask for a language", true, "?lang= is " +
+  (new URL(location.href).searchParams.get("lang") || "not set"));
+check("nothing is missing a translation", i18n.missing().length === 0, i18n.missing().slice(0, 3).join("; "));
+check("there are three languages to choose from", i18n.LANGUAGES.length === 3,
+  i18n.LANGUAGES.map((l) => l.label).join(", "));
+
+/* the same key in three languages must give three different sentences */
+const asked = i18n.lang();
+const seen = {};
+["nl", "fr", "en"].forEach((code) => {
+  i18n.setLang(code);
+  seen[code] = i18n.t("welcome.p1");
+});
+i18n.setLang(asked);
+check("one key gives a different sentence per language",
+  seen.nl !== seen.fr && seen.fr !== seen.en && seen.nl !== seen.en,
+  Object.values(seen).map((s) => s.slice(0, 22)).join(" | "));
+
+check("the page tag follows the language", document.documentElement.lang === asked,
+  document.documentElement.lang);
+check("the voice language is a Belgian one where it should be",
+  i18n.spokenLang() === (asked === "en" ? "en-GB" : asked + "-BE"), i18n.spokenLang());
+
+/* how a letter is turned into speech, per language */
+const letter = "Afspraak op 14/10/2026 om 10:30\nDr. Vermeulen\nNummer [national number removed]";
+const shaped = {
+  nl: speech.humanise(letter, "nl-BE"),
+  fr: speech.humanise(letter, "fr-BE"),
+  en: speech.humanise(letter, "en-GB")
+};
+check("a date is read as words, Dutch", shaped.nl.includes("14 oktober 2026"), shaped.nl.slice(0, 46));
+check("a date is read as words, French", shaped.fr.includes("le 14 octobre 2026"), shaped.fr.slice(0, 46));
+check("a date is read as words, English", shaped.en.includes("of October 2026"), shaped.en.slice(0, 46));
+check("a time is read as a time, Dutch", shaped.nl.includes("10 uur 30"));
+check("a time is read as a time, French", shaped.fr.includes("10 heures 30"));
+check("dokter is spelled out, Dutch", shaped.nl.toLowerCase().includes("dokter"));
+check("docteur is spelled out, French", shaped.fr.toLowerCase().includes("docteur"));
+check("the redaction marker is read as a sentence, all three",
+  !shaped.nl.includes("[") && !shaped.fr.includes("[") && !shaped.en.includes("["));
+check("nothing is added to what the letter says",
+  shaped.nl.includes("Vermeulen") && shaped.fr.includes("Vermeulen"));
+
+/* which language the letter reader thinks it is looking at */
+check("a Dutch letter is guessed as Dutch",
+  ocr.guessLang("de afspraak is met uw dokter en niet met de andere") === "nl-BE");
+check("a French letter is guessed as French",
+  ocr.guessLang("le rendez-vous est avec votre docteur et nous vous attendons") === "fr-BE");
+check("an unreadable scrap falls back to the chosen language",
+  ocr.guessLang("xx yy zz") === i18n.spokenLang(), ocr.guessLang("xx yy zz"));
+
+/* the voices actually on this device */
+function voiceReport() {
+  const box = document.getElementById("voices");
+  const rows = ["nl", "fr", "en"].map((code) => {
+    const list = speech.voicesFor(code);
+    const picked = speech.pickVoice(code === "en" ? "en-GB" : code + "-BE");
+    return "<tr><td>" + code + "</td><td>" + list.length + "</td><td>" +
+      (list.map((v) => v.name).join(", ") || "none on this device") + "</td><td>" +
+      (picked ? picked.name : "none") + "</td></tr>";
+  });
+  box.innerHTML = "<table><thead><tr><th>Language</th><th>How many</th>" +
+    "<th>Which ones speak on the phone itself</th><th>Recall would use</th></tr></thead><tbody>" +
+    rows.join("") + "</tbody></table>";
+
+  const missing = ["nl", "fr", "en"].filter((code) => speech.voicesFor(code).length === 0);
+  if (missing.length === 3) {
+    // Not one usable voice for any of the three. That is a browser without a
+    // speech engine rather than a phone missing a language, and there is
+    // nothing to conclude from it either way.
+    check("this device has a voice for every language", true,
+      "cannot tell, this browser offers no usable voices at all");
+  } else {
+    check("this device has a voice for every language", missing.length === 0,
+      missing.length ? "no voice for: " + missing.join(", ") +
+        ". The app says so in the help screen, N15." : "");
+  }
+  check("no voice that sends the words away is ever offered",
+    speech.voicesFor("nl").concat(speech.voicesFor("fr"), speech.voicesFor("en"))
+      .every((v) => v.localService !== false && !/online|cloud/i.test(v.name)));
+  draw();
+}
+
+/* the table of every word */
+function wordTable() {
+  const body = document.querySelector("#words tbody");
+  const rows = i18n.keys().map((key) => {
+    const cells = ["nl", "fr", "en"].map((code) => {
+      i18n.setLang(code);
+      return i18n.t(key);
+    });
+    i18n.setLang(asked);
+    return "<tr><td class='key'>" + key + "</td><td>" + esc(cells[2]) + "</td><td>" +
+      esc(cells[0]) + "</td><td>" + esc(cells[1]) + "</td></tr>";
+  });
+  body.innerHTML = rows.join("");
+}
+
+function esc(text) {
+  return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function draw() {
+  const list = document.getElementById("checks");
+  list.innerHTML = checks.map((c) =>
+    "<li class='" + (c.ok ? "pass" : "fail") + "'>" + (c.ok ? "pass" : "FAIL") + " &middot; " +
+    esc(c.name) + (c.detail ? " <span style='color:#6b5b4d'>" + esc(c.detail) + "</span>" : "") + "</li>"
+  ).join("");
+
+  const failed = checks.filter((c) => !c.ok).length;
+  const summary = document.getElementById("summary");
+  summary.textContent = (checks.length - failed) + " passed, " + failed + " failed";
+  summary.className = failed ? "bad" : "good";
+}
+
+wordTable();
+draw();
+
+// The voice list arrives a moment after the page on most browsers.
+// Once only, whichever happens first: the list arriving, or the wait running
+// out on a browser that never fires the event.
+let reported = false;
+function reportOnce() {
+  if (reported) return;
+  reported = true;
+  voiceReport();
+}
+
+if (speech.canSpeak() && window.speechSynthesis.getVoices().length === 0) {
+  window.speechSynthesis.addEventListener("voiceschanged", reportOnce, { once: true });
+  window.setTimeout(reportOnce, 1200);
+} else {
+  reportOnce();
+}
+</script>
+</body>
+</html>

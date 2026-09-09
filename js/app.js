@@ -1,14 +1,14 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=26";
-import * as speech from "./speech.js?v=26";
-import * as camera from "./camera.js?v=26";
-import * as ocr from "./ocr.js?v=26";
-import { isConfigured, NOTICE_VERSION } from "./config.js?v=26";
-import * as install from "./install.js?v=26";
-import * as lock from "./lock.js?v=26";
-import * as i18n from "./i18n.js?v=26";
+import * as store from "./store.js?v=27";
+import * as speech from "./speech.js?v=27";
+import * as camera from "./camera.js?v=27";
+import * as ocr from "./ocr.js?v=27";
+import { isConfigured, NOTICE_VERSION } from "./config.js?v=27";
+import * as install from "./install.js?v=27";
+import * as lock from "./lock.js?v=27";
+import * as i18n from "./i18n.js?v=27";
 
 // Short, because it is used on nearly every line that says something.
 const t = i18n.t;
@@ -314,7 +314,7 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=26");
+    const cloud = await import("./cloud.js?v=27");
     const people = await cloud.members(id);
     const helpers = people
       .filter((m) => m.role === "helper")
@@ -537,7 +537,7 @@ async function consentNeeded() {
   if (!isConfigured() || !linkedHousehold()) return false;
   if (consentRemembered()) return false;
   try {
-    const cloud = await import("./cloud.js?v=26");
+    const cloud = await import("./cloud.js?v=27");
     const latest = await cloud.latestConsent(linkedHousehold());
     if (latest && !latest.withdrawn_at) {
       rememberConsent(true);
@@ -564,7 +564,7 @@ async function consentYes() {
   msg.hidden = false;
   msg.textContent = t("consent.thanks");
   try {
-    const cloud = await import("./cloud.js?v=26");
+    const cloud = await import("./cloud.js?v=27");
     const where = await cloud.recordConsent(linkedHousehold(), noticeVersion());
     window.console.info("Recall: consent recorded in the " + where + " table.");
     rememberConsent(true);
@@ -598,7 +598,7 @@ async function stopSharing() {
   msg.textContent = t("share.stopping");
   const id = linkedHousehold();
   try {
-    const cloud = await import("./cloud.js?v=26");
+    const cloud = await import("./cloud.js?v=27");
     await cloud.withdrawConsent(id);
   } catch (err) {
     // Even if the note cannot be written, the sharing still stops here.
@@ -716,7 +716,7 @@ async function rescueWithCode(event) {
   }
 
   try {
-    const cloud = await import("./cloud.js?v=26");
+    const cloud = await import("./cloud.js?v=27");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
@@ -825,7 +825,7 @@ async function linkThisPhone(event) {
   msg.hidden = false;
   msg.textContent = t("run.onemoment");
   try {
-    const cloud = await import("./cloud.js?v=26");
+    const cloud = await import("./cloud.js?v=27");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     msg.textContent = t("run.linkedfetch");
@@ -850,7 +850,7 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=26");
+    cloud = await import("./cloud.js?v=27");
   } catch (err) {
     if (loud) say(t("run.unreachable"));
     return false;
@@ -1469,7 +1469,7 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=26");
+    const cloud = await import("./cloud.js?v=27");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     say(t("run.linkedfamily"));

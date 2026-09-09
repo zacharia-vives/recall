@@ -31,6 +31,27 @@ def read(name):
         return f.read()
 
 
+# ------------------------------------------------------------------ do they parse
+# As modules, not as scripts: node --check on a .js file parses it as CommonJS,
+# where declaring the same function twice is allowed. In a module it is a
+# SyntaxError, and that is what the browser does.
+import glob
+import shutil
+import subprocess
+import tempfile
+
+work = tempfile.mkdtemp()
+bad = []
+for path in sorted(glob.glob(os.path.join(HERE, "js", "*.js"))):
+    target = os.path.join(work, os.path.basename(path)[:-3] + ".mjs")
+    shutil.copyfile(path, target)
+    done = subprocess.run(["node", "--check", target], capture_output=True, text=True)
+    if done.returncode != 0:
+        first = [line for line in done.stderr.splitlines() if line.strip()]
+        bad.append(os.path.basename(path) + ": " + (first[2] if len(first) > 2 else done.stderr[:60]))
+shutil.rmtree(work, ignore_errors=True)
+check("every module parses as a module", not bad, bad[:3])
+
 # ------------------------------------------------------------------ the dictionary
 src = read("js/i18n.js")
 

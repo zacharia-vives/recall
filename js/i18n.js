@@ -570,9 +570,28 @@ function fromDevice() {
   return FALLBACK;
 }
 
+function known(code) {
+  return code === "nl" || code === "fr" || code === "en";
+}
+
+// ?lang=fr makes a link openable in one language. It sets the choice once, on
+// arrival, rather than winning every time it is asked: otherwise the picker in
+// the app would quietly stop working for anybody who followed such a link.
+function seedFromLink() {
+  try {
+    const asked = new URL(window.location.href).searchParams.get("lang");
+    if (!asked || !known(asked.toLowerCase())) return;
+    window.localStorage.setItem(STORE_KEY, asked.toLowerCase());
+  } catch (err) {
+    // no storage, so the link cannot be remembered. Nothing else breaks.
+  }
+}
+
+seedFromLink();
+
 export function lang() {
   const mine = stored();
-  if (mine === "nl" || mine === "fr" || mine === "en") return mine;
+  if (known(mine)) return mine;
   return fromDevice();
 }
 

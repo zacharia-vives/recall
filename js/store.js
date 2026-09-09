@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=26";
+import * as i18n from "./i18n.js?v=27";
 
 // Store: everything is kept on the device in IndexedDB.
 // Requirement P1: local only by default, nothing leaves the phone unless a
@@ -139,14 +139,6 @@ export async function hasPhotoStored(id) {
   const store = await tx("photos", "readonly");
   const row = await ask(store.get(id));
   return Boolean(row);
-}
-
-// The export needs the picture itself rather than a link to it, because a
-// blob url dies with the page and a copy of your things should not. P21.
-export async function photoBlob(id) {
-  const store = await tx("photos", "readonly");
-  const row = await ask(store.get(id));
-  return row ? row.blob : null;
 }
 
 // The export needs the picture itself rather than a link to it, because a
