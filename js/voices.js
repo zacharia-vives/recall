@@ -18,9 +18,15 @@
         goes wrong here, at any stage, ends with speech coming out of the phone
         the way it does today. A better voice that fails silently is worse than
         a plain voice that works.
-     2. Nothing is downloaded until somebody asks for it. A voice is 20 to 60
-        MB. That is a deliberate choice made once on wifi, never a surprise on
-        mobile data.
+     2. The good voice is the one Recall uses. The phone's own voice is what
+        happens when the good one cannot be, and nothing else. So it is on from
+        the start and it fetches itself, rather than waiting to be found in a
+        settings screen by somebody who was never going to look.
+     2b. It still never costs anybody their data plan. Sixty megabytes is
+        fetched on its own only on a connection that can carry it and where the
+        browser has not been asked to save data. On anything else it waits, the
+        phone's own voice reads in the meantime, and there is a button that says
+        the size for somebody who wants it now anyway.
      3. A voice that has been downloaded is kept. The library stores it in the
         origin private file system, so the second time is instant and it works
         with no internet at all, which is the point for a phone in a kitchen.
@@ -29,7 +35,7 @@
    for is Flemish. nl_BE is a real Piper voice, recorded in Belgium, so Dutch
    gets a proper voice rather than a fallback. */
 
-import * as i18n from "./i18n.js?v=35";
+import * as i18n from "./i18n.js?v=37";
 
 // Resolved by the import map in the two pages: the library imports the ONNX
 // runtime by bare name, which normally only a bundler can resolve, and its own
@@ -58,24 +64,61 @@ let lastError = "";
 
 /* ------------------------------------------------------------------ wanted */
 
-// Off unless somebody deliberately turned it on. Rule two.
+/* On unless somebody deliberately turned it off. Rule one: the phone's own
+   voice is the fallback, so the better voice cannot be something you have to
+   go and find. What is stored is therefore the refusal, not the consent: an
+   empty store means yes. */
 export function wanted() {
   try {
-    return window.localStorage.getItem(CHOICE_KEY) === "yes";
+    return window.localStorage.getItem(CHOICE_KEY) !== "no";
   } catch (err) {
-    return false;
+    // Storage that throws should not switch the voice off. Whether it can
+    // actually be used is decided by possible() and by whether the model is
+    // there, both of which fall back on their own.
+    return true;
   }
 }
 
 export function setWanted(yes) {
   try {
-    if (yes) window.localStorage.setItem(CHOICE_KEY, "yes");
-    else window.localStorage.removeItem(CHOICE_KEY);
+    if (yes) window.localStorage.removeItem(CHOICE_KEY);
+    else window.localStorage.setItem(CHOICE_KEY, "no");
   } catch (err) {
-    // A phone with storage switched off simply forgets the choice, which
-    // means it falls back, which is the safe direction.
+    // A phone with storage switched off forgets the choice on the next
+    // opening, which lands back on the better voice, which is the default.
   }
   if (!yes) forget();
+}
+
+/* Whether this connection should carry sixty megabytes without being asked.
+
+   There is no honest way to ask a browser "is this mobile data", so this asks
+   the two things it will answer: has the person turned on data saving, and how
+   good is the connection. A slow connection is reason enough to wait on its
+   own: sixty megabytes over 2G is hours of somebody's evening for a voice they
+   did not ask for yet. Where the browser says nothing at all, the answer is
+   yes, because a desktop says nothing and a desktop is the common case. */
+export function connectionWillCarryIt() {
+  const link = window.navigator.connection ||
+    window.navigator.mozConnection || window.navigator.webkitConnection;
+  if (!link) return true;
+  if (link.saveData) return false;
+  const kind = link.effectiveType || "";
+  if (kind === "slow-2g" || kind === "2g" || kind === "3g") return false;
+  return true;
+}
+
+/* Which of our three a spoken tag belongs to, or nothing.
+
+   The tag that reaches speech is the language of the words, not the language
+   of the screen: "fr-BE" for a French letter in a Dutch household, which is
+   L4. So the voice has to be chosen from the tag. A tag we have no voice for
+   returns nothing, and nothing means the phone's own voice reads it, which is
+   the right answer for a German letter rather than reading German aloud in
+   Dutch. */
+export function codeFor(tag) {
+  const short = String(tag || "").toLowerCase().slice(0, 2);
+  return VOICES[short] ? short : "";
 }
 
 export function voiceFor(lang) {
@@ -151,6 +194,41 @@ export async function fetchVoice(lang, onProgress) {
     await new Promise((done) => setTimeout(done, 150));
   }
   throw new Error("the voice downloaded but was not stored");
+}
+
+/* Fetch the voice for the language in use, on its own, once.
+
+   Called when the app opens. Everything about it is allowed to decline, and
+   declining is not an error: it means this reading, and maybe every reading on
+   this phone, uses the phone's own voice. Nothing here ever throws at the
+   caller and nothing here blocks the app starting.
+
+   Returns what it did, so the help screen can say which of the three it was.  */
+let fetching = "";
+
+export function busy() {
+  return fetching;
+}
+
+export async function fetchIfSensible(lang, onProgress) {
+  const code = lang || i18n.lang();
+  if (!wanted()) return "off";
+  if (!possible()) return "cannot";
+  if (!voiceFor(code)) return "nolanguage";
+  if (fetching === code) return "already";
+  if (await isReady(code)) return "have";
+  if (!connectionWillCarryIt()) return "waiting";
+
+  fetching = code;
+  try {
+    await fetchVoice(code, onProgress);
+    return "got";
+  } catch (err) {
+    lastError = String((err && err.message) || err);
+    return "failed";
+  } finally {
+    fetching = "";
+  }
 }
 
 export async function remove(lang) {

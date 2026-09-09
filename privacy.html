@@ -7,8 +7,8 @@
 <meta name="description" content="What Recall keeps, why, where, and what you can do about it.">
 <meta name="theme-color" content="#F0692B">
 <link rel="icon" href="favicon.ico" sizes="any">
-<link rel="stylesheet" href="css/style.css?v=35">
-<link rel="stylesheet" href="css/privacy.css?v=35">
+<link rel="stylesheet" href="css/style.css?v=37">
+<link rel="stylesheet" href="css/privacy.css?v=37">
 </head>
 <body class="policy">
 
@@ -119,6 +119,23 @@
     content delivery network, which means their browser tells that network its own IP
     address. Both are written down as open findings in our assessment, and both are
     on the list to fix before any real household uses this.</p>
+
+  <h2>The voice that reads to you</h2>
+  <p>Recall reads with a natural sounding voice that it fetches once, about 60 MB,
+    over wifi. It waits for a good connection, and if your browser is set to save
+    data it waits for you to ask instead. Until it has arrived, and if anything
+    goes wrong with it, Recall reads with the voice your phone already has.</p>
+  <p><b>The voice runs on your device.</b> Nothing you have Recall read is sent
+    anywhere to be turned into speech, and that is a deliberate refusal: the best
+    sounding voices offered by phones and computers are online ones, and those send
+    the text to a company's server. The text here is your post. So Recall only ever
+    uses voices that speak on the device itself.</p>
+  <p>Fetching the voice is a download from Hugging Face and jsDelivr, which means
+    their servers see your device's IP address at that moment, the same way any
+    download does. It happens once. After that the voice works with no internet at
+    all. This is the same open finding as the one above about the library that reads
+    letters, and it is on the same list to fix. You can switch the voice off, and
+    remove it and free up the space, in the help screen.</p>
 
   <h2>If a care organisation is involved</h2>
   <p>A household can invite a care organisation's software in, so their scheduling
@@ -254,6 +271,25 @@
     content delivery network gehaald, waardoor de browser dat netwerk het IP-adres
     vertelt. Beide staan als openstaande bevindingen in onze effectbeoordeling, en
     beide moeten opgelost zijn voordat een echt huishouden dit gebruikt.</p>
+
+  <h2>De stem die voorleest</h2>
+  <p>Recall leest voor met een natuurlijk klinkende stem die één keer opgehaald
+    wordt, ongeveer 60 MB, via wifi. Recall wacht op een goede verbinding, en als je
+    browser ingesteld staat om data te sparen wacht Recall tot je het zelf vraagt.
+    Zolang de stem er niet is, en als er iets mee misgaat, leest Recall voor met de
+    stem die de telefoon al heeft.</p>
+  <p><b>De stem werkt op je toestel.</b> Niets van wat je laat voorlezen wordt
+    ergens naartoe gestuurd om in spraak omgezet te worden, en dat is een bewuste
+    weigering: de best klinkende stemmen die telefoons en computers aanbieden zijn
+    online stemmen, en die sturen de tekst naar de server van een bedrijf. De tekst
+    hier is jouw post. Recall gebruikt dus enkel stemmen die op het toestel zelf
+    spreken.</p>
+  <p>De stem ophalen is een download bij Hugging Face en jsDelivr, waardoor hun
+    servers op dat moment het IP adres van je toestel zien, zoals bij elke download.
+    Dat gebeurt één keer. Daarna werkt de stem helemaal zonder internet. Dit is
+    hetzelfde openstaande punt als hierboven bij de bibliotheek die brieven leest, en
+    het staat op dezelfde lijst om op te lossen. Je kan de stem uitzetten, en ze
+    verwijderen om de ruimte vrij te maken, in het helpscherm.</p>
 
   <h2>Als er een zorgorganisatie bij komt</h2>
   <p>Een huishouden kan de software van een zorgorganisatie binnenlaten, zodat hun
@@ -394,6 +430,26 @@
     consignés comme constats ouverts dans notre analyse d'impact, et les deux doivent
     être réglés avant qu'un vrai foyer utilise ceci.</p>
 
+  <h2>La voix qui vous lit</h2>
+  <p>Recall lit avec une voix au son naturel qu'il télécharge une fois, environ
+    60 MB, en wifi. Il attend une bonne connexion, et si votre navigateur est réglé
+    pour économiser les données, il attend que vous le demandiez. Tant que la voix
+    n'est pas arrivée, et si quelque chose ne va pas avec elle, Recall lit avec la
+    voix que le téléphone possède déjà.</p>
+  <p><b>La voix tourne sur votre appareil.</b> Rien de ce que vous faites lire n'est
+    envoyé ailleurs pour être transformé en parole, et c'est un refus délibéré: les
+    voix les plus agréables proposées par les téléphones et les ordinateurs sont des
+    voix en ligne, et celles-là envoient le texte au serveur d'une entreprise. Le
+    texte ici, c'est votre courrier. Recall n'utilise donc que des voix qui parlent
+    sur l'appareil même.</p>
+  <p>Télécharger la voix est un téléchargement chez Hugging Face et jsDelivr, ce qui
+    fait que leurs serveurs voient à ce moment l'adresse IP de votre appareil, comme
+    pour n'importe quel téléchargement. Cela arrive une fois. Ensuite la voix
+    fonctionne sans aucune connexion. C'est le même point ouvert que celui ci-dessus
+    au sujet de la bibliothèque qui lit les lettres, et il est sur la même liste à
+    corriger. Vous pouvez désactiver la voix, et la supprimer pour libérer la place,
+    dans l'écran d'aide.</p>
+
   <h2>Si une organisation de soins entre en jeu</h2>
   <p>Un ménage peut laisser entrer le logiciel d'une organisation de soins, pour que
     leur système de planification pose un rendez-vous directement sur une carte au
@@ -446,7 +502,7 @@
 <script type="module">
   // The page shows one language and remembers the same choice as the app, so
   // somebody who set the app to Dutch does not land on English here.
-  import * as i18n from "./js/i18n.js?v=35";
+  import * as i18n from "./js/i18n.js?v=37";
 
   const pick = document.getElementById("lang-pick");
 

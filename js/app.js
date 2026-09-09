@@ -1,15 +1,15 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=35";
-import * as speech from "./speech.js?v=35";
-import * as camera from "./camera.js?v=35";
-import * as ocr from "./ocr.js?v=35";
-import { isConfigured, NOTICE_VERSION } from "./config.js?v=35";
-import * as install from "./install.js?v=35";
-import * as lock from "./lock.js?v=35";
-import * as i18n from "./i18n.js?v=35";
-import * as docs from "./docs.js?v=35";
+import * as store from "./store.js?v=37";
+import * as speech from "./speech.js?v=37";
+import * as camera from "./camera.js?v=37";
+import * as ocr from "./ocr.js?v=37";
+import { isConfigured, NOTICE_VERSION } from "./config.js?v=37";
+import * as install from "./install.js?v=37";
+import * as lock from "./lock.js?v=37";
+import * as i18n from "./i18n.js?v=37";
+import * as docs from "./docs.js?v=37";
 
 // Short, because it is used on nearly every line that says something.
 const t = i18n.t;
@@ -430,7 +430,7 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=35");
+    const cloud = await import("./cloud.js?v=37");
     const people = await cloud.members(id);
     const helpers = people
       .filter((m) => m.role === "helper")
@@ -484,7 +484,7 @@ function ask(question, yesLabel) {
 
 /* the voice, N13. Family picks it, she lives with it */
 
-function drawVoices() {
+async function drawVoices() {
   const pick = document.getElementById("voice-pick");
   const msg = document.getElementById("voice-msg");
   // Both languages, because her letters are Dutch and the app speaks English.
@@ -508,8 +508,20 @@ function drawVoices() {
 
   // If the device has no voice for the language she reads in, the text is read
   // with a foreign accent, which sounds broken and is not obvious why. N15.
+  //
+  // Unless the neural voice is doing the reading, in which case there is
+  // nothing wrong and saying "your phone has no Dutch voice, install one"
+  // would be alarming and untrue. That warning is about the fallback, so it
+  // only belongs here when the fallback is what she is hearing.
   const mine = speech.voicesFor(i18n.lang());
-  if (!mine.length) {
+  let neuralCovers = false;
+  try {
+    const voices = await import("./voices.js?v=37");
+    neuralCovers = voices.wanted() && (await voices.isReady(i18n.lang()));
+  } catch (err) {
+    neuralCovers = false;
+  }
+  if (!mine.length && !neuralCovers) {
     msg.hidden = false;
     msg.textContent = t("voice.missing");
   } else {
@@ -782,7 +794,9 @@ function drawLanguages() {
 // markup carrying data-t is refreshed by the module itself.
 async function redrawEverything() {
   drawLanguages();
-  drawVoices();
+  await drawVoices();
+  // A different language needs a different voice, so ask for that one too.
+  getVoiceQuietly();
   await drawLockSettings();
   await drawSharingState();
   await drawKnows();
@@ -808,8 +822,12 @@ async function redrawEverything() {
 async function readAloud(text, lang) {
   let slow = false;
   try {
-    const voices = await import("./voices.js?v=35");
-    slow = voices.wanted() && (await voices.isReady(i18n.lang()));
+    const voices = await import("./voices.js?v=37");
+    // Asked about the language of the words, the same one speech will use, so
+    // the message does not appear for a letter that is about to be read by the
+    // phone's own voice anyway.
+    const code = voices.codeFor(lang || i18n.spokenLang());
+    slow = voices.wanted() && Boolean(code) && (await voices.isReady(code));
   } catch (err) {
     slow = false;
   }
@@ -821,7 +839,7 @@ async function drawBetterVoice() {
   const onBtn = document.getElementById("better-on");
   if (!onBtn) return;
 
-  const voices = await import("./voices.js?v=35");
+  const voices = await import("./voices.js?v=37");
   const hint = document.getElementById("better-hint");
   const getBtn = document.getElementById("better-get");
   const tryBtn = document.getElementById("better-try");
@@ -848,22 +866,31 @@ async function drawBetterVoice() {
   onBtn.setAttribute("aria-pressed", on ? "true" : "false");
 
   const ready = await voices.isReady(i18n.lang());
-  getBtn.hidden = ready;
+  const fetchingNow = voices.busy() === i18n.lang();
+  // A connection that cannot carry sixty megabytes is why the voice has not
+  // arrived on its own, and saying so is the difference between "broken" and
+  // "waiting for wifi".
+  const willCarry = voices.connectionWillCarryIt();
+  getBtn.hidden = ready || fetchingNow;
   getBtn.textContent = t("better.get", { mb: voice.mb });
   tryBtn.hidden = !ready;
   removeBtn.hidden = !ready;
+  document.getElementById("better-bar").hidden = !fetchingNow;
 
-  // Three states, three different sentences, because "ready" and "ready but
-  // switched off" are not the same thing to somebody wondering why the voice
-  // still sounds the same.
+  // Every state gets its own sentence, because the only thing worse than a
+  // voice that has not arrived is not being told why. Somebody wondering why
+  // it still sounds the same has to be able to read the answer here.
   msg.hidden = false;
   if (ready && on) msg.textContent = t("better.ready");
   else if (ready) msg.textContent = t("better.readyoff");
+  else if (!on) msg.textContent = t("better.switchedoff");
+  else if (fetchingNow) msg.textContent = t("better.getting", { pct: 0 });
+  else if (!willCarry) msg.textContent = t("better.waiting", { mb: voice.mb });
   else msg.textContent = t("better.notyet");
 }
 
 async function getBetterVoice() {
-  const voices = await import("./voices.js?v=35");
+  const voices = await import("./voices.js?v=37");
   const getBtn = document.getElementById("better-get");
   const bar = document.getElementById("better-bar");
   const fill = bar.querySelector("i");
@@ -959,7 +986,7 @@ async function drawSeen() {
     // Loaded here rather than at the top, the way every other cloud call in
     // this app does it, so a phone that is only ever used offline never
     // downloads the library at all.
-    const cloud = await import("./cloud.js?v=35");
+    const cloud = await import("./cloud.js?v=37");
     rows = await cloud.listActivity(household, 40);
   } catch (err) {
     // Offline, or the request failed. Say which, rather than showing an empty
@@ -1074,7 +1101,7 @@ async function consentNeeded() {
   if (!isConfigured() || !linkedHousehold()) return false;
   if (consentRemembered()) return false;
   try {
-    const cloud = await import("./cloud.js?v=35");
+    const cloud = await import("./cloud.js?v=37");
     const latest = await cloud.latestConsent(linkedHousehold());
     if (latest && !latest.withdrawn_at) {
       rememberConsent(true);
@@ -1101,7 +1128,7 @@ async function consentYes() {
   msg.hidden = false;
   msg.textContent = t("consent.thanks");
   try {
-    const cloud = await import("./cloud.js?v=35");
+    const cloud = await import("./cloud.js?v=37");
     const where = await cloud.recordConsent(linkedHousehold(), noticeVersion());
     window.console.info("Recall: consent recorded in the " + where + " table.");
     rememberConsent(true);
@@ -1135,7 +1162,7 @@ async function stopSharing() {
   msg.textContent = t("share.stopping");
   const id = linkedHousehold();
   try {
-    const cloud = await import("./cloud.js?v=35");
+    const cloud = await import("./cloud.js?v=37");
     await cloud.withdrawConsent(id);
   } catch (err) {
     // Even if the note cannot be written, the sharing still stops here.
@@ -1253,7 +1280,7 @@ async function rescueWithCode(event) {
   }
 
   try {
-    const cloud = await import("./cloud.js?v=35");
+    const cloud = await import("./cloud.js?v=37");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
@@ -1366,7 +1393,7 @@ async function linkThisPhone(event) {
   msg.hidden = false;
   msg.textContent = t("run.onemoment");
   try {
-    const cloud = await import("./cloud.js?v=35");
+    const cloud = await import("./cloud.js?v=37");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     msg.textContent = t("run.linkedfetch");
@@ -1391,7 +1418,7 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=35");
+    cloud = await import("./cloud.js?v=37");
   } catch (err) {
     if (loud) say(t("run.unreachable"));
     return false;
@@ -1962,11 +1989,14 @@ function wire() {
     speech.chooseVoice("");
   });
   document.getElementById("better-on").addEventListener("click", async (event) => {
-    const voices = await import("./voices.js?v=35");
+    const voices = await import("./voices.js?v=37");
     const now = event.currentTarget.getAttribute("aria-pressed") !== "true";
     voices.setWanted(now);
     speech.stop();
     await drawBetterVoice();
+    // Switching it back on is also asking for it, so start fetching rather
+    // than leaving somebody looking at a switch that changed nothing.
+    if (now && !(await voices.isReady(i18n.lang()))) getVoiceQuietly();
   });
 
   document.getElementById("better-get").addEventListener("click", getBetterVoice);
@@ -1980,7 +2010,7 @@ function wire() {
   });
 
   document.getElementById("better-remove").addEventListener("click", async () => {
-    const voices = await import("./voices.js?v=35");
+    const voices = await import("./voices.js?v=37");
     speech.stop();
     await voices.remove(i18n.lang());
     voices.setWanted(false);
@@ -2072,7 +2102,7 @@ function wire() {
   document.getElementById("btn-help").addEventListener("click", async () => {
     await drawLockSettings();
     await drawSharingState();
-    drawVoices();
+    await drawVoices();
     drawLanguages();
     await drawKnows();
     await drawSeen();
@@ -2104,7 +2134,7 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=35");
+    const cloud = await import("./cloud.js?v=37");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     say(t("run.linkedfamily"));
@@ -2127,6 +2157,8 @@ async function init() {
   if (speech.canSpeak() && window.speechSynthesis.addEventListener) {
     window.speechSynthesis.addEventListener("voiceschanged", () => {
       const pick = document.getElementById("voice-pick");
+      // Not awaited: this fires whenever the browser feels like it and
+      // nothing here depends on the redraw having finished.
       if (pick && document.getElementById("help").open) drawVoices();
     });
   }
@@ -2177,6 +2209,39 @@ async function init() {
         // no offline mode, the app still works
       });
   }
+
+  // Last, and never awaited: the good voice fetches itself in the background
+  // so it is simply there rather than waiting to be discovered in a settings
+  // screen. Until it arrives, and if it never does, the phone's own voice
+  // reads. Nothing here can stop the app working.
+  getVoiceQuietly();
+}
+
+/* Fetch the voice without making a fuss about it.
+
+   No progress bar on the Today screen: she did not ask for this and it must
+   not look like something is happening to her phone. The help screen is where
+   the progress is, for anybody who goes looking. If it fails, it fails
+   quietly, because the app is already reading with the phone's own voice and
+   there is nothing for her to do about it. */
+async function getVoiceQuietly() {
+  try {
+    const voices = await import("./voices.js?v=37");
+    const what = await voices.fetchIfSensible(i18n.lang(), () => {
+      // The bar only exists while the help screen is open.
+      const bar = document.getElementById("better-bar");
+      if (bar && !document.getElementById("help").open) return;
+      drawVoiceProgress();
+    });
+    if (what === "got" && document.getElementById("help").open) await drawBetterVoice();
+  } catch (err) {
+    // The module would not load. The phone's own voice is already in use.
+  }
+}
+
+function drawVoiceProgress() {
+  const bar = document.getElementById("better-bar");
+  if (bar) bar.hidden = false;
 }
 
 init();
