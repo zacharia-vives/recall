@@ -89,6 +89,12 @@ for key, row in words.items():
         bad_tags.append(key + " " + str(sets))
 check("markup inside a translation matches", not bad_tags, bad_tags[:4])
 
+# Nothing in the interface should assume who is holding the phone. English is
+# checked strictly because the other two follow it; Dutch and French keep their
+# plural "zij" and their grammatical genders, which a word list cannot judge.
+gendered = [k for k in words if re.search(r"(she|her|hers|herself)", words[k]["en"], re.I)]
+check("nothing in the interface assumes a gender", not gendered, gendered[:6])
+
 # ------------------------------------------------------------------ the markup
 used_in_html = set()
 for page in ["index.html", "helper.html"]:
@@ -177,6 +183,10 @@ else:
 
 check("the notice names the supervisory authority",
       "Drukpersstraat" in policy and "rue de la Presse" in policy)
+policy_en = re.search(r'data-lang="en"(.*?)</section>', policy, re.S)
+check("the notice does not assume a gender either",
+      policy_en and not re.search(r"(she|her|hers)", policy_en.group(1), re.I))
+
 check("the notice admits the two open findings",
       "not signed yet" in policy and "content delivery network" in policy)
 
