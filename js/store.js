@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=37";
+import * as i18n from "./i18n.js?v=38";
 
 // Store: everything is kept on the device in IndexedDB.
 // Requirement P1: local only by default, nothing leaves the phone unless a
@@ -12,7 +12,12 @@ const DB_VERSION = 3;
 // Bump this when the example cards change. Anyone who already used the app then
 // loses the old examples and gets the new ones, while their own cards are left
 // alone.
-const SEED_VERSION = 3;
+// 4: the example cards were hardcoded English, so a Dutch phone opened on
+// "Cardiology, check-up". Bumped so the phones that already have the English
+// ones replace them. The examples keep the language they were made in, which
+// is the same rule as a real card: switching the interface to French does not
+// rewrite a Dutch letter.
+const SEED_VERSION = 4;
 const SEED_KEY = "recall.seedVersion";
 
 let db = null;
@@ -317,12 +322,12 @@ export async function seedIfEmpty() {
     {
       id: letterId,
       kind: "letter",
-      title: "Cardiology, check-up",
-      people: ["doctor Vermeulen", "Marie (daughter)"],
+      title: i18n.t("seed.lettertitle"),
+      people: [i18n.t("seed.letterdoctor"), i18n.t("seed.letterdaughter")],
       place: "AZ Groeninge, Kortrijk",
       happensAt: tomorrow.toISOString(),
       tags: ["appointment", "heart"],
-      spokenText: "Your appointment with the cardiologist is tomorrow at ten, at AZ Groeninge.",
+      spokenText: i18n.t("seed.letterspoken"),
       ocrText: "",
       hasPhoto: false,
       createdAt: new Date(now.getTime() - 3600 * 1000).toISOString(),
@@ -331,12 +336,12 @@ export async function seedIfEmpty() {
     {
       id: personId,
       kind: "person",
-      title: "Marie, your daughter",
+      title: i18n.t("seed.persontitle"),
       people: ["Marie"],
-      place: "Ghent",
+      place: "Gent",
       happensAt: "",
       tags: ["family"],
-      spokenText: "This is Marie, your daughter. She called on Tuesday evening.",
+      spokenText: i18n.t("seed.personspoken"),
       ocrText: "",
       hasPhoto: false,
       createdAt: new Date(now.getTime() - 2 * 3600 * 1000).toISOString(),
@@ -345,12 +350,12 @@ export async function seedIfEmpty() {
     {
       id: placeId,
       kind: "place",
-      title: "The bench at Sint-Anna",
+      title: i18n.t("seed.placetitle"),
       people: ["Jan", "Marie"],
-      place: "Sint-Anna park",
+      place: i18n.t("seed.placewhere"),
       happensAt: "",
       tags: ["1963"],
-      spokenText: "The bench at Sint-Anna, where you and Jan sat in 1963.",
+      spokenText: i18n.t("seed.placespoken"),
       ocrText: "",
       hasPhoto: false,
       createdAt: new Date(now.getTime() - 3 * 3600 * 1000).toISOString(),

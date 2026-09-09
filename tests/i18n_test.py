@@ -192,7 +192,12 @@ check("every English fallback in the markup matches its translation",
 # And the wording itself assumes nobody. The person holding the phone is not
 # necessarily a she, which is the correction that started this check.
 GENDERED = re.compile(r"\b(she|her|hers)\b", re.I)
-assuming = [k for k in words if GENDERED.search(words[k]["en"])]
+# A pronoun for somebody the sentence has already named and described is not
+# an assumption about the keeper. The example card says "Marie, your daughter",
+# so "she called on Tuesday evening" is simply correct English about Marie.
+NAMED_PERSON = {"seed.personspoken"}
+assuming = [k for k in words
+            if k not in NAMED_PERSON and GENDERED.search(words[k]["en"])]
 check("no English translation assumes the keeper is a woman", not assuming, assuming[:5])
 
 assuming_markup = []

@@ -152,6 +152,31 @@ const WORDS = {
   /* N16. A neural voice that runs on the device. Opt in, because it is sixty
      megabytes, and it falls back to the phone's own voice for everything:
      not wanted, not downloaded, not supported, or simply broken. */
+  /* The three example cards on a new phone. They were written in English and
+     stayed in English whatever the language was set to, so a Dutch demo opened
+     on "Cardiology, check-up". The first thing anybody sees should not be the
+     one part of the app that was never translated. */
+  "seed.lettertitle":    { en: "Cardiology, check-up",
+                           nl: "Cardiologie, controle",
+                           fr: "Cardiologie, contrôle" },
+  "seed.letterdoctor":   { en: "doctor Vermeulen", nl: "dokter Vermeulen", fr: "docteur Vermeulen" },
+  "seed.letterdaughter": { en: "Marie (daughter)", nl: "Marie (dochter)", fr: "Marie (fille)" },
+  "seed.letterspoken":   { en: "Your appointment with the cardiologist is tomorrow at ten, at AZ Groeninge.",
+                           nl: "Je afspraak bij de cardioloog is morgen om tien uur, in AZ Groeninge.",
+                           fr: "Votre rendez-vous chez le cardiologue est demain à dix heures, à AZ Groeninge." },
+  "seed.persontitle":    { en: "Marie, your daughter",
+                           nl: "Marie, je dochter",
+                           fr: "Marie, votre fille" },
+  "seed.personspoken":   { en: "This is Marie, your daughter. She called on Tuesday evening.",
+                           nl: "Dit is Marie, je dochter. Ze heeft dinsdagavond gebeld.",
+                           fr: "C'est Marie, votre fille. Elle a téléphoné mardi soir." },
+  "seed.placetitle":     { en: "The bench at Sint-Anna",
+                           nl: "Het bankje aan Sint-Anna",
+                           fr: "Le banc à Sint-Anna" },
+  "seed.placewhere":     { en: "Sint-Anna park", nl: "Sint-Annapark", fr: "Parc Sint-Anna" },
+  "seed.placespoken":    { en: "The bench at Sint-Anna, where you and Jan sat in 1963.",
+                           nl: "Het bankje aan Sint-Anna, waar jij en Jan in 1963 zaten.",
+                           fr: "Le banc à Sint-Anna, où Jan et vous étiez assis en 1963." },
   "better.heading":      { en: "A better voice",
                            nl: "Een betere stem",
                            fr: "Une meilleure voix" },
