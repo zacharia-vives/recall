@@ -28,7 +28,8 @@ def money():
     y += 20
 
     top = y
-    L.card(im := im, [L.MARGIN, top, W - L.MARGIN, H - 210], radius=42)
+    bottom = H - 148
+    L.card(im, [L.MARGIN, top, W - L.MARGIN, bottom], radius=42)
     d = ImageDraw.Draw(im)
 
     rows = [
@@ -65,21 +66,18 @@ def money():
     d.text((c2, yy + 58), "+ 26,900", font=L.body(58, 700), fill=GOOD,
            anchor="mm")
 
-    # The sentence that answers the question before it is asked.
-    yy += 128
-    d.rounded_rectangle([x0, yy, W - L.MARGIN - 62, yy + 92], 20, fill=(255, 232, 214))
-    d.text((x0 + 30, yy + 46),
-           "Break even: 752 households at the price we can sell today, "
-           "537 once multiple keepers ship.",
+    # The sentence that answers the question before it is asked, inside the
+    # card rather than hanging off the bottom of it.
+    yy += 118
+    d.rounded_rectangle([x0, yy, W - L.MARGIN - 62, yy + 86], 18,
+                        fill=(255, 230, 210))
+    d.text((x0 + 28, yy + 43),
+           "Break even: 752 households today. 537 once multiple keepers ship.",
            font=L.body(30, 500), fill=MAROON, anchor="lm")
 
-    L.para(d, (L.MARGIN, H - 156),
-           "Year two is the bridge: 1,200 households by its end, and the year "
-           "the salary starts. It is not separately modelled, so it is not charted.",
-           L.body(27, 300), MAROON, W - L.MARGIN * 2, leading=1.3)
-    d.text((L.MARGIN, H - 104),
-           "Live model:  zacharia-vives.github.io/recall/m/…/money-over-time.html",
-           font=L.body(26, 500), fill=PANEL, anchor="la")
+    d.text((L.MARGIN, H - 96),
+           "Year two is the bridge, and is not separately modelled.",
+           font=L.body(28, 300), fill=MAROON, anchor="la")
     return L.save(im, "money")
 
 

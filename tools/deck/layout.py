@@ -137,7 +137,9 @@ def kicker(im, text, y=MARGIN, colour=None):
     fnt = body(28, 700)
     spaced = "  ".join(text.upper())
     d.text((MARGIN, y), spaced, font=fnt, fill=colour or PANEL, anchor="la")
-    return y + 56
+    d.rounded_rectangle([MARGIN, y + 46, MARGIN + 64, y + 52], 3,
+                        fill=colour or PANEL)
+    return y + 74
 
 
 def headline(im, text, y, size=110, fill=None, width=None):
@@ -184,21 +186,26 @@ def title(name, big, sub=None, tag=None):
 
 
 def section(name, number, label, big, sub=None):
-    """A divider: big number, the part of the talk, one promise."""
-    im = ground()
-    d = ImageDraw.Draw(im)
-    d.text((MARGIN, 300), number, font=display(300), fill=(255, 214, 184),
-           anchor="ls")
-    x = MARGIN + d.textlength(number, font=display(300)) + 50
-    d.text((x, 232), "  ".join(label.upper()), font=body(30, 700),
-           fill=PANEL, anchor="ls")
+    """A divider, on the deep panel colour with cream type."""
+    im = Image.new("RGB", (W, H), PANEL)
+    d = ImageDraw.Draw(im, "RGBA")
+    # The same flat shapes as the peach ground, a shade lighter.
+    for x, y0, w, h in ((-200, 560, 820, 560), (1500, -160, 860, 700)):
+        d.ellipse([x, y0, x + w, y0 + h], fill=(255, 255, 255, 18))
+
+    d.text((W - MARGIN, H - 96), number, font=display(420),
+           fill=(224, 118, 66), anchor="rs")
+    d.text((MARGIN, 236), "  ".join(label.upper()), font=body(30, 700),
+           fill=(255, 206, 172), anchor="ls")
+    d.rounded_rectangle([MARGIN, 262, MARGIN + 72, 268], 3,
+                        fill=(255, 206, 172))
     fnt = display(116)
-    y = 420
-    for line in wrap(d, big, fnt, W - MARGIN * 2 - 120):
-        d.text((MARGIN, y), line, font=fnt, fill=MAROON, anchor="la")
+    y = 340
+    for line in wrap(d, big, fnt, W - MARGIN * 2 - 300):
+        d.text((MARGIN, y), line, font=fnt, fill=CREAM, anchor="la")
         y += 134
     if sub:
-        para(d, (MARGIN, y + 26), sub, body(38, 300), INK, 1400)
+        para(d, (MARGIN, y + 30), sub, body(36, 300), (255, 222, 198), 1180)
     return save(im, name)
 
 
@@ -213,16 +220,16 @@ def _points_height(d, items, columns, note, scale=1.0):
         for item in items[c * per:(c + 1) * per]:
             if isinstance(item, tuple):
                 t, line = item
-                tf = body(int(38 * scale), 700)
-                h += len(wrap(d, t, tf, inner - 34)) * int(38 * scale * 1.18)
+                tf = body(int(44 * scale), 700)
+                h += len(wrap(d, t, tf, inner - 34)) * int(44 * scale * 1.18)
                 h += int(12 * scale)
-                h += len(wrap(d, line, body(int(29 * scale), 300),
-                              inner - 34)) * int(29 * scale * 1.34)
+                h += len(wrap(d, line, body(int(32 * scale), 300),
+                              inner - 34)) * int(32 * scale * 1.34)
                 h += int(26 * scale)
             else:
                 plain = item.replace("**", "")
-                h += len(wrap(d, plain, body(int(33 * scale), 300),
-                              inner - 34)) * int(33 * scale * 1.36)
+                h += len(wrap(d, plain, body(int(36 * scale), 300),
+                              inner - 34)) * int(36 * scale * 1.36)
                 h += int(22 * scale)
         tallest = max(tallest, h)
     return tallest
@@ -275,19 +282,19 @@ def points(name, kick, head, items, note=None, columns=1, head_size=96):
                 # The title wraps like everything else. It did not, so a
                 # long one ("What a care organisation is actually buying")
                 # ran straight out of the column and off the card.
-                tf = body(int(38 * scale), 700)
+                tf = body(int(44 * scale), 700)
                 yy = para(d, (x + 34, yy), t, tf, RUST, inner - 34,
                           leading=1.18)
                 yy = para(d, (x + 34, yy + int(12 * scale)), line,
-                          body(int(29 * scale), 300), INK,
+                          body(int(32 * scale), 300), INK,
                           inner - 34, leading=1.34)
                 yy += int(26 * scale)
             else:
                 d.rounded_rectangle([x, yy + 12, x + 13, yy + 40], 6,
                                     fill=PANEL)
-                yy = para(d, (x + 34, yy), item, body(int(33 * scale), 300),
+                yy = para(d, (x + 34, yy), item, body(int(36 * scale), 300),
                           INK, inner - 34, leading=1.36,
-                          bold=body(int(33 * scale), 700))
+                          bold=body(int(36 * scale), 700))
                 yy += int(22 * scale)
     if note:
         # Wrapped, and measured from the card rather than from a fixed

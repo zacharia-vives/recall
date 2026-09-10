@@ -104,6 +104,12 @@ ORDER = [
      "Linking and consent. She never sees a login screen: the phone gets an "
      "identity with no password. 30 seconds."),
 
+    ("themes", None,
+     "Twenty six looks, six shown. The point is not the colours: it is that "
+     "they are generated, with contrast checked by role before the CSS "
+     "exists, so a look cannot ship below 4.5:1. Low vision is a named "
+     "group, not an afterthought. 30 seconds."),
+
     ("v_demo", "Recall-demo.mp4",
      "Click and stop talking. 1:22. This is a walkthrough of both sides, not "
      "an advert. If the room is running long, this is the one thing you do "
@@ -182,6 +188,26 @@ ORDER = [
 ]
 
 
+def numbered(name, index, total):
+    """A copy of the still with its number on it. Content slides only: a
+    number on the opening film or the title reads as a page proof."""
+    import sys
+    sys.path.insert(0, r"C:\Users\zpsja\AppData\Local\Temp\recall-ad")
+    import warm
+    from PIL import Image, ImageDraw
+    src = os.path.join(HERE, "s_%s.png" % name)
+    if name.startswith(("v_", "sec_")) or name in ("title", "thanks",
+                                                   "campaign1"):
+        return src
+    im = Image.open(src).convert("RGB")
+    d = ImageDraw.Draw(im)
+    d.text((warm.W - 116, warm.H - 54), "%d" % index,
+           font=warm.body(26, 500), fill=(214, 138, 96), anchor="rs")
+    out = os.path.join(HERE, "n_%s.png" % name)
+    im.save(out)
+    return out
+
+
 def build(out="Recall-end-presentation.pptx"):
     prs = Presentation()
     prs.slide_width = Inches(W_IN)
@@ -190,10 +216,11 @@ def build(out="Recall-end-presentation.pptx"):
 
     made = 0
     for name, movie, note in ORDER:
-        still = os.path.join(HERE, "s_%s.png" % name)
-        if not os.path.exists(still):
-            print("  MISSING", still)
+        raw = os.path.join(HERE, "s_%s.png" % name)
+        if not os.path.exists(raw):
+            print("  MISSING", raw)
             continue
+        still = numbered(name, made + 1, len(ORDER))
         slide = prs.slides.add_slide(blank)
 
         if movie:
