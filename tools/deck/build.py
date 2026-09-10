@@ -443,24 +443,132 @@ L.section("sec_notion", "05", "how we worked",
           "Notion, and\nwhat is on it",
           "Thirteen working hours, four people, one workspace.")
 
-L.points("notion_what", "notion", "What is on it", [
-    ("Four hubs", "Build. Business. Privacy and the law. Delivery."),
-    ("Three databases", "Sprint board, Daily log, Gantt."),
-    ("The test plan", "Nine runs, 407 checks, 31 defects, traceability."),
-    ("Seven process models", "Intake, reminders, consent, the API, the gate."),
-    ("The business, in full", "Canvas, plan, numbers, funding, positioning."),
-    ("The DPIA", "And the wording we all use for AI and the voice."),
-], columns=2, head_size=100)
+def _shot(path, bottom_trim=96):
+    """A capture, trimmed to the part worth showing.
 
-L.points("notion_how", "notion", "How we use it", [
+    Notion centres its content in a wide empty page, so a full-width capture
+    scaled into a slide is unreadable. This keeps the content column and the
+    top bar and throws away the dead margins, which roughly doubles the size
+    the type ends up at. The cookie banner goes too."""
+    im = Image.open(path).convert("RGB")
+    return im.crop((300, 0, 1360, im.height - bottom_trim))
+
+
+def _ink_head(im, kick, head, size=88):
+    d = ImageDraw.Draw(im)
+    d.text((L.MARGIN, L.MARGIN), "  ".join(kick.upper()),
+           font=L.body(28, 700), fill=L.EMBER, anchor="la")
+    d.rounded_rectangle([L.MARGIN, L.MARGIN + 46, L.MARGIN + 64,
+                         L.MARGIN + 52], 3, fill=L.EMBER)
+    y = L.MARGIN + 74
+    hf = L.display(size)
+    for line in L.wrap(d, head, hf, W - L.MARGIN * 2):
+        d.text((L.MARGIN, y), line, font=hf, fill=L.BONE, anchor="la")
+        y += int(size * 1.14)
+    return y + 26
+
+
+def _framed(im, d, pic, x, y, wide, tall):
+    """Fit a capture into a box and give it a light keyline, so a dark
+    screenshot on a dark ground still reads as a separate object."""
+    sc = min(wide / pic.width, tall / pic.height)
+    pic = pic.resize((int(pic.width * sc), int(pic.height * sc)),
+                     Image.LANCZOS)
+    px = int(x + (wide - pic.width) / 2)
+    py = int(y)
+    im.paste(pic, (px, py))
+    d.rectangle([px, py, px + pic.width - 1, py + pic.height - 1],
+                outline=(96, 70, 56), width=2)
+    return px, py, pic.width, pic.height
+
+
+def notion_what():
+    """The workspace itself, and what is on it."""
+    im = Image.new("RGB", (W, H), L.INKY)
+    d = ImageDraw.Draw(im, "RGBA")
+    d.ellipse([1420, -200, 2340, 540], fill=(255, 255, 255, 10))
+    y = _ink_head(im, "notion", "The workspace")
+
+    room_h = H - y - L.MARGIN - 52
+    # One capture, large enough to actually read, rather than two that are
+    # not. The hub page is the next slide's job if it is wanted.
+    px, py, pw, ph = _framed(im, d, _shot("nt_home.png"), L.MARGIN, y,
+                             900, room_h)
+    d.text((px, py + ph + 18), "The Recall home page, live",
+           font=L.body(23, 500), fill=L.MIST, anchor="la")
+
+    cx = px + pw + 46
+    cw = W - L.MARGIN - cx
+    cy = y
+    for t, line in (("Four hubs",
+                     "Build. Business. Privacy and the law. Delivery."),
+                    ("Three databases",
+                     "Sprint board, Daily log, and a Gantt."),
+                    ("The test plan",
+                     "Nine runs, 407 checks, 31 defects, traceability."),
+                    ("Seven process models",
+                     "Intake, reminders, consent, the API, the gate.")):
+        hh = 132
+        d.rounded_rectangle([cx, cy, cx + cw, cy + hh], 18, fill=L.CARD_INK)
+        d.rounded_rectangle([cx, cy, cx + 7, cy + hh], 18, fill=L.EMBER)
+        d.text((cx + 28, cy + 28), t, font=L.body(32, 700), fill=L.SAND,
+               anchor="la")
+        L.para(d, (cx + 28, cy + 70), line, L.body(25, 300), L.MIST,
+               cw - 56, leading=1.3)
+        cy += hh + 18
+    return L.save(im, "notion_what")
+
+
+def notion_how_shots():
+    """Kept for when the remaining pages can be captured."""
+    im = Image.new("RGB", (W, H), L.INKY)
+    d = ImageDraw.Draw(im, "RGBA")
+    d.ellipse([1420, -200, 2340, 540], fill=(255, 255, 255, 10))
+    y = _ink_head(im, "notion", "How we use it")
+
+    shots = [("nt_sprint.png", "Sprint board",
+              "Kanban, during the session"),
+             ("nt_daily.png", "Daily log",
+              "One entry at the end of each"),
+             ("nt_testplan.png", "Test plan",
+              "The controlling document")]
+    band = 96
+    room_h = H - y - L.MARGIN - band
+    slot = (W - L.MARGIN * 2) / 3.0
+    for i, (path, name, cap) in enumerate(shots):
+        try:
+            pic = _shot(path)
+        except Exception:
+            continue
+        px, py, pw, ph = _framed(im, d, pic, L.MARGIN + slot * i, y,
+                                 slot - 34, room_h)
+        cxx = L.MARGIN + slot * i + (slot - 34) / 2
+        d.text((cxx, y + room_h + 16), name, font=L.body(30, 700),
+               fill=L.SAND, anchor="ma")
+        d.text((cxx, y + room_h + 54), cap, font=L.body(23, 300),
+               fill=L.MIST, anchor="ma")
+
+    d.text((L.MARGIN, H - L.MARGIN - 10),
+           "Kanban during the session. Daily log at the end of it. "
+           "The Gantt when somebody asks whether Friday is still real.",
+           font=L.body(27, 500), fill=L.EMBER, anchor="ls")
+    return L.save(im, "notion_how")
+
+
+notion_what()
+
+# The three pages we actually open, described rather than shown: Cloudflare
+# put a bot check in front of the remaining captures and that is not
+# something to work around. Drawn in ink so it sits with the capture above it.
+L.points_ink("notion_how", "notion", "How we use it", [
     ("Kanban during the session", "Tasks move as the work lands."),
     ("Daily log at the end of it", "Did, decided, blocked, next."),
     ("The Gantt for one question", "Is Friday still real?"),
-    ("Decisions, dated, when taken",
-     "Fourteen. Including the two superseded."),
+    ("Decisions, dated, when taken", "Fourteen. Including the two superseded."),
     ("Written as we went", "Not the night before."),
     ("What it cost", "A thousand-block cap, so long tables live in the repo."),
 ], columns=2, head_size=100)
+
 
 # --------------------------------------------------------------- 9. roadmap
 L.section("sec_road", "06", "what comes next",
