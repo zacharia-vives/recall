@@ -1,9 +1,10 @@
 // The family side. Everything here needs a signed in helper and a household, so
 // unlike the keeper app this one does nothing until the cloud is configured.
 
-import * as cloud from "./cloud.js?v=48";
-import { NOTICE_VERSION } from "./config.js?v=48";
-import * as i18n from "./i18n.js?v=48";
+import * as cloud from "./cloud.js?v=49";
+import { NOTICE_VERSION } from "./config.js?v=49";
+import * as i18n from "./i18n.js?v=49";
+import * as docs from "./docs.js?v=49";
 
 const panes = {
   unconfigured: document.getElementById("s-unconfigured"),
@@ -66,6 +67,11 @@ function localValue(iso) {
 }
 
 const KIND_BADGE = { letter: "L", person: "P", place: "●" };
+// The words out of the document the family just chose. The file itself never
+// leaves this computer: only the text travels, which is the same bargain the
+// keeper app makes. F1 to F4, on the roadmap side of the sprint.
+let pendingDoc = { name: "", type: "", text: "" };
+
 const REPEAT_WORD = {
   none: "rep.once",
   daily: "rep.daily",
@@ -303,6 +309,16 @@ function openCardForm(record) {
   document.getElementById("c-when").value = record ? localValue(record.happens_at) : "";
   document.getElementById("c-spoken").value = record ? record.spoken_text || "" : "";
   document.getElementById("c-photo").value = "";
+  document.getElementById("c-doc").value = "";
+  pendingDoc = { name: "", type: "", text: "" };
+  // A card that already carries a document says so, so that leaving the
+  // picker alone reads as keeping it rather than as having none.
+  const docState = document.getElementById("c-doc-state");
+  const already = record && record.file_name ? record.file_name : "";
+  docState.hidden = !already;
+  docState.textContent = already
+    ? i18n.t("h.dochas", { name: already })
+    : "";
   document.getElementById("c-repeat").value = "";
   document.getElementById("c-remind-at").value = "";
   document.getElementById("c-phone").value = record ? record.phone || "" : "";
@@ -332,6 +348,38 @@ function showItemsBox() {
   field.hidden = document.getElementById("c-kind").value !== "list";
 }
 
+// Read it here, in this browser, and say what came out. A document nobody can
+// get words out of is still worth attaching by name, because the family will
+// know what they meant by it.
+async function chooseDoc(event) {
+  const file = event.target.files && event.target.files[0];
+  const state = document.getElementById("c-doc-state");
+  pendingDoc = { name: "", type: "", text: "" };
+  if (!file) {
+    state.hidden = true;
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    state.hidden = false;
+    state.textContent = i18n.t("file.toobig");
+    event.target.value = "";
+    return;
+  }
+
+  state.hidden = false;
+  state.textContent = i18n.t("file.reading");
+  let words = "";
+  try {
+    words = await docs.readWords(file);
+  } catch (err) {
+    words = "";
+  }
+  pendingDoc = { name: file.name, type: file.type || "", text: words || "" };
+  state.textContent = words
+    ? i18n.t("h.docread", { name: file.name, n: words.split(/\s+/).filter(Boolean).length })
+    : i18n.t("file.cannotread");
+}
+
 async function saveCard(event) {
   event.preventDefault();
   const id = document.getElementById("c-id").value;
@@ -344,7 +392,10 @@ async function saveCard(event) {
     happensAt: whenValue ? new Date(whenValue).toISOString() : null,
     spokenText: document.getElementById("c-spoken").value.trim(),
     phone: document.getElementById("c-phone").value.trim(),
-    items: itemsFromBox()
+    items: itemsFromBox(),
+    fileName: pendingDoc.name,
+    fileType: pendingDoc.type,
+    fileText: pendingDoc.text
   };
 
   if (!payload.title) {
@@ -364,7 +415,16 @@ async function saveCard(event) {
         spoken_text: payload.spokenText,
         phone: payload.phone,
         items: payload.items
-      }, payload.title + " was changed");
+      }, payload.title);
+      // Only if they chose one this time. Editing a card without touching the
+      // document must not wipe the document.
+      if (pendingDoc.name) {
+        record = await cloud.updateRecord(household.id, id, {
+          file_name: pendingDoc.name,
+          file_type: pendingDoc.type,
+          file_text: pendingDoc.text
+        }, payload.title);
+      }
     } else {
       record = await cloud.addRecord(household.id, payload);
     }
@@ -373,7 +433,7 @@ async function saveCard(event) {
     if (file) {
       const path = await cloud.uploadPhoto(household.id, record.id, file);
       record = await cloud.updateRecord(household.id, record.id, { photo_path: path },
-        "a photo was added to " + payload.title);
+        payload.title);
     }
 
     const repeat = document.getElementById("c-repeat").value;
@@ -695,6 +755,14 @@ function drawLanguages() {
 function wire() {
   const kindPicker = document.getElementById("c-kind");
   if (kindPicker) kindPicker.addEventListener("change", showItemsBox);
+
+  // The same list of types the keeper app accepts, named in one place so the
+  // two sides cannot drift apart on what a document is.
+  const docPicker = document.getElementById("c-doc");
+  if (docPicker) {
+    docPicker.setAttribute("accept", docs.ACCEPTS);
+    docPicker.addEventListener("change", chooseDoc);
+  }
 
   const picker = document.getElementById("lang-pick");
   if (picker) {

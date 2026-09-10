@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#231710">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=48">
-<link rel="stylesheet" href="css/helper.css?v=48">
+<link rel="stylesheet" href="css/style.css?v=49">
+<link rel="stylesheet" href="css/helper.css?v=49">
 </head>
 <body class="helper">
 
@@ -150,6 +150,16 @@
             <input id="c-photo" type="file" accept="image/*">
           </label>
         </div>
+        <!-- A document on the card, the same as the keeper app has had since
+             F1. The file itself stays on this laptop: what travels is the
+             words out of it, which is what the phone needs to read it out
+             loud. Same as it works from the keeper's own side. -->
+        <label class="field">
+          <span class="label" data-t="h.doc">A document, optional</span>
+          <input id="c-doc" type="file">
+          <p class="hint-line" data-t="h.dochint">A letter as a text file, a Word document or a pdf. It is read here on this computer, and only the words travel to the phone, to be read out loud there.</p>
+        </label>
+        <p id="c-doc-state" class="hint-line" hidden></p>
         <label class="field" id="c-items-field" hidden>
           <span class="label" data-t="h.items">The things on the list, one per line</span>
           <textarea id="c-items" rows="5"></textarea>
@@ -307,6 +317,6 @@
   }
 }
 </script>
-<script type="module" src="js/helper.js?v=48"></script>
+<script type="module" src="js/helper.js?v=49"></script>
 </body>
 </html>

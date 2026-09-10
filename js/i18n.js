@@ -890,6 +890,23 @@ const WORDS = {
 
   "hrun.wentwrong":      { en: "That did not work.", nl: "Dat werkte niet.", fr: "Cela n'a pas fonctionné." },
 
+  /* A document added from the family app. The keeper app has had this since
+     F1; the family side only ever took a photograph. The file stays on their
+     computer and the words travel, which is the same bargain the keeper's own
+     phone makes. */
+  "h.doc":               { en: "A document, optional",
+                           nl: "Een document, optioneel",
+                           fr: "Un document, facultatif" },
+  "h.dochint":           { en: "A letter as a text file, a Word document or a pdf. It is read here on this computer, and only the words travel to the phone, to be read out loud there.",
+                           nl: "Een brief als tekstbestand, Word-document of pdf. Hij wordt hier op deze computer gelezen en alleen de woorden gaan naar de telefoon, om daar voorgelezen te worden.",
+                           fr: "Une lettre en fichier texte, document Word ou pdf. Elle est lue ici sur cet ordinateur, et seuls les mots vont vers le téléphone, pour y être lus à voix haute." },
+  "h.docread":           { en: "{name} was read: {n} words will travel to the phone.",
+                           nl: "{name} is gelezen: {n} woorden gaan naar de telefoon.",
+                           fr: "{name} a été lu : {n} mots iront vers le téléphone." },
+  "h.dochas":            { en: "This card already carries {name}. Choose a file only to replace it.",
+                           nl: "Deze kaart bevat al {name}. Kies alleen een bestand om het te vervangen.",
+                           fr: "Cette fiche porte déjà {name}. Choisissez un fichier seulement pour le remplacer." },
+
   /* The rows and buttons in the family app. These were written straight into
      the markup as English, so the app changed language around them and left
      them behind: "since", "linked", "Remove", the status on a reminder, and

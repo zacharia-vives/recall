@@ -30,8 +30,12 @@ function check(what, ok, detail) {
   return ok;
 }
 
+// Line endings are normalised on the way in. Git checks these files out with
+// CRLF on Windows, so a regex written against a newline stopped matching the
+// moment the working tree was normalised, and two checks failed for a reason
+// that had nothing to do with the code they were testing.
 function read(rel) {
-  return fs.readFileSync(path.join(ROOT, rel), "utf8");
+  return fs.readFileSync(path.join(ROOT, rel), "utf8").replace(/\r\n/g, "\n");
 }
 
 const gate = read("db/patch-006-consent-gate.sql");

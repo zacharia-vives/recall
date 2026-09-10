@@ -188,7 +188,11 @@ async function run() {
   const url = await import("url");
   const path = await import("path");
   const here = path.dirname(url.fileURLToPath(import.meta.url));
-  const speech = fs.readFileSync(path.join(here, "..", "js", "speech.js"), "utf8");
+  // Normalised: git checks these out with CRLF on Windows, and a regex
+  // written against a newline silently stopped matching once the working
+  // tree was normalised.
+  const speech = fs.readFileSync(path.join(here, "..", "js", "speech.js"), "utf8")
+    .replace(/\r\n/g, "\n");
 
   check("speech.js has a read() that tries the better voice first",
     /export async function read\(/.test(speech));
