@@ -6,6 +6,8 @@ keeper of that household. Everything is cleaned up at the end.
 """
 
 import json
+import random
+import string
 import urllib.error
 import urllib.request
 
@@ -13,6 +15,21 @@ URL = "https://xoczuvvxengzkcxybfbx.supabase.co"
 ANON = ("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6In"
         "hvY3p1dnZ4ZW5nemtjeHliZmJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4NDM5ODcs"
         "ImV4cCI6MjEwNDQxOTk4N30.nJP2cRyzwP7YunkTremJc6ioYauadBpYk0ptkgwCmpo")
+
+# A fresh pair of link codes every run.
+#
+# These used to be the literals TESTAB and TESTCD. device_links.code is
+# unique, so the moment a run did not reach its own cleanup the next run died
+# on a duplicate key before reaching a single check, and the whole suite
+# looked broken when nothing about the security it tests had changed. Random
+# codes mean a leftover row can never block a run again.
+def fresh_code():
+    return "T" + "".join(random.choice(string.ascii_uppercase)
+                         for _ in range(5))
+
+
+CODE_A = fresh_code()
+CODE_B = fresh_code()
 
 passed = []
 failed = []
@@ -65,6 +82,20 @@ check("A creates a household", status == 200 and isinstance(hh, str), hh)
 status, mine = call("GET", "/rest/v1/memberships?select=role,display_name,household_id", a_token)
 check("A is a helper in it", status == 200 and len(mine) == 1 and mine[0]["role"] == "helper", mine)
 
+# What the family app does next, and the reason this suite now has to do it
+# too. Since patch 006 the consent gate governs writes as well as reads, so a
+# household with no consent row is one where a helper cannot add anything.
+# helper.js records a consent row the moment a household is created, so this
+# mirrors the app rather than testing a state the app never produces.
+#
+# It also puts the finding in front of anybody reading this file: the row is
+# written by the FAMILY, before the keeper has been asked anything. See
+# db/patch-007-consent-authorship.sql for the fix and the argument.
+status, out = call("POST", "/rest/v1/consents", a_token,
+                   {"household_id": hh, "notice_version": "2026-09-08/en",
+                    "explained_by": a_uid})
+check("a consent row exists, as the family app writes one", status in (200, 201), out)
+
 status, rec = call("POST", "/rest/v1/records", a_token,
                    {"household_id": hh, "created_by": a_uid, "kind": "letter",
                     "title": "A private card", "spoken_text": "This is private."},
@@ -105,12 +136,12 @@ check("B cannot claim a made up code", status >= 400, out)
 
 print("\n=== the keeper phone linking flow ===")
 status, out = call("POST", "/rest/v1/device_links", a_token,
-                   {"code": "TESTAB", "household_id": hh, "created_by": a_uid,
+                   {"code": CODE_A, "household_id": hh, "created_by": a_uid,
                     "display_name": "the keeper",
                     "expires_at": "2030-01-01T00:00:00Z"})
 check("A makes a link code", status in (200, 201), out)
 
-status, claimed = call("POST", "/rest/v1/rpc/claim_keeper_device", b_token, {"link_code": "testab"})
+status, claimed = call("POST", "/rest/v1/rpc/claim_keeper_device", b_token, {"link_code": CODE_A.lower()})
 check("B claims it, case insensitively", status == 200 and claimed == hh, claimed)
 
 status, rows = call("GET", "/rest/v1/records?select=id,title", b_token)
@@ -126,16 +157,16 @@ status, out = call("POST", "/rest/v1/records", b_token,
 check("the keeper can add a card", status in (200, 201), out if status >= 400 else "ok")
 
 status, out = call("PATCH", "/rest/v1/records?id=eq." + str(rec_id), b_token, {"title": "keeper edit"})
-status2, after = call("GET", "/rest/v1/records?select=title&id=eq." + rec_id, a_token)
+status2, after = call("GET", "/rest/v1/records?select=title&id=eq." + str(rec_id), a_token)
 unchanged = status2 == 200 and after and after[0]["title"] == "A private card"
 check("the keeper cannot edit a card", unchanged, after)
 
-status, out = call("POST", "/rest/v1/rpc/claim_keeper_device", b_token, {"link_code": "testab"})
+status, out = call("POST", "/rest/v1/rpc/claim_keeper_device", b_token, {"link_code": CODE_A.lower()})
 check("a used code cannot be claimed twice", status >= 400, out)
 
 print("\n=== a helper must not be demoted by claiming a code ===")
 status, out = call("POST", "/rest/v1/device_links", a_token,
-                   {"code": "TESTCD", "household_id": hh, "created_by": a_uid,
+                   {"code": CODE_B, "household_id": hh, "created_by": a_uid,
                     "display_name": "a second phone",
                     "expires_at": "2030-01-01T00:00:00Z"})
 check("A makes a second code", status in (200, 201), out)
@@ -144,7 +175,7 @@ check("A makes a second code", status in (200, 201), out)
 # as family turned that family member into the keeper, so they lost the family
 # app. Fixed in db/patch-001-roles.sql, which still has to be run by hand, so
 # until it is run this is the one check that fails.
-call("POST", "/rest/v1/rpc/claim_keeper_device", a_token, {"link_code": "testcd"})
+call("POST", "/rest/v1/rpc/claim_keeper_device", a_token, {"link_code": CODE_B.lower()})
 status, rows = call("GET", "/rest/v1/memberships?select=role&user_id=eq." + str(a_uid), a_token)
 role = rows[0]["role"] if status == 200 and rows else "?"
 check("A is still the helper afterwards", role == "helper", role)

@@ -136,10 +136,12 @@ ORDER = [
      "45 seconds."),
     ("gdpr_rights", None,
      "The rights, answered by the product rather than by a policy document. "
-     "Finish on the honest gaps, unprompted: no key of her own yet, the "
-     "library still comes from a CDN, no processor agreement because there "
-     "is no company. Volunteering those is what makes the rest credible. "
-     "60 seconds."),
+     "Finish on the four honest gaps, unprompted. The first one is new and "
+     "it is the one to say clearly: the family app writes the first consent "
+     "row when it creates the household, so today her own yes is the second "
+     "row rather than the only one. The fix is written "
+     "(db/patch-007-consent-authorship.sql) and not yet run. Volunteering "
+     "that is what makes the rest credible. 75 seconds."),
 
     ("sec_notion", None, "Divider."),
     ("notion_what", None,

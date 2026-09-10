@@ -411,7 +411,7 @@ L.points("gdpr_where", "gdpr", "Where the data is", [
 L.points("gdpr_consent", "gdpr", "Consent, and taking it back", [
     ("Article 9: health data", "So explicit consent, not legitimate interest."),
     ("Asked out loud", "In her language. The version she heard is recorded."),
-    ("The family cannot consent for her", "It is recorded against her phone."),
+    ("A helper cannot delete her cards", "Only into a bin, for thirty days."),
     ("Article 7(3): withdrawal stops it",
      "Enforced by ten Postgres policies, not by the app."),
     ("Nothing is deleted", "The row is marked. The cards stay on her phone."),
@@ -433,9 +433,10 @@ L.points("gdpr_rights", "gdpr", "The rights, in the product", [
     ("Article 30, the log", "What the family did, in her language."),
     ("Article 35, the DPIA", "Written. It names what is unfinished."),
     ("The authority is named", "The Belgian DPA, in all three languages."),
-    ("Three honest gaps",
-     "No key of her own yet. The library is on a CDN. No processor "
-     "agreement, because no company."),
+    ("Four honest gaps",
+     "The family app still writes the first consent row, so today her own "
+     "yes is the second one. No key of her own yet. The library is on a "
+     "CDN. No processor agreement, because no company."),
 ], columns=2, head_size=96)
 
 # ---------------------------------------------------------------- 8. Notion
@@ -557,17 +558,47 @@ def notion_how_shots():
 
 notion_what()
 
-# The three pages we actually open, described rather than shown: Cloudflare
-# put a bot check in front of the remaining captures and that is not
-# something to work around. Drawn in ink so it sits with the capture above it.
-L.points_ink("notion_how", "notion", "How we use it", [
-    ("Kanban during the session", "Tasks move as the work lands."),
-    ("Daily log at the end of it", "Did, decided, blocked, next."),
-    ("The Gantt for one question", "Is Friday still real?"),
-    ("Decisions, dated, when taken", "Fourteen. Including the two superseded."),
-    ("Written as we went", "Not the night before."),
-    ("What it cost", "A thousand-block cap, so long tables live in the repo."),
-], columns=2, head_size=100)
+# The three pages we actually open, as they actually look. Screenshots of
+# the app rather than of the published site, so the sidebar, the view tabs
+# and the Kanban columns are all visible: that is what shows a workspace
+# being used rather than described.
+def notion_how():
+    im = Image.new("RGB", (W, H), L.INKY)
+    d = ImageDraw.Draw(im, "RGBA")
+    d.ellipse([1420, -200, 2340, 540], fill=(255, 255, 255, 10))
+    y = _ink_head(im, "notion", "How we use it")
+
+    # The Kanban board, large, because it is the one we touch every session.
+    room = H - y - L.MARGIN - 128
+    big = Image.open("shot_sprint.png").convert("RGB")
+    bx, by, bw, bh = _framed(im, d, big, L.MARGIN, y, 1090, room)
+    d.text((bx, by + bh + 18),
+           "Sprint board, Kanban: dragged during the session",
+           font=L.body(23, 500), fill=L.MIST, anchor="la")
+
+    # The other two, stacked beside it.
+    sx = bx + bw + 40
+    sw = W - L.MARGIN - sx
+    sh_room = (room - 78) / 2
+    for i, (path, cap) in enumerate((
+            ("shot_daily.png", "Daily log: one entry per session"),
+            ("shot_testplan.png", "Test plan: the controlling document"))):
+        pic = Image.open(path).convert("RGB")
+        px, py, pw, ph = _framed(im, d, pic, sx, y + i * (sh_room + 78),
+                                 sw, sh_room)
+        d.text((px, py + ph + 14), cap, font=L.body(22, 500), fill=L.MIST,
+               anchor="la")
+
+    d.text((L.MARGIN, H - L.MARGIN - 52),
+           "Kanban during the session. Daily log at the end of it.",
+           font=L.body(28, 700), fill=L.EMBER, anchor="la")
+    d.text((L.MARGIN, H - L.MARGIN - 12),
+           "The Gantt only when somebody asks whether Friday is still real.",
+           font=L.body(28, 300), fill=L.MIST, anchor="la")
+    return L.save(im, "notion_how")
+
+
+notion_how()
 
 
 # --------------------------------------------------------------- 9. roadmap
