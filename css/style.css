@@ -43,9 +43,14 @@ html, body {
 }
 
 body {
-  /* Room for the floating pill: its own height, its gap, and the quarter of
-     the phone's reserved strip that the pill now uses. */
-  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px) / 4);
+  /* Room for the floating pill. --pill-room is measured in JS from where the
+     pill actually is, because on iOS the bottom toolbar expands at the end of
+     a scroll and Safari lifts the pill to keep it visible: a fixed number is
+     right in the middle of a list and short by the height of that toolbar at
+     the exact moment somebody is trying to read the last card. The calc below
+     is the fallback for the first paint, before any script has run. */
+  padding-bottom: var(--pill-room,
+    calc(96px + env(safe-area-inset-bottom, 0px) / 4));
 }
 
 .skip {
@@ -56,8 +61,8 @@ body {
   left: 12px;
   top: 12px;
   z-index: 50;
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--bar, var(--ink));
+  color: var(--on-bar, var(--paper));
   padding: 12px 18px;
 }
 
@@ -72,8 +77,10 @@ body {
   align-items: center;
   gap: 12px;
   padding: 12px 18px;
-  background: var(--ink);
-  color: var(--paper);
+  /* --bar, not --ink. ink is the text colour, so on a dark palette painting
+     the header with it produced a bright white band across a dark app. */
+  background: var(--bar, var(--ink));
+  color: var(--on-bar, var(--paper));
   position: sticky;
   top: 0;
   z-index: 10;
@@ -350,7 +357,8 @@ fieldset.kinds input {
 /* camera */
 .camera-wrap {
   position: relative;
-  background: var(--ink);
+  /* Dark behind the picture on every skin, for the same reason. */
+  background: var(--bar, var(--ink));
   border-radius: var(--radius);
   overflow: hidden;
   aspect-ratio: 3 / 4;
@@ -416,6 +424,33 @@ body.on-camera #screen-capture .actions {
   margin: 0;
 }
 body.on-camera #screen-capture #btn-read { grid-column: 1 / -1; }
+
+/* Tightening the camera screen when it still does not fit.
+   The height is set from JS, but the parts that cannot shrink, the heading,
+   the zoom row and the three buttons, are taller in some faces than others.
+   Twenty two of the twenty six skins download a face, so the same markup can
+   need a different amount of room depending on the theme. Lexend, which Calm
+   uses, was the one that overflowed.
+   JS measures the result and raises this level until it fits. Each step takes
+   a little from the heading, the gaps and the buttons, in that order, so the
+   camera view keeps as much of the screen as it can. */
+body.on-camera #screen-capture[data-tight] h1 { font-size: 24px; margin-bottom: 6px; }
+body.on-camera #screen-capture[data-tight] .camera-wrap { margin-bottom: 8px; min-height: 120px; }
+body.on-camera #screen-capture[data-tight] .zoom { margin-bottom: 6px; }
+body.on-camera #screen-capture[data-tight] .big { min-height: 56px; font-size: 19px; }
+
+body.on-camera #screen-capture[data-tight="2"] h1 { font-size: 21px; margin-bottom: 4px; }
+body.on-camera #screen-capture[data-tight="2"] .camera-wrap { margin-bottom: 6px; min-height: 100px; }
+body.on-camera #screen-capture[data-tight="2"] .zoom { margin-bottom: 4px; }
+body.on-camera #screen-capture[data-tight="2"] .big { min-height: 50px; font-size: 18px; }
+body.on-camera #screen-capture[data-tight="2"] .zoom .label { font-size: 16px; }
+
+/* The last step. Below this the buttons stop being big enough to hit, so the
+   heading goes instead: the pill already says Camera, and she is looking at a
+   letter rather than at the title. */
+body.on-camera #screen-capture[data-tight="3"] h1 { display: none; }
+body.on-camera #screen-capture[data-tight="3"] .camera-wrap { min-height: 88px; }
+body.on-camera #screen-capture[data-tight="3"] .big { min-height: 48px; font-size: 18px; }
 /* Without this the video refuses to shrink past its own natural size and
    pushes the buttons off the bottom of the screen. */
 body.on-camera #video { min-height: 0; }
@@ -776,8 +811,8 @@ body.is-locked #main { display: none; }
   left: 50%;
   bottom: 110px;
   transform: translateX(-50%);
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--bar, var(--ink));
+  color: var(--on-bar, var(--paper));
   padding: 14px 20px;
   border-radius: 10px;
   font-size: 20px;

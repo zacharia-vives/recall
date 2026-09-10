@@ -51,7 +51,9 @@ export const SKINS = [
   { key: "the-next-thing", layout: "one", base: 26, group: "lowvision", face: "lexend" },
   { key: "two-tiles", layout: "tiles", base: 22, group: "daylight", face: "archivo" },
   { key: "strong-light", layout: "tiles", base: 22, group: "lowvision", face: "atkinson" },
-  { key: "quiet-stone", layout: "tiles", base: 22, group: "daylight", face: "public" }
+  { key: "quiet-stone", layout: "tiles", base: 22, group: "daylight", face: "public" },
+  { key: "sober-white", layout: "plain", base: 22, group: "daylight", face: "public" },
+  { key: "sober-dark", layout: "plain", base: 22, group: "night", face: "public" }
 ];
 
 const BY_KEY = {};

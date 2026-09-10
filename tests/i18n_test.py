@@ -280,6 +280,71 @@ check("the notice admits the two open findings",
       "not signed yet" in policy and "content delivery network" in policy)
 
 # ------------------------------------------------------------------
+# ------------------------------------------------------------------
+# The family app, and the words that were written straight into it.
+#
+# Reported: "not everything seems to be fully translated, words like linked,
+# since,... the history doesnt seem to translate". Three separate causes. Row
+# labels were English literals in the rendering code. The status on a reminder
+# printed the internal word ("coming", "missed"). And the history read the
+# detail column out of the database, which this app had filled with English
+# sentences, so those words were not in the markup at all: they were stored.
+
+helper_js = read("js/helper.js")
+cloud_js = read("js/cloud.js")
+
+for word in ["since ", "linked ", "her phone", '">Remove<', '">Mark done<',
+             '">Restore<', '">Edit<', '">Bin<', "Nothing has happened yet",
+             "The bin is empty", "No phone is linked yet"]:
+    check("the family app no longer writes %r into a row" % word.strip('"><'),
+          word not in helper_js)
+
+hrow_calls = len(re.findall(r'i18n\.t\("hrow\.', helper_js))
+check("every row label it shows comes out of the dictionary",
+      hrow_calls >= 20, "%d lookups" % hrow_calls)
+
+check("the status on a reminder is a word she can read, not the internal one",
+      'i18n.t("hrow." + status)' in helper_js)
+
+check("and how often it repeats is looked up rather than de-underscored",
+      "REPEAT_WORD[reminder.repeat]" in helper_js and
+      'repeat.replace("_", " ")' not in helper_js)
+
+check("the history says what happened from the action, like the keeper's does",
+      'i18n.t("seen." + row.action' in helper_js and
+      'a.action.replace("_", " ")' not in helper_js)
+
+check("it prints the name of the card, not the sentence that was stored",
+      "function bareDetail(row)" in helper_js)
+
+check("and the sentences this app used to store are stripped off old rows",
+      "OLD_TAILS" in helper_js and "OLD_WHOLE" in helper_js)
+
+check("nothing writes an English sentence into the log any more",
+      not re.search(r'logActivity\([^)]*"[a-z ]+ (was|went|came) ', cloud_js) and
+      '"marked as done"' not in cloud_js)
+
+check("but the consent row keeps the version it is read back by",
+      "notice version " in cloud_js)
+
+for key in ["hrow.since", "hrow.linkedon", "hrow.coming", "hrow.missed",
+            "hrow.done", "hrow.remove", "hrow.markdone", "hrow.nohistory",
+            "hrow.thephone", "hrow.helper"]:
+    at_key = src.find('"' + key + '"')
+    entry = src[at_key:src.find('\n  "', at_key + 1)] if at_key >= 0 else ""
+    check("%s is in all three languages" % key,
+          at_key >= 0 and all((l + ': "') in entry for l in LANGS))
+
+for key in ['"hrow.since"', '"hrow.linkedon"']:
+    at_key = src.find(key)
+    entry = src[at_key:src.find('\n  "', at_key + 1)]
+    check(key.strip('"') + " says where the date goes in all three",
+          entry.count("{when}") == 3, "%d of 3" % entry.count("{when}"))
+
+check("and no new phrase assumes the keeper is a woman",
+      not re.search(r'"hrow\.[a-z]+":[^}]*\b(she|her|hers)\b', src))
+
+
 print("\n".join(results))
 fails = [r for r in results if r.startswith("FAIL")]
 print("\n%d passed, %d failed" % (len(results) - len(fails), len(fails)))

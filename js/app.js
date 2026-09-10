@@ -1,16 +1,16 @@
 // Recall - main script. Four screens, switched on the hash, so the app works
 // from a plain static host with no server and no build step.
 
-import * as store from "./store.js?v=47";
-import * as speech from "./speech.js?v=47";
-import * as camera from "./camera.js?v=47";
-import * as ocr from "./ocr.js?v=47";
-import { isConfigured, NOTICE_VERSION } from "./config.js?v=47";
-import * as install from "./install.js?v=47";
-import * as lock from "./lock.js?v=47";
-import * as i18n from "./i18n.js?v=47";
-import * as docs from "./docs.js?v=47";
-import * as skins from "./skins.js?v=47";
+import * as store from "./store.js?v=48";
+import * as speech from "./speech.js?v=48";
+import * as camera from "./camera.js?v=48";
+import * as ocr from "./ocr.js?v=48";
+import { isConfigured, NOTICE_VERSION } from "./config.js?v=48";
+import * as install from "./install.js?v=48";
+import * as lock from "./lock.js?v=48";
+import * as i18n from "./i18n.js?v=48";
+import * as docs from "./docs.js?v=48";
+import * as skins from "./skins.js?v=48";
 
 // Short, because it is used on nearly every line that says something.
 const t = i18n.t;
@@ -160,9 +160,17 @@ function todayItemHtml(reminder, record) {
       // neither. A layout that had to be given different markup would mean
       // eight code paths to keep correct instead of one.
       "<span>" +
-        '<span class="when">' + esc(clockTime(reminder.dueAt)) + "</span>" +
+        // store.currentDue, not reminder.dueAt. The stored time no longer
+        // moves when something is ticked off, so for anything that repeats
+        // this is the difference between "today at 10:30" and the morning
+        // three weeks ago that it was first set for.
+        '<span class="when">' +
+          esc(clockTime(new Date(store.currentDue(reminder)).toISOString())) +
+        "</span>" +
         '<span class="title">' + esc(record.title) + "</span>" +
-        '<span class="meta">' + esc(readableDate(reminder.dueAt)) + "</span>" +
+        '<span class="meta">' +
+          esc(readableDate(new Date(store.currentDue(reminder)).toISOString())) +
+        "</span>" +
         (status === "missed" ? '<span class="status">' + t("run.passed") + "</span>" : "") +
       "</span>" +
     "</button>" +
@@ -282,7 +290,8 @@ async function renderRecord(id) {
     [t("field.when"), readableDate(record.happensAt)],
     [t("run.tags"), (record.tags || []).join(", ")],
     [t("run.reminder"), reminder
-      ? readableDate(reminder.dueAt) + ", " + (repeatWords[reminder.repeat] || t("rep.once"))
+      ? readableDate(new Date(store.currentDue(reminder)).toISOString()) +
+        ", " + (repeatWords[reminder.repeat] || t("rep.once"))
       : ""],
     [t("run.lastdone"), reminder && reminder.lastDoneAt ? readableDate(reminder.lastDoneAt) : ""]
   ].filter((row) => row[1]);
@@ -311,6 +320,10 @@ async function renderRecord(id) {
       callButtonHtml(record) +
       '<button class="big" type="button" id="btn-say">' +
         (record.kind === "list" ? t("list.readaloud") : t("record.read")) + "</button>" +
+      (record.kind === "list" && (record.items || []).some((one) => !one.done)
+        ? '<button class="big ghost" type="button" id="btn-say-left">' +
+          t("list.readleft") + "</button>"
+        : "") +
       (words
         ? '<button class="big ghost" type="button" id="btn-say-long">' + t("file.read") + "</button>"
         : "") +
@@ -370,6 +383,14 @@ async function renderRecord(id) {
       drop.addEventListener("click", async () => {
         const at = Number(drop.dataset.drop);
         const items = (record.items || []).slice();
+        if (!items[at]) return;
+        // It used to take the item off the list on one tap, with nothing
+        // asked and no way back. Everything else that removes something on
+        // this side asks first, so this does too, and it names the thing so
+        // she knows which one she is about to lose.
+        const sure = await ask(
+          t("list.removeask", { item: items[at].text }), t("list.removeyes"));
+        if (!sure) return;
         items.splice(at, 1);
         record.items = items;
         await store.saveRecord(record);
@@ -411,13 +432,34 @@ async function renderRecord(id) {
       speech.stop();
       return;
     }
-    if (!(await readAloud(sentenceFor(record), i18n.spokenLang()))) say(t("run.nospeech"));
+    const words = record.kind === "list"
+      ? wholeListSentence(record) : sentenceFor(record);
+    if (!(await readAloud(words, i18n.spokenLang()))) say(t("run.nospeech"));
   });
+
+  const leftButton = document.getElementById("btn-say-left");
+  if (leftButton) {
+    leftButton.addEventListener("click", async () => {
+      if (speech.speaking()) {
+        speech.stop();
+        return;
+      }
+      if (!(await readAloud(listSentence(record), i18n.spokenLang()))) {
+        say(t("run.nospeech"));
+      }
+    });
+  }
 
   document.getElementById("btn-del").addEventListener("click", async () => {
     const sure = await ask(t("run.deleteask"), t("run.deleteyes"));
     if (!sure) return;
-    await store.deleteRecord(record.id);
+    try {
+      await binCard(record.id);
+    } catch (err) {
+      // It is still in the household, so saying it is gone would be a lie.
+      say(t("run.deletefailed"));
+      return;
+    }
     records = await store.allRecords();
     say(t("run.deleted"));
     go("#/records");
@@ -470,7 +512,7 @@ async function showWhoHasAccess() {
     return;
   }
   try {
-    const cloud = await import("./cloud.js?v=47");
+    const cloud = await import("./cloud.js?v=48");
     const people = await cloud.members(id);
     const helpers = people
       .filter((m) => m.role === "helper")
@@ -556,7 +598,7 @@ async function drawVoices() {
   const mine = speech.voicesFor(i18n.lang());
   let neuralCovers = false;
   try {
-    const voices = await import("./voices.js?v=47");
+    const voices = await import("./voices.js?v=48");
     neuralCovers = voices.wanted() && (await voices.isReady(i18n.lang()));
   } catch (err) {
     neuralCovers = false;
@@ -798,6 +840,23 @@ function listSentence(record) {
     left.map((one) => one.text).join(", ") + ".";
 }
 
+// The whole list, in order, saying which ones are already done. The button was
+// labelled "Read the list out loud" and read only what was left, which is a
+// useful thing to hear but not what it said it would do. Now there are two
+// buttons and each does what it says.
+function wholeListSentence(record) {
+  const items = record.items || [];
+  if (!items.length) return record.title;
+  const done = items.filter((one) => one.done).length;
+  const said = items.map((one) =>
+    one.done ? t("list.itemdone", { item: one.text }) : one.text);
+  return record.title + ". " +
+    (done === items.length
+      ? t("list.alldone")
+      : t("list.progress", { done: done, total: items.length })) +
+    ". " + said.join(", ") + ".";
+}
+
 /* calling somebody, F10 to F13 */
 
 // Belgian numbers are written half a dozen ways. Keep the digits, keep a
@@ -881,6 +940,7 @@ function drawSkins() {
 async function useSkin(key) {
   skins.set(key);
   drawSkins();
+  fitBottomRoom(true);
   // The layout can change what is drawn, so the screens that draw themselves
   // have to be drawn again.
   await route();
@@ -903,7 +963,7 @@ async function useSkin(key) {
 async function readAloud(text, lang) {
   let slow = false;
   try {
-    const voices = await import("./voices.js?v=47");
+    const voices = await import("./voices.js?v=48");
     // Asked about the language of the words, the same one speech will use, so
     // the message does not appear for a letter that is about to be read by the
     // phone's own voice anyway.
@@ -920,7 +980,7 @@ async function drawBetterVoice() {
   const onBtn = document.getElementById("better-on");
   if (!onBtn) return;
 
-  const voices = await import("./voices.js?v=47");
+  const voices = await import("./voices.js?v=48");
   const hint = document.getElementById("better-hint");
   const getBtn = document.getElementById("better-get");
   const tryBtn = document.getElementById("better-try");
@@ -971,7 +1031,7 @@ async function drawBetterVoice() {
 }
 
 async function getBetterVoice() {
-  const voices = await import("./voices.js?v=47");
+  const voices = await import("./voices.js?v=48");
   const getBtn = document.getElementById("better-get");
   const bar = document.getElementById("better-bar");
   const fill = bar.querySelector("i");
@@ -1067,7 +1127,7 @@ async function drawSeen() {
     // Loaded here rather than at the top, the way every other cloud call in
     // this app does it, so a phone that is only ever used offline never
     // downloads the library at all.
-    const cloud = await import("./cloud.js?v=47");
+    const cloud = await import("./cloud.js?v=48");
     rows = await cloud.listActivity(household, 40);
   } catch (err) {
     // Offline, or the request failed. Say which, rather than showing an empty
@@ -1182,7 +1242,7 @@ async function consentNeeded() {
   if (!isConfigured() || !linkedHousehold()) return false;
   if (consentRemembered()) return false;
   try {
-    const cloud = await import("./cloud.js?v=47");
+    const cloud = await import("./cloud.js?v=48");
     const latest = await cloud.latestConsent(linkedHousehold());
     if (latest && !latest.withdrawn_at) {
       rememberConsent(true);
@@ -1209,7 +1269,7 @@ async function consentYes() {
   msg.hidden = false;
   msg.textContent = t("consent.thanks");
   try {
-    const cloud = await import("./cloud.js?v=47");
+    const cloud = await import("./cloud.js?v=48");
     const where = await cloud.recordConsent(linkedHousehold(), noticeVersion());
     window.console.info("Recall: consent recorded in the " + where + " table.");
     rememberConsent(true);
@@ -1233,7 +1293,15 @@ async function consentNo() {
   await showWhoHasAccess();
 }
 
-// Article 7(3): as easy to take back as to give.
+// Article 7(3): as easy to take back as to give, and taking it back has to
+// stop the processing rather than record a wish.
+//
+// This used to throw the household link away as well, which stopped the phone
+// sending anything but left the family reading everything already there, and
+// left her with no way back except asking for a new six letter code. The link
+// now stays and the consent is what moves, because consent is the thing she
+// is actually changing her mind about. Patch 006 is what makes the withdrawal
+// bite: every policy over her cards asks has_consent().
 async function stopSharing() {
   const msg = document.getElementById("sharing-msg");
   const sure = await ask(t("share.stopask"), t("share.stopyes"));
@@ -1243,12 +1311,12 @@ async function stopSharing() {
   msg.textContent = t("share.stopping");
   const id = linkedHousehold();
   try {
-    const cloud = await import("./cloud.js?v=47");
+    const cloud = await import("./cloud.js?v=48");
     await cloud.withdrawConsent(id);
   } catch (err) {
-    // Even if the note cannot be written, the sharing still stops here.
+    msg.textContent = t("share.stopfailed");
+    return;
   }
-  window.localStorage.removeItem(HOUSEHOLD_KEY);
   rememberConsent(false);
   msg.textContent = t("share.stopped");
   await drawSharingState();
@@ -1256,16 +1324,96 @@ async function stopSharing() {
   await showWhoHasAccess();
 }
 
+// And giving it again. Article 7(3) does not say a withdrawal is final, it
+// says it is hers to make. A new consent row is written, which is why the
+// table is insert only: the history of what she agreed to, and when, stays
+// readable afterwards.
+async function resumeSharing() {
+  const msg = document.getElementById("sharing-msg");
+  const sure = await ask(t("share.againask"), t("share.againyes"));
+  if (!sure) return;
+
+  msg.hidden = false;
+  msg.textContent = t("share.starting");
+  const id = linkedHousehold();
+  try {
+    const cloud = await import("./cloud.js?v=48");
+    await cloud.recordConsent(id, noticeVersion());
+  } catch (err) {
+    msg.textContent = t("share.againfailed");
+    return;
+  }
+  rememberConsent(true);
+  msg.textContent = t("share.again");
+  await drawSharingState();
+  await route();
+  await showWhoHasAccess();
+  await syncHousehold({ loud: true });
+}
+
+// Telling the household a reminder was ticked off. Both roles may update a
+// reminder, so this works from the phone as well as from the browser; the
+// call simply was never wired up on this side. R3.4.
+async function pushDone(reminderId) {
+  const id = linkedHousehold();
+  if (!isConfigured() || !id) return false;
+  const reminder = reminders.find((r) => r.id === reminderId);
+  try {
+    const cloud = await import("./cloud.js?v=48");
+    await cloud.markDone(id, reminderId, reminder ? reminder.recordId : null);
+    return true;
+  } catch (err) {
+    // Offline, or the row is not in the household yet. The tick is already on
+    // the phone and the next sync will carry it.
+    return false;
+  }
+}
+
+// Putting a card in the bin. The button on the card screen used to delete it
+// from the phone only, so the next sync downloaded it straight back. Now the
+// household is told first, and the card is only removed here if that worked,
+// because a card that comes back is worse than one that will not go.
+async function binCard(recordId) {
+  const id = linkedHousehold();
+  if (!isConfigured() || !id) {
+    // Not shared with anybody, so the phone is the only copy there is.
+    await store.deleteRecord(recordId);
+    return true;
+  }
+  const cloud = await import("./cloud.js?v=48");
+  await cloud.binAsMember(recordId);
+  await store.deleteRecord(recordId);
+  return true;
+}
+
 async function drawSharingState() {
   const wrap = document.getElementById("sharing-wrap");
   const state = document.getElementById("sharing-state");
+  const stop = document.getElementById("btn-stop-sharing");
+  const again = document.getElementById("btn-share-again");
   const id = linkedHousehold();
   if (!isConfigured() || !id) {
     wrap.hidden = true;
     return;
   }
   wrap.hidden = false;
-  state.textContent = t("share.on");
+
+  // Ask the household rather than trusting what this phone last remembered:
+  // she may have withdrawn it from another device, and the answer that counts
+  // is the one the database is enforcing.
+  let sharing = consentRemembered();
+  try {
+    const cloud = await import("./cloud.js?v=48");
+    const latest = await cloud.latestConsent(id);
+    sharing = !!(latest && !latest.withdrawn_at);
+    rememberConsent(sharing);
+  } catch (err) {
+    // Offline. What this phone remembers is the best answer available.
+  }
+
+  state.textContent = sharing ? t("share.on") : t("share.off");
+  if (stop) stop.hidden = !sharing;
+  if (again) again.hidden = sharing;
 }
 
 /* the lock, R7.3 and R7.4 */
@@ -1361,7 +1509,7 @@ async function rescueWithCode(event) {
   }
 
   try {
-    const cloud = await import("./cloud.js?v=47");
+    const cloud = await import("./cloud.js?v=48");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     lock.clearLock();
@@ -1474,7 +1622,7 @@ async function linkThisPhone(event) {
   msg.hidden = false;
   msg.textContent = t("run.onemoment");
   try {
-    const cloud = await import("./cloud.js?v=47");
+    const cloud = await import("./cloud.js?v=48");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     msg.textContent = t("run.linkedfetch");
@@ -1499,7 +1647,7 @@ async function syncHousehold(options) {
 
   let cloud;
   try {
-    cloud = await import("./cloud.js?v=47");
+    cloud = await import("./cloud.js?v=48");
   } catch (err) {
     if (loud) say(t("run.unreachable"));
     return false;
@@ -1583,7 +1731,15 @@ async function syncHousehold(options) {
   try {
     const remoteReminders = await cloud.listReminders(id);
     for (const row of remoteReminders) {
-      if (reminders.some((r) => r.id === row.id)) continue;
+      // This used to skip anything already on the phone, which meant a
+      // reminder the family ticked off in the browser was downloaded once and
+      // never updated again. Marked done on one side stayed unmarked on the
+      // other for ever. Take the row every time and let the store overwrite:
+      // done_at is the only field either side changes after it is made, and
+      // whichever tick happened is the one worth keeping.
+      const mine = reminders.find((r) => r.id === row.id);
+      if (mine && (mine.lastDoneAt || null) === (row.done_at || null) &&
+          mine.dueAt === row.due_at) continue;
       try {
         await store.saveReminder({
           id: row.id,
@@ -1650,6 +1806,42 @@ async function syncHousehold(options) {
 
 // N11. The camera screen is sized to the device instead of to a guess, so the
 // picture is as big as this phone allows and nothing falls below the fold.
+// How much room the floating pill actually needs at the bottom of a page.
+//
+// It used to be one number in the stylesheet: 96px plus a quarter of the
+// phone's reserved strip. That is about right for where the pill sits while
+// you are in the middle of a list, and wrong at the moment it matters. On iOS
+// the bottom toolbar expands when you reach the end of a scroll, and Safari
+// lifts a fixed element so it stays visible. The pill rises by the height of
+// that toolbar, the reserved 96px does not, and the last card ends up
+// underneath it. Which is exactly the thing this pill was supposed to stop
+// doing when it was a bar welded to the bottom edge.
+//
+// So measure it. The pill reports where it is; the reserve is the distance
+// from its top edge to the bottom of what she can actually see, plus a little
+// air. Keeping the largest value seen since the last real layout change means
+// the reserve covers the toolbar being out as well as tucked away, and does
+// not shuffle the page up and down while she scrolls.
+let bottomRoomSeen = 0;
+
+function fitBottomRoom(fresh) {
+  const tabs = document.querySelector(".tabs");
+  if (!tabs || tabs.hidden) return;
+  if (fresh) bottomRoomSeen = 0;
+
+  const seen = window.visualViewport;
+  const visible = seen ? seen.height : window.innerHeight;
+  const rect = tabs.getBoundingClientRect();
+  // getBoundingClientRect is in layout coordinates; offsetTop is how far the
+  // visual viewport has been pushed down inside them.
+  const top = rect.top - (seen ? seen.offsetTop : 0);
+  const need = Math.round(visible - top) + 14;
+
+  if (!(need > 0) || need <= bottomRoomSeen) return;
+  bottomRoomSeen = need;
+  document.documentElement.style.setProperty("--pill-room", need + "px");
+}
+
 function fitCameraScreen() {
   const screen = screens.capture;
   if (!screen || screen.hidden) return;
@@ -1669,8 +1861,25 @@ function fitCameraScreen() {
   const tall = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   const ceiling = bar.offsetHeight + padding;
   const left = (pill.top > 0 ? pill.top : tall - tabs.offsetHeight) - ceiling - 10;
+  const room = Math.max(240, Math.round(left));
 
-  screen.style.setProperty("--fit", Math.max(240, Math.round(left)) + "px");
+  screen.style.setProperty("--fit", room + "px");
+
+  // Setting the height is not the same as fitting in it. The parts that do
+  // not shrink, the heading, the zoom row and the buttons, are taller in some
+  // faces than in others, and twenty two of the twenty six skins use a face
+  // that is downloaded. On Calm, which is Lexend, they came to more than the
+  // room available and the overflow was unreachable, because this screen
+  // turns scrolling off on purpose.
+  //
+  // So measure what actually happened and tighten until it fits. Three steps,
+  // each one taking a little out of the heading, the gaps and the buttons.
+  // Nothing here is a number chosen per theme: it asks the browser.
+  screen.removeAttribute("data-tight");
+  for (let step = 1; step <= 3; step += 1) {
+    if (screen.scrollHeight <= room + 1) break;
+    screen.setAttribute("data-tight", String(step));
+  }
 }
 
 function show(name) {
@@ -1717,8 +1926,22 @@ function go(hash) {
   else location.hash = hash;
 }
 
+// Which tile she was on before opening a card or the save screen.
+//
+// The back buttons were each wired to one fixed destination, so opening a card
+// from Today and pressing back landed on Everything. On Calm that is the
+// easiest way to notice it, because that layout shows one card at a time, so
+// opening a card is the normal thing to do from Today. R2.11.
+const TILES = ["#/today", "#/capture", "#/records"];
+let cameFrom = "#/today";
+
+function backTo(fallback) {
+  return TILES.indexOf(cameFrom) >= 0 ? cameFrom : (fallback || "#/today");
+}
+
 async function route() {
   const hash = location.hash || "#/today";
+  if (TILES.indexOf(hash) >= 0) cameFrom = hash;
 
   if (!welcomed()) {
     show("welcome");
@@ -1964,10 +2187,26 @@ async function saveNew(event) {
 /* wiring */
 
 function wire() {
+  // Let the audio out of its box while the tap is still happening.
+  //
+  // Every read goes through an await first: the voices module is imported, and
+  // the model turns the text into a wav. By the time anything is played the
+  // gesture is over and the browser refuses, silently. So the very first touch
+  // anywhere in the app primes one audio element and the speaking queue, and
+  // every read after that is playing on something already allowed to make a
+  // noise. Capture, so it runs before any handler that might await. R2.13.
+  ["pointerdown", "keydown"].forEach((kind) => {
+    document.addEventListener(kind, () => speech.unlock(), { capture: true });
+  });
+
   window.addEventListener("hashchange", route);
 
-  document.querySelectorAll("[data-go]").forEach((btn) => {
+  document.querySelectorAll("[data-go]:not([data-back])").forEach((btn) => {
     btn.addEventListener("click", () => go(btn.dataset.go));
+  });
+
+  document.querySelectorAll("[data-back]").forEach((btn) => {
+    btn.addEventListener("click", () => go(backTo(btn.dataset.go)));
   });
 
   document.addEventListener("click", async (event) => {
@@ -1983,6 +2222,11 @@ function wire() {
     const doneIt = target.closest("[data-done]");
     if (doneIt) {
       await store.markReminderDone(doneIt.dataset.done);
+      // And tell the household, so the family sees it too. Both roles are
+      // allowed to update a reminder (R3.4), so this is not a helper only
+      // call; it simply was never made. Offline it throws and the tick stays
+      // on the phone until the next sync pushes it.
+      await pushDone(doneIt.dataset.done);
       reminders = await store.allReminders();
       say(t("run.markeddone"));
       await route();
@@ -2058,6 +2302,31 @@ function wire() {
   // room the camera has.
   window.addEventListener("resize", fitCameraScreen);
   window.addEventListener("resize", moveTabThumb);
+  window.addEventListener("resize", () => fitBottomRoom(true));
+  window.addEventListener("orientationchange", () => fitBottomRoom(true));
+  // A skin's face is fetched only when a screen needs it, so the first
+  // measurement above can happen in the fallback font and be wrong by the
+  // time the real one lands. Both of these fire after that.
+  if (document.fonts) {
+    document.fonts.ready.then(() => {
+      fitCameraScreen();
+      moveTabThumb();
+      fitBottomRoom(true);
+    });
+    document.fonts.addEventListener("loadingdone", () => {
+      fitCameraScreen();
+      moveTabThumb();
+      fitBottomRoom(true);
+    });
+  }
+  if (window.visualViewport) {
+    // Not a fresh measurement: the toolbar coming out is the state the
+    // reserve exists for, so its number has to be kept, not replaced.
+    window.visualViewport.addEventListener("resize", () => fitBottomRoom(false));
+    window.visualViewport.addEventListener("scroll", () => fitBottomRoom(false));
+  }
+  // And once the pill has been laid out at all.
+  fitBottomRoom(true);
   window.addEventListener("orientationchange", fitCameraScreen);
   window.addEventListener("orientationchange", moveTabThumb);
   if (window.visualViewport) {
@@ -2109,7 +2378,7 @@ function wire() {
   });
 
   document.getElementById("better-on").addEventListener("click", async (event) => {
-    const voices = await import("./voices.js?v=47");
+    const voices = await import("./voices.js?v=48");
     const now = event.currentTarget.getAttribute("aria-pressed") !== "true";
     voices.setWanted(now);
     speech.stop();
@@ -2130,7 +2399,7 @@ function wire() {
   });
 
   document.getElementById("better-remove").addEventListener("click", async () => {
-    const voices = await import("./voices.js?v=47");
+    const voices = await import("./voices.js?v=48");
     speech.stop();
     await voices.remove(i18n.lang());
     voices.setWanted(false);
@@ -2161,6 +2430,8 @@ function wire() {
   document.getElementById("btn-consent-yes").addEventListener("click", consentYes);
   document.getElementById("btn-consent-no").addEventListener("click", consentNo);
   document.getElementById("btn-stop-sharing").addEventListener("click", stopSharing);
+  document.getElementById("btn-share-again")
+    .addEventListener("click", resumeSharing);
 
   document.getElementById("form-setcode").addEventListener("submit", saveCode);
   document.getElementById("btn-lock-off").addEventListener("click", async () => {
@@ -2255,7 +2526,7 @@ async function claimFromLink() {
   if (!isConfigured()) return false;
 
   try {
-    const cloud = await import("./cloud.js?v=47");
+    const cloud = await import("./cloud.js?v=48");
     const id = await cloud.claimDeviceLink(code);
     window.localStorage.setItem(HOUSEHOLD_KEY, id);
     say(t("run.linkedfamily"));
@@ -2352,7 +2623,7 @@ async function init() {
    there is nothing for her to do about it. */
 async function getVoiceQuietly() {
   try {
-    const voices = await import("./voices.js?v=47");
+    const voices = await import("./voices.js?v=48");
     const what = await voices.fetchIfSensible(i18n.lang(), () => {
       // The bar only exists while the help screen is open.
       const bar = document.getElementById("better-bar");

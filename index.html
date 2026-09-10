@@ -10,9 +10,9 @@
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/style.css?v=47">
-<link rel="stylesheet" href="css/fonts.css?v=47">
-<link rel="stylesheet" href="css/skins.css?v=47">
+<link rel="stylesheet" href="css/style.css?v=48">
+<link rel="stylesheet" href="css/fonts.css?v=48">
+<link rel="stylesheet" href="css/skins.css?v=48">
 
 <!-- N18. Before the first paint, deliberately not in a module: a module is
      deferred, and a deferred script means the default palette is painted and
@@ -196,14 +196,14 @@
 
   <!-- one card -->
   <section id="screen-record" class="screen" hidden aria-labelledby="record-title">
-    <button class="back" type="button" data-go="#/records" data-t="app.back">Back</button>
+    <button class="back" type="button" data-back data-go="#/records" data-t="app.back">Back</button>
     <h1 id="record-title" data-t="record.title">Card</h1>
     <div id="record-detail"></div>
   </section>
 
   <!-- camera -->
   <section id="screen-capture" class="screen" hidden aria-labelledby="capture-title">
-    <button class="back" type="button" data-go="#/today">Back</button>
+    <button class="back" type="button" data-back data-go="#/today">Back</button>
     <h1 id="capture-title" data-t="capture.title">Point at the letter</h1>
     <div class="camera-wrap">
       <video id="video" playsinline muted></video>
@@ -226,7 +226,7 @@
 
   <!-- save -->
   <section id="screen-new" class="screen" hidden aria-labelledby="new-title">
-    <button class="back" type="button" data-go="#/today">Back</button>
+    <button class="back" type="button" data-back data-go="#/today">Back</button>
     <h1 id="new-title" data-t="new.title">What are we keeping?</h1>
     <img id="shot" class="shot" alt="The photo you just took" data-t-alt="new.shotalt">
     <p id="ocr-state" class="ocr-state" hidden></p>
@@ -441,6 +441,9 @@
       <h3 data-t="share.heading">Sharing with your family</h3>
       <p id="sharing-state" class="hint-line"></p>
       <button id="btn-stop-sharing" class="big danger" type="button" data-t="share.stop">Stop sharing with my family</button>
+      <!-- Article 7(3) does not make a withdrawal final. She can give it
+           again, and the family app comes back to life when she does. -->
+      <button id="btn-share-again" class="big" type="button" hidden data-t="share.againbtn">Share with my family again</button>
       <p id="sharing-msg" class="link-msg" hidden></p>
     </div>
 
@@ -482,6 +485,6 @@
   }
 }
 </script>
-<script type="module" src="js/app.js?v=47"></script>
+<script type="module" src="js/app.js?v=48"></script>
 </body>
 </html>

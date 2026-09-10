@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#231710">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=47">
-<link rel="stylesheet" href="css/helper.css?v=47">
+<link rel="stylesheet" href="css/style.css?v=48">
+<link rel="stylesheet" href="css/helper.css?v=48">
 </head>
 <body class="helper">
 
@@ -72,6 +72,26 @@
   </section>
 
   <!-- the household itself -->
+  <!-- Consent withdrawn. Article 7(3): consent can be taken back, and when it
+       is this is all the family app is allowed to be. No cards, no
+       reminders, no names, no counts, because every one of those is the
+       keeper's data and the permission to hold it is gone. Patch 006 enforces the same
+       thing in the database, so this page is what the family sees rather than
+       the only thing stopping them. -->
+  <section id="s-withdrawn" class="pane" hidden>
+    <h1 data-t="hw.title">Sharing has been turned off</h1>
+    <p data-t="hw.body">The permission for the family to see these cards has
+      been taken back, so there is nothing here to show. Nothing has been
+      deleted: the cards are still on the phone they belong to.</p>
+    <p class="hint" data-t="hw.how">Sharing can be turned back on from that
+      phone at any time: Recall, the question mark, then sharing with your
+      family.</p>
+    <div class="actions">
+      <button id="btn-w-recheck" class="btn" type="button" data-t="hw.recheck">Check again</button>
+      <button id="btn-w-signout" class="btn ghost" type="button" data-t="h.signout">Sign out</button>
+    </div>
+  </section>
+
   <section id="s-app" class="pane" hidden>
     <nav class="subtabs" aria-label="Sections" data-t-aria="h.tabs">
       <button class="subtab" data-view="follow" aria-current="page" data-t="h.follow">Follow up</button>
@@ -287,6 +307,6 @@
   }
 }
 </script>
-<script type="module" src="js/helper.js?v=47"></script>
+<script type="module" src="js/helper.js?v=48"></script>
 </body>
 </html>

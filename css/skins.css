@@ -29,6 +29,8 @@
   --on-soft: #A8400F;
   --ok: #2F6B4F;
   --on-accent: #FFFFFF;
+  --bar: #231710;
+  --on-bar: #FFF7F0;
   --face: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
   --radius: 12px;
   --edge: 1px;
@@ -49,6 +51,8 @@
   --on-soft: #7A4310;
   --ok: #2E6249;
   --on-accent: #FFFFFF;
+  --bar: #2A2418;
+  --on-bar: #F5F0E6;
   --face: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --radius: 8px;
   --edge: 2px;
@@ -69,6 +73,8 @@
   --on-soft: #FFC59A;
   --ok: #63C48F;
   --on-accent: #1A1206;
+  --bar: #211D19;
+  --on-bar: #F6F1EA;
   --face: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
   --radius: 12px;
   --edge: 1px;
@@ -89,6 +95,8 @@
   --on-soft: #6B2C0B;
   --ok: #2B5F44;
   --on-accent: #FFFFFF;
+  --bar: #1A1712;
+  --on-bar: #FAF6EE;
   --face: "Literata", Georgia, serif;
   --radius: 0px;
   --edge: 1px;
@@ -109,6 +117,8 @@
   --on-soft: #F0CFA3;
   --ok: #8FC48A;
   --on-accent: #1A1206;
+  --bar: #26201B;
+  --on-bar: #F2E8DC;
   --face: "Literata", Georgia, serif;
   --radius: 0px;
   --edge: 1px;
@@ -129,6 +139,8 @@
   --on-soft: #6B390B;
   --ok: #2D5E40;
   --on-accent: #FFFFFF;
+  --bar: #22190D;
+  --on-bar: #F4ECDD;
   --face: Georgia, "Times New Roman", serif;
   --radius: 0px;
   --edge: 2px;
@@ -149,6 +161,8 @@
   --on-soft: #0E3F72;
   --ok: #2C6048;
   --on-accent: #FFFFFF;
+  --bar: #1B1A16;
+  --on-bar: #FFFBF6;
   --face: "Public Sans", "Segoe UI", system-ui, sans-serif;
   --radius: 8px;
   --edge: 0px;
@@ -169,6 +183,8 @@
   --on-soft: #FFD79A;
   --ok: #9CC46A;
   --on-accent: #1C1204;
+  --bar: #241D13;
+  --on-bar: #FBEED8;
   --face: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --radius: 8px;
   --edge: 0px;
@@ -189,6 +205,8 @@
   --on-soft: #B4E6C4;
   --ok: #7FC6E0;
   --on-accent: #06140C;
+  --bar: #18211D;
+  --on-bar: #EAF3EE;
   --face: "Nunito", "Segoe UI", system-ui, sans-serif;
   --radius: 20px;
   --edge: 0px;
@@ -209,6 +227,8 @@
   --on-soft: #6B4506;
   --ok: #2C5E42;
   --on-accent: #FFFFFF;
+  --bar: #211E10;
+  --on-bar: #FDF8E3;
   --face: "Roboto Mono", ui-monospace, Consolas, monospace;
   --radius: 2px;
   --edge: 1px;
@@ -229,6 +249,8 @@
   --on-soft: #A5DBF2;
   --ok: #61C58D;
   --on-accent: #04161E;
+  --bar: #1B2226;
+  --on-bar: #EDF3F6;
   --face: "Roboto Mono", ui-monospace, Consolas, monospace;
   --radius: 2px;
   --edge: 1px;
@@ -249,6 +271,8 @@
   --on-soft: #663800;
   --ok: #245736;
   --on-accent: #FFFFFF;
+  --bar: #141208;
+  --on-bar: #FFFBE0;
   --face: "Bitter", Georgia, serif;
   --radius: 0px;
   --edge: 2px;
@@ -269,6 +293,8 @@
   --on-soft: #0A5340;
   --ok: #2C5F8A;
   --on-accent: #FFFFFF;
+  --bar: #1C241E;
+  --on-bar: #F4F7F3;
   --face: "Lexend", "Segoe UI", system-ui, sans-serif;
   --radius: 10px;
   --edge: 0px;
@@ -289,6 +315,8 @@
   --on-soft: #B6CDF7;
   --ok: #6FCBA0;
   --on-accent: #050B18;
+  --bar: #151B2E;
+  --on-bar: #EEF1FA;
   --face: "Oswald", "Arial Narrow", sans-serif;
   --radius: 2px;
   --edge: 1px;
@@ -309,6 +337,8 @@
   --on-soft: #FFC79B;
   --ok: #7FD8A4;
   --on-accent: #000000;
+  --bar: #0C0C0C;
+  --on-bar: #FFFFFF;
   --face: Verdana, Geneva, "DejaVu Sans", sans-serif;
   --radius: 0px;
   --edge: 3px;
@@ -329,6 +359,8 @@
   --on-soft: #8A2F12;
   --ok: #2F6046;
   --on-accent: #FFFFFF;
+  --bar: #241512;
+  --on-bar: #FBF3EC;
   --face: "Archivo", "Arial Narrow", system-ui, sans-serif;
   --radius: 6px;
   --edge: 2px;
@@ -349,6 +381,8 @@
   --on-soft: #A8E884;
   --ok: #59C7E0;
   --on-accent: #0A1004;
+  --bar: #17171A;
+  --on-bar: #FAFAFC;
   --face: "Archivo", "Arial Narrow", system-ui, sans-serif;
   --radius: 0px;
   --edge: 3px;
@@ -369,6 +403,8 @@
   --on-soft: #FFD24A;
   --ok: #B7E06A;
   --on-accent: #000000;
+  --bar: #0B0A06;
+  --on-bar: #FFD24A;
   --face: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --radius: 0px;
   --edge: 3px;
@@ -389,6 +425,8 @@
   --on-soft: #452F82;
   --ok: #2B6150;
   --on-accent: #FFFFFF;
+  --bar: #1F1B27;
+  --on-bar: #F5F4F9;
   --face: "Lexend", "Segoe UI", system-ui, sans-serif;
   --radius: 14px;
   --edge: 0px;
@@ -409,6 +447,8 @@
   --on-soft: #FFC0CC;
   --ok: #6FC79C;
   --on-accent: #1A0A11;
+  --bar: #221C2B;
+  --on-bar: #F3EDF8;
   --face: "Lexend", "Segoe UI", system-ui, sans-serif;
   --radius: 18px;
   --edge: 0px;
@@ -429,6 +469,8 @@
   --on-soft: #6B2200;
   --ok: #1B5636;
   --on-accent: #FFFFFF;
+  --bar: #111111;
+  --on-bar: #FBF9F4;
   --face: "Lexend", "Segoe UI", system-ui, sans-serif;
   --radius: 4px;
   --edge: 3px;
@@ -449,6 +491,8 @@
   --on-soft: #084A4C;
   --ok: #2D5F8C;
   --on-accent: #FFFFFF;
+  --bar: #12211F;
+  --on-bar: #EFF6F6;
   --face: "Archivo", "Arial Narrow", system-ui, sans-serif;
   --radius: 6px;
   --edge: 2px;
@@ -469,6 +513,8 @@
   --on-soft: #7A2208;
   --ok: #1E5C3C;
   --on-accent: #FFFFFF;
+  --bar: #000000;
+  --on-bar: #FFFFFF;
   --face: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --radius: 0px;
   --edge: 3px;
@@ -489,8 +535,54 @@
   --on-soft: #3A3A36;
   --ok: #2C6046;
   --on-accent: #FFFFFF;
+  --bar: #1B1B1A;
+  --on-bar: #F2F2F0;
   --face: "Public Sans", "Segoe UI", system-ui, sans-serif;
   --radius: 4px;
+  --edge: 1px;
+  --base: 22px;
+}
+
+/* Sober white - Plain list layout, Public Sans */
+:root[data-skin="sober-white"] {
+  --paper: #FFFFFF;
+  --card: #FFFFFF;
+  --ink: #111111;
+  --body: #242424;
+  --mid: #565656;
+  --rule: #DDDDDD;
+  --orange: #1C1C1C;
+  --orange-dark: #000000;
+  --orange-soft: #EFEFEF;
+  --on-soft: #1C1C1C;
+  --ok: #1B5636;
+  --on-accent: #FFFFFF;
+  --bar: #111111;
+  --on-bar: #FFFFFF;
+  --face: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --radius: 0px;
+  --edge: 1px;
+  --base: 22px;
+}
+
+/* Sober dark - Plain list layout, Public Sans */
+:root[data-skin="sober-dark"] {
+  --paper: #0D0D0D;
+  --card: #161616;
+  --ink: #F6F6F6;
+  --body: #E3E3E3;
+  --mid: #A6A6A6;
+  --rule: #343434;
+  --orange: #EDEDED;
+  --orange-dark: #C8C8C8;
+  --orange-soft: #232323;
+  --on-soft: #F1F1F1;
+  --ok: #7FD8A4;
+  --on-accent: #0D0D0D;
+  --bar: #161616;
+  --on-bar: #F6F6F6;
+  --face: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --radius: 0px;
   --edge: 1px;
   --base: 22px;
 }

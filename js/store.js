@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=47";
+import * as i18n from "./i18n.js?v=48";
 
 // Store: everything is kept on the device in IndexedDB.
 // Requirement P1: local only by default, nothing leaves the phone unless a
@@ -198,7 +198,9 @@ export async function photoUrl(id) {
 export async function allReminders() {
   const store = await tx("reminders", "readonly");
   const rows = await ask(store.getAll());
-  rows.sort((a, b) => (a.dueAt > b.dueAt ? 1 : -1));
+  // By the occurrence being asked about, for the same reason: a daily
+  // reminder set in March must not sort behind everything else for ever.
+  rows.sort((a, b) => currentDue(a) - currentDue(b));
   return rows;
 }
 
@@ -234,14 +236,14 @@ export async function markReminderDone(id) {
   const reminder = await ask(store.get(id));
   if (!reminder) return null;
 
+  // Only stamp when it was done. This used to also push dueAt forward to the
+  // next occurrence, which is where the two sides stopped agreeing: the
+  // family side never moves due_at, it works out which occurrence is being
+  // asked about from the original time and the repeat. With one row and two
+  // different meanings, a tick on the phone and a tick in the browser
+  // disagreed about what was done and what was missed. Now both read the row
+  // the same way, and the row is what the database holds. R3.4.
   reminder.lastDoneAt = new Date().toISOString();
-  const step = periodMs(reminder.repeat);
-  if (step > 0) {
-    let next = new Date(reminder.dueAt).getTime();
-    const now = Date.now();
-    while (next <= now) next += step;
-    reminder.dueAt = new Date(next).toISOString();
-  }
   await ask(store.put(reminder));
   return reminder;
 }
@@ -252,17 +254,34 @@ export async function markReminderDone(id) {
 // appointment shows as missed the same afternoon rather than the next day.
 const GRACE_MS = 60 * 60 * 1000;
 
-export function reminderStatus(reminder) {
+// Which time this reminder is asking about right now. For something that does
+// not repeat that is simply when it was due. For something that repeats it is
+// the most recent time that has come around, so a daily reminder set three
+// weeks ago is asking about today and not about three weeks ago. This is the
+// same function as cloud.js currentDue, deliberately: reminders_test.js checks
+// the two against each other.
+export function currentDue(reminder) {
   const due = new Date(reminder.dueAt).getTime();
-  const now = Date.now();
   const step = periodMs(reminder.repeat);
+  if (!step || due >= Date.now()) return due;
+  const rounds = Math.floor((Date.now() - due) / step);
+  return due + rounds * step;
+}
 
+export function reminderStatus(reminder) {
+  const asking = currentDue(reminder);
+
+  // Done, but only for the time it is asking about. The old rule here was
+  // "done less than one period ago", which called a daily reminder done all
+  // day after a tick at one minute past midnight, and also disagreed with the
+  // family side. Comparing against the occurrence fixes both.
   if (reminder.lastDoneAt) {
     const done = new Date(reminder.lastDoneAt).getTime();
-    if (step === 0) return "done";
-    if (now - done < step) return "done";
+    if (!periodMs(reminder.repeat)) return "done";
+    if (done >= asking) return "done";
   }
-  if (due < now - GRACE_MS) return "missed";
+
+  if (asking < Date.now() - GRACE_MS) return "missed";
   return "coming";
 }
 
@@ -275,7 +294,8 @@ export async function dueSoon() {
     const status = reminderStatus(r);
     if (status === "missed") return true;
     if (status === "done") return false;
-    return new Date(r.dueAt).getTime() <= horizon;
+    // The occurrence being asked about, not the time it was first set for.
+    return currentDue(r) <= horizon;
   });
 }
 

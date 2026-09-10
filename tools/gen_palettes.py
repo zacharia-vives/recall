@@ -57,6 +57,12 @@ P = {
  # ------------------------------------------------------------ low vision
  "slight": pal("#FFFFFF","#FFFFFF","#000000","#000000","#3B3B3B","#767676","#A3300B","#7A2208","#FFE2D2","#7A2208","#1E5C3C","#FFFFFF"),
  "sdark":  pal("#000000","#0C0C0C","#FFFFFF","#FFFFFF","#CFCFCF","#8A8A8A","#FFA061","#E07E3C","#2B1A0C","#FFC79B","#7FD8A4","#000000"),
+ # ------------------------------------------------- sober, no hue at all
+ # The accent in every other palette is a colour. Here it is the ink, so
+ # a button is a black block on white or a white block on black. That is
+ # what makes these two read as restrained rather than as recolours.
+ "soberw": pal("#FFFFFF","#FFFFFF","#111111","#242424","#565656","#DDDDDD","#1C1C1C","#000000","#EFEFEF","#1C1C1C","#1B5636","#FFFFFF"),
+ "soberd": pal("#0D0D0D","#161616","#F6F6F6","#E3E3E3","#A6A6A6","#343434","#EDEDED","#C8C8C8","#232323","#F1F1F1","#7FD8A4","#0D0D0D"),
  "amberb": pal("#000000","#0B0A06","#FFD24A","#FFC833","#D9A621","#7A5E0F","#FFD24A","#D9A621","#241B04","#FFD24A","#B7E06A","#000000"),
  "blue":   pal("#FFFBF6","#FFFFFF","#1B1A16","#2F2C25","#5F5A4E","#E4DDD1","#15599C","#0E3F72","#DEEAF6","#0E3F72","#2C6048","#FFFFFF"),
  "ivory":  pal("#FBF9F4","#FFFFFF","#111111","#1C1C1C","#454545","#8C8C8C","#8F2E00","#6B2200","#FFE0CC","#6B2200","#1B5636","#FFFFFF"),
@@ -158,6 +164,10 @@ SKINS = [
   "Black on white as two squared tiles. Hand this to somebody with cataracts."),
  ("Quiet stone","daylight","stone","public","tiles",4,1,22,"no colour at all",
   "Almost no hue anywhere, as two plain tiles. Nothing competes with the words."),
+ ("Sober white","daylight","soberw","public","plain",0,1,22,"the plainest one",
+  "White, near black, one grey rule. No hue and no rounded corners anywhere."),
+ ("Sober dark","night","soberd","public","plain",0,1,22,"the plainest one, at night",
+  "The same restraint inverted for a dark room. No hue, square corners, nothing else."),
 ]
 
 CHECKS = [

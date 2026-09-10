@@ -280,6 +280,34 @@
    "ok": "#7FD8A4",
    "onAccent": "#000000"
   },
+  "soberw": {
+   "paper": "#FFFFFF",
+   "card": "#FFFFFF",
+   "ink": "#111111",
+   "body": "#242424",
+   "mid": "#565656",
+   "rule": "#DDDDDD",
+   "orange": "#1C1C1C",
+   "orangeDark": "#000000",
+   "orangeSoft": "#EFEFEF",
+   "onSoft": "#1C1C1C",
+   "ok": "#1B5636",
+   "onAccent": "#FFFFFF"
+  },
+  "soberd": {
+   "paper": "#0D0D0D",
+   "card": "#161616",
+   "ink": "#F6F6F6",
+   "body": "#E3E3E3",
+   "mid": "#A6A6A6",
+   "rule": "#343434",
+   "orange": "#EDEDED",
+   "orangeDark": "#C8C8C8",
+   "orangeSoft": "#232323",
+   "onSoft": "#F1F1F1",
+   "ok": "#7FD8A4",
+   "onAccent": "#0D0D0D"
+  },
   "amberb": {
    "paper": "#000000",
    "card": "#0B0A06",
@@ -797,6 +825,32 @@
    "base": 22,
    "tag": "no colour at all",
    "who": "Almost no hue anywhere, as two plain tiles. Nothing competes with the words."
+  },
+  {
+   "key": "sober-white",
+   "name": "Sober white",
+   "group": "daylight",
+   "pal": "soberw",
+   "font": "public",
+   "layout": "plain",
+   "radius": 0,
+   "edge": 1,
+   "base": 22,
+   "tag": "the plainest one",
+   "who": "White, near black, one grey rule. No hue and no rounded corners anywhere."
+  },
+  {
+   "key": "sober-dark",
+   "name": "Sober dark",
+   "group": "night",
+   "pal": "soberd",
+   "font": "public",
+   "layout": "plain",
+   "radius": 0,
+   "edge": 1,
+   "base": 22,
+   "tag": "the plainest one, at night",
+   "who": "The same restraint inverted for a dark room. No hue, square corners, nothing else."
   }
  ]
 }

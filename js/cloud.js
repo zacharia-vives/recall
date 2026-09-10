@@ -5,7 +5,7 @@
 // Two roles live here: a helper signs in with an emailed link, a keeper phone
 // signs in anonymously once and is claimed into a household with a code.
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from "./config.js?v=47";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, isConfigured } from "./config.js?v=48";
 
 const LIB = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
@@ -101,7 +101,7 @@ export async function removeMember(membershipId, householdId, name) {
   const db = await getClient();
   const { error } = await db.from("memberships").delete().eq("id", membershipId);
   if (error) throw error;
-  await logActivity(householdId, "removed", null, name + " no longer has access");
+  await logActivity(householdId, "removed", null, name);
 }
 
 /* --------------------------------------------------------- device linking */
@@ -185,7 +185,7 @@ export async function inviteHelper(householdId, email) {
     expires_at: expires
   });
   if (error) throw error;
-  await logActivity(householdId, "invited", null, email + " was invited");
+  await logActivity(householdId, "invited", null, email);
   return token;
 }
 
@@ -347,7 +347,7 @@ export async function updateRecord(householdId, id, changes, what) {
     }
     throw error;
   }
-  await logActivity(householdId, "edited", id, what || "a card was changed");
+  await logActivity(householdId, "edited", id, what || "");
   return data;
 }
 
@@ -359,14 +359,32 @@ export async function binRecord(householdId, id, title) {
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id);
   if (error) throw error;
-  await logActivity(householdId, "deleted", id, title + " went to the bin");
+  await logActivity(householdId, "deleted", id, title);
+}
+
+// Binning as either role. binRecord below updates the row directly, which
+// only a helper is allowed to do: the sole update policy on records is
+// "helpers change records". The keeper needs the same outcome without being
+// given the right to rewrite every column, so patch 005 added a function that
+// touches deleted_at and nothing else, and this calls it. Works for helpers
+// too, so there is one path rather than two.
+export async function binAsMember(recordId) {
+  const db = await getClient();
+  const { error } = await db.rpc("bin_record", { p_record: recordId });
+  if (error) throw error;
+}
+
+export async function restoreAsMember(recordId) {
+  const db = await getClient();
+  const { error } = await db.rpc("restore_record", { p_record: recordId });
+  if (error) throw error;
 }
 
 export async function restoreRecord(householdId, id, title) {
   const db = await getClient();
   const { error } = await db.from("records").update({ deleted_at: null }).eq("id", id);
   if (error) throw error;
-  await logActivity(householdId, "restored", id, title + " came back out of the bin");
+  await logActivity(householdId, "restored", id, title);
 }
 
 /* --------------------------------------------------------------- reminders */
@@ -398,7 +416,7 @@ export async function setReminder(householdId, recordId, dueAt, repeat, spokenTe
     .select()
     .single();
   if (error) throw error;
-  await logActivity(householdId, "reminder_set", recordId, "a reminder was set");
+  await logActivity(householdId, "reminder_set", recordId, "");
   return data;
 }
 
@@ -410,7 +428,7 @@ export async function markDone(householdId, reminderId, recordId) {
     .update({ done_at: new Date().toISOString(), done_by: user.id })
     .eq("id", reminderId);
   if (error) throw error;
-  await logActivity(householdId, "marked_done", recordId, "marked as done");
+  await logActivity(householdId, "marked_done", recordId, "");
 }
 
 // How long between one time and the next. The same table as the keeper's side,
@@ -457,6 +475,11 @@ export function reminderStatus(reminder) {
 
 /* ---------------------------------------------------------------- activity */
 
+// The detail column carries the bare name of the thing and nothing else: the
+// title of a card, the address of an invitation, the name of a person. It
+// used to carry a sentence, and both apps printed that sentence, so the
+// history stayed in English however the app was set. What happened is said by
+// the action now, which every screen translates. R2.14.
 export async function logActivity(householdId, action, recordId, detail) {
   const db = await getClient();
   if (!db) return;

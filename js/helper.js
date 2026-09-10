@@ -1,15 +1,16 @@
 // The family side. Everything here needs a signed in helper and a household, so
 // unlike the keeper app this one does nothing until the cloud is configured.
 
-import * as cloud from "./cloud.js?v=47";
-import { NOTICE_VERSION } from "./config.js?v=47";
-import * as i18n from "./i18n.js?v=47";
+import * as cloud from "./cloud.js?v=48";
+import { NOTICE_VERSION } from "./config.js?v=48";
+import * as i18n from "./i18n.js?v=48";
 
 const panes = {
   unconfigured: document.getElementById("s-unconfigured"),
   signin: document.getElementById("s-signin"),
   households: document.getElementById("s-households"),
-  app: document.getElementById("s-app")
+  app: document.getElementById("s-app"),
+  withdrawn: document.getElementById("s-withdrawn")
 };
 
 const views = {
@@ -65,6 +66,62 @@ function localValue(iso) {
 }
 
 const KIND_BADGE = { letter: "L", person: "P", place: "●" };
+const REPEAT_WORD = {
+  none: "rep.once",
+  daily: "rep.daily",
+  twice_daily: "rep.twice",
+  weekly: "rep.weekly"
+};
+
+// The ten things the activity table is allowed to record. The keeper app has
+// a sentence for each one; this list is what says a row is one of them and
+// not something a later version wrote.
+const LOGGED = ["added", "edited", "deleted", "restored", "invited",
+  "removed", "linked", "unlinked", "reminder_set", "marked_done"];
+
+// The English tails this app used to write into the detail column. The
+// history read that column straight out, which is why it stayed English
+// whatever language the app was in: the words were not in the markup, they
+// were in the database. The detail carries only the bare name now, but rows
+// written before that are still there, so the tail comes off on the way out.
+const OLD_TAILS = [
+  " went to the bin",
+  " came back out of the bin",
+  " was invited",
+  " no longer has access"
+];
+const OLD_WHOLE = [
+  "a card was changed",
+  "a reminder was set",
+  "marked as done",
+  "moved to the bin",
+  "taken back out of the bin"
+];
+
+// What happened, as a sentence, in her language. Same source as the keeper's
+// own list: the action, not the English that was stored beside it.
+function happened(row) {
+  const who = row.actor_name === "a connected system"
+    ? i18n.t("seen.system")
+    : (row.actor_name || i18n.t("hrow.someone"));
+  return LOGGED.indexOf(row.action) >= 0
+    ? i18n.t("seen." + row.action, { who: who })
+    : who;
+}
+
+// The name of the card or the person the row is about, if the row has one,
+// with the separator. Anything that is only prose is dropped: the sentence
+// above already says what happened, and says it in the right language.
+function bareDetail(row) {
+  let text = (row.detail || "").trim();
+  if (!text || text.indexOf("notice version") >= 0) return "";
+  if (OLD_WHOLE.indexOf(text) >= 0) return "";
+  OLD_TAILS.forEach((tail) => {
+    if (text.slice(-tail.length) === tail) text = text.slice(0, -tail.length);
+  });
+  text = text.trim();
+  return text ? text + " · " : "";
+}
 
 /* --------------------------------------------------------------- sign in */
 
@@ -99,7 +156,7 @@ async function showHouseholds() {
   });
 
   if (unique.length === 0) {
-    box.innerHTML = '<p class="none">You are not part of a household yet. Set one up below.</p>';
+    box.innerHTML = '<p class="none">' + esc(i18n.t("hrow.nohousehold")) + "</p>";
   } else {
     box.innerHTML = unique.map((m) => {
       const name = m.households ? m.households.name : "household";
@@ -111,10 +168,10 @@ async function showHouseholds() {
         (mine ? ", and you created it" : "") + "</span></span>" +
         '<span class="acts"><button class="btn small" data-open-hh="' + esc(m.household_id) +
         '" data-hh-name="' + esc(name) + '" data-hh-role="' + esc(m.role) +
-        '" data-hh-me="' + esc(m.display_name || "") + '">Open</button>' +
+        '" data-hh-me="' + esc(m.display_name || "") + '">' + esc(i18n.t("hrow.open")) + "</button>" +
         (mine
           ? '<button class="btn small danger" data-drop-hh="' + esc(m.household_id) +
-            '" data-drop-name="' + esc(name) + '">Delete</button>'
+            '" data-drop-name="' + esc(name) + '">' + esc(i18n.t("hrow.delete")) + "</button>"
           : "") +
         "</span></div>";
     }).join("");
@@ -159,16 +216,18 @@ async function createHousehold(event) {
 
 function reminderRow(reminder) {
   const status = cloud.reminderStatus(reminder);
-  const title = reminder.records ? reminder.records.title : "a card";
+  const title = reminder.records ? reminder.records.title : i18n.t("hrow.acard");
   const done = status === "done";
   return '<div class="row-item ' + (status === "missed" ? "is-missed" : done ? "is-done" : "") + '">' +
     '<span class="grow"><span class="t">' + esc(title) + "</span>" +
     '<span class="s">' + esc(when(reminder.due_at)) +
-    (reminder.repeat && reminder.repeat !== "none" ? " &middot; " + esc(reminder.repeat.replace("_", " ")) : "") +
+    (reminder.repeat && reminder.repeat !== "none"
+      ? " &middot; " + esc(i18n.t(REPEAT_WORD[reminder.repeat] || "rep.once"))
+      : "") +
     "</span></span>" +
-    '<span class="pill ' + status + '">' + status + "</span>" +
+    '<span class="pill ' + status + '">' + esc(i18n.t("hrow." + status)) + "</span>" +
     (done ? "" : '<span class="acts"><button class="btn small" data-done="' + esc(reminder.id) +
-      '" data-rec="' + esc(reminder.record_id) + '">Mark done</button></span>') +
+      '" data-rec="' + esc(reminder.record_id) + '">' + esc(i18n.t("hrow.markdone")) + "</button></span>") +
     "</div>";
 }
 
@@ -202,9 +261,9 @@ async function cardRow(record, binned) {
   }
 
   const acts = binned
-    ? '<button class="btn small" data-restore="' + esc(record.id) + '">Restore</button>'
-    : '<button class="btn small ghost" data-edit="' + esc(record.id) + '">Edit</button>' +
-      '<button class="btn small danger" data-bin="' + esc(record.id) + '">Bin</button>';
+    ? '<button class="btn small" data-restore="' + esc(record.id) + '">' + esc(i18n.t("hrow.restore")) + "</button>"
+    : '<button class="btn small ghost" data-edit="' + esc(record.id) + '">' + esc(i18n.t("hrow.edit")) + "</button>" +
+      '<button class="btn small danger" data-bin="' + esc(record.id) + '">' + esc(i18n.t("hrow.bin")) + "</button>";
 
   return '<div class="row-item">' +
     '<span class="badge">' + badge + "</span>" +
@@ -221,12 +280,12 @@ async function renderCards() {
   const list = document.getElementById("cards-list");
   list.innerHTML = live.length
     ? (await Promise.all(live.map((c) => cardRow(c, false)))).join("")
-    : '<p class="none">No cards yet. Add the first one, she will hear it read out loud.</p>';
+    : '<p class="none">' + esc(i18n.t("hrow.nocards")) + "</p>";
 
   const bin = document.getElementById("bin-list");
   bin.innerHTML = binned.length
     ? (await Promise.all(binned.map((c) => cardRow(c, true)))).join("")
-    : '<p class="none">The bin is empty.</p>';
+    : '<p class="none">' + esc(i18n.t("hrow.binempty")) + "</p>";
   document.getElementById("bin-wrap").hidden = binned.length === 0;
 }
 
@@ -349,7 +408,7 @@ function ask(question, yesLabel) {
   document.getElementById("ask-text").textContent = question;
   const yes = document.getElementById("ask-yes");
   const no = document.getElementById("ask-no");
-  yes.textContent = yesLabel || "Yes";
+  yes.textContent = yesLabel || i18n.t("hrow.yes");
 
   return new Promise((resolve) => {
     const finish = (answer) => {
@@ -380,11 +439,12 @@ async function renderHouse() {
   document.getElementById("members-list").innerHTML = people.map((m) =>
     '<div class="row-item">' +
     '<span class="badge">' + esc((m.display_name || "?").slice(0, 1).toUpperCase()) + "</span>" +
-    '<span class="grow"><span class="t">' + esc(m.display_name || "someone") + "</span>" +
-    '<span class="s">since ' + esc(when(m.accepted_at)) + "</span></span>" +
-    '<span class="pill helper">helper</span>' +
+    '<span class="grow"><span class="t">' + esc(m.display_name || i18n.t("hrow.someone")) + "</span>" +
+    '<span class="s">' + esc(i18n.t("hrow.since", { when: when(m.accepted_at) })) + "</span></span>" +
+    '<span class="pill helper">' + esc(i18n.t("hrow.helper")) + "</span>" +
     '<span class="acts"><button class="btn small danger" data-remove="' + esc(m.id) +
-    '" data-name="' + esc(m.display_name || "someone") + '">Remove</button></span>' +
+    '" data-name="' + esc(m.display_name || i18n.t("hrow.someone")) + '">' +
+    esc(i18n.t("hrow.remove")) + "</button></span>" +
     "</div>"
   ).join("");
 
@@ -392,22 +452,25 @@ async function renderHouse() {
   document.getElementById("activity-list").innerHTML = log.length
     ? log.map((a) =>
         '<div class="row-item"><span class="grow"><span class="t">' +
-        esc(a.actor_name || "someone") + " " + esc(a.action.replace("_", " ")) + "</span>" +
-        '<span class="s">' + esc(a.detail) + " &middot; " + esc(when(a.at)) + "</span></span></div>"
+        esc(happened(a)) + "</span>" +
+        '<span class="s">' + esc(bareDetail(a)) + esc(when(a.at)) +
+        "</span></span></div>"
       ).join("")
-    : '<p class="none">Nothing has happened yet.</p>';
+    : '<p class="none">' + esc(i18n.t("hrow.nohistory")) + "</p>";
 }
 
-/* her phones, and the wizard that moves Recall to another one. R7.1, R7.2 */
+/* the keeper's phones, and the wizard that moves Recall to another one.
+   R7.1, R7.2 */
 
 function deviceRow(m, withRemove) {
   return '<div class="row-item">' +
     '<span class="badge">\u260E</span>' +
-    '<span class="grow"><span class="t">' + esc(m.display_name || "her phone") + "</span>" +
-    '<span class="s">linked ' + esc(when(m.accepted_at)) + "</span></span>" +
+    '<span class="grow"><span class="t">' + esc(m.display_name || i18n.t("hrow.thephone")) + "</span>" +
+    '<span class="s">' + esc(i18n.t("hrow.linkedon", { when: when(m.accepted_at) })) + "</span></span>" +
     (withRemove
       ? '<span class="acts"><button class="btn small danger" data-remove="' + esc(m.id) +
-        '" data-name="' + esc(m.display_name || "her phone") + '">Remove</button></span>'
+        '" data-name="' + esc(m.display_name || i18n.t("hrow.thephone")) + '">' +
+        esc(i18n.t("hrow.remove")) + "</button></span>"
       : "") +
     "</div>";
 }
@@ -416,7 +479,7 @@ async function renderDevices(list) {
   const rows = (list || await cloud.members(household.id)).filter((m) => m.role === "keeper");
   document.getElementById("devices-list").innerHTML = rows.length
     ? rows.map((m) => deviceRow(m, true)).join("")
-    : '<p class="none">No phone is linked yet. Set one up below.</p>';
+    : '<p class="none">' + esc(i18n.t("hrow.nophone")) + "</p>";
   return rows;
 }
 
@@ -486,7 +549,7 @@ function waitForPhone() {
     );
     document.getElementById("w-others").innerHTML = others.length
       ? others.map((m) => deviceRow(m, true)).join("")
-      : '<p class="none">There is no older phone to remove.</p>';
+      : '<p class="none">' + esc(i18n.t("hrow.nooldphone")) + "</p>";
     wizardStep(3);
   }, 3000);
 }
@@ -498,7 +561,7 @@ async function makeWizardCode() {
 
   try {
     knownDevices = await cloud.members(household.id);
-    const link = await cloud.createDeviceLink(household.id, name || "her phone");
+    const link = await cloud.createDeviceLink(household.id, name || i18n.t("hrow.thephone"));
     document.getElementById("link-code").textContent = link.code;
     document.getElementById("w-waiting").textContent = i18n.t("h.waiting");
     wizardStep(2);
@@ -580,7 +643,31 @@ function showView(name) {
   });
 }
 
+// Everything the family app shows goes through here, which makes it the one
+// place the consent has to be checked. Ask first, and if she has taken it
+// back, show the page that says so and load nothing at all: not the cards,
+// not the reminders, not even how many there are. Patch 006 refuses the reads
+// anyway, but an app that tries and gets an empty list would tell the family
+// "no cards yet", which is a different and untrue thing.
+async function consentStands() {
+  try {
+    const latest = await cloud.latestConsent(household.id);
+    return !!(latest && !latest.withdrawn_at);
+  } catch (err) {
+    // Cannot tell. Treat it as standing rather than locking the family out on
+    // a dropped connection; the database is what actually withholds the data.
+    return true;
+  }
+}
+
 async function refresh() {
+  if (!(await consentStands())) {
+    cards = [];
+    reminders = [];
+    showPane("withdrawn");
+    return;
+  }
+  showPane("app");
   cards = await cloud.listRecords(household.id, true);
   reminders = await cloud.listReminders(household.id);
   renderFollow();
@@ -645,6 +732,16 @@ function wire() {
   });
 
   document.getElementById("btn-out").addEventListener("click", async () => {
+    await cloud.signOut();
+    location.reload();
+  });
+
+  // On the withdrawn page. Checking again is the only useful thing the family
+  // can do from there, short of asking her.
+  document.getElementById("btn-w-recheck").addEventListener("click", async () => {
+    await refresh();
+  });
+  document.getElementById("btn-w-signout").addEventListener("click", async () => {
     await cloud.signOut();
     location.reload();
   });
@@ -715,7 +812,7 @@ function wire() {
           .filter((m) => m.role === "keeper" && m.id !== freshDevice);
         document.getElementById("w-others").innerHTML = rows.length
           ? rows.map((m) => deviceRow(m, true)).join("")
-          : '<p class="none">Only the new phone is linked now.</p>';
+          : '<p class="none">' + esc(i18n.t("hrow.onlynew")) + "</p>";
       }
       say(i18n.t("hrun.removed"));
     }

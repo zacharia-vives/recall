@@ -1,4 +1,4 @@
-import * as i18n from "./i18n.js?v=47";
+import * as i18n from "./i18n.js?v=48";
 
 // Reading out loud, with the Web Speech API. Free, and on the voices we allow
 // it also works with no network. Requirement S2: we speak the text as it is, we
@@ -40,10 +40,14 @@ function allVoices() {
 // Everything that can speak this language without telling anybody about it.
 export function voicesFor(lang) {
   const short = (lang || i18n.spokenLang()).slice(0, 2).toLowerCase();
-  return allVoices()
-    .filter((v) => v.localService !== false)
+  const sameLang = allVoices()
     .filter((v) => !CLOUD.test(v.name))
     .filter((v) => (v.lang || "").replace("_", "-").toLowerCase().startsWith(short));
+  const onDevice = sameLang.filter((v) => v.localService !== false);
+  // Prefer a voice that lives on the phone, but do not insist. Some browsers
+  // report localService false for everything they have, and insisting left
+  // this list empty and sent the caller to its last resort.
+  return onDevice.length ? onDevice : sameLang;
 }
 
 function score(voice, lang) {
@@ -74,20 +78,45 @@ export function chooseVoice(name) {
   }
 }
 
-export function pickVoice(lang) {
-  const useLang = lang || i18n.spokenLang();
+// The best voice for the language of the words, and the rules for when there
+// is not one.
+//
+// Two things were wrong here. The voice she had chosen in the settings was
+// looked up across every voice on the phone, not just the ones that speak the
+// language being read, so choosing a French voice once meant English and Dutch
+// were read in French from then on, in every language, for ever. And when
+// nothing matched at all it returned the first voice in the phone's list,
+// whatever language that was: on a Belgian phone that is French, so an English
+// letter came out French.
+//
+// The fallback is her own language now. If the words are in a language the
+// phone cannot speak, they are read in the language she set the app to, which
+// is at least a voice she can follow. If even that is missing, no voice is
+// named and the utterance carries the language tag instead, which lets the
+// browser choose rather than being handed the wrong one. R2.14.
+function bestOf(list, lang) {
+  if (!list.length) return null;
   const mine = chosenName();
-  const local = voicesFor(useLang);
   if (mine) {
-    const picked = local.find((v) => v.name === mine) || allVoices().find((v) => v.name === mine);
+    // Only if it speaks this language. That was the bug.
+    const picked = list.find((v) => v.name === mine);
     if (picked) return picked;
   }
-  if (local.length) {
-    return local.slice().sort((a, b) => score(b, useLang) - score(a, useLang))[0];
+  return list.slice().sort((a, b) => score(b, lang) - score(a, lang))[0];
+}
+
+export function pickVoice(lang) {
+  const useLang = lang || i18n.spokenLang();
+  const said = bestOf(voicesFor(useLang), useLang);
+  if (said) return said;
+
+  // Nothing speaks the language of the words. Fall back to her own.
+  const hers = i18n.spokenLang();
+  if (hers.slice(0, 2).toLowerCase() !== useLang.slice(0, 2).toLowerCase()) {
+    const ours = bestOf(voicesFor(hers), hers);
+    if (ours) return ours;
   }
-  // Nothing local for this language: rather the wrong accent than no voice.
-  const any = allVoices().filter((v) => !CLOUD.test(v.name));
-  return any.length ? any[0] : null;
+  return null;
 }
 
 /* turning stored text into something a person would say */
@@ -228,24 +257,81 @@ function isApple() {
    play, so it goes through an <audio> element instead. One at a time, and the
    handle is kept so stop() can stop this as well as the ordinary queue. */
 let playing = null;
+let shared = null;
+let unlocked = false;
+
+// A no sample WAV. Playing this is silent, and it is the smallest thing that
+// counts as playing audio, which is all an unlock needs to be.
+const SILENCE = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEA" +
+  "qKwAAIhYAQACABAAZGF0YQAAAAA=";
+
+// One element, reused. It used to make a new Audio for every read, and by the
+// time it existed the user's tap was long over: read() awaits the voices
+// module and then awaits the model turning text into a wav, and a browser only
+// lets audio start from a gesture. So the play was refused, the rejection was
+// swallowed, true was returned anyway, and the app went quiet with nothing to
+// show for it. This element is created and allowed to make noise during the
+// tap itself, and reused afterwards, so the later play is on an element that
+// already has permission.
+function element() {
+  if (!shared) {
+    shared = new Audio();
+    shared.preload = "auto";
+  }
+  return shared;
+}
+
+// Called from a real user gesture, before anything is awaited. Safe to call
+// as often as you like.
+export function unlock() {
+  if (unlocked) return;
+  unlocked = true;
+  try {
+    const audio = element();
+    audio.src = SILENCE;
+    const go = audio.play();
+    if (go && go.catch) go.catch(() => { unlocked = false; });
+  } catch (err) {
+    unlocked = false;
+  }
+  // The speaking queue on iOS wants the same courtesy: the first utterance has
+  // to be asked for inside a gesture or the queue stays silent all session.
+  try {
+    if (isApple() && canSpeak() && !window.speechSynthesis.speaking) {
+      const quiet = new SpeechSynthesisUtterance(" ");
+      quiet.volume = 0;
+      window.speechSynthesis.speak(quiet);
+    }
+  } catch (err) {
+    // Nothing to do: the ordinary path still tries.
+  }
+}
 
 function playWav(blob, rate) {
   return new Promise((resolve) => {
     stopWav();
-    const audio = new Audio(URL.createObjectURL(blob));
+    const audio = element();
+    const url = URL.createObjectURL(blob);
+    audio.src = url;
     // The neural voice already speaks at a measured pace, so it needs far less
     // slowing down than the device voice does. Below about 0.9 it starts to
     // sound wrong rather than calm.
     audio.playbackRate = rate || 0.95;
     playing = audio;
-    const done = () => {
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
       if (playing === audio) playing = null;
-      URL.revokeObjectURL(audio.src);
-      resolve(true);
+      URL.revokeObjectURL(url);
+      resolve(ok);
     };
-    audio.addEventListener("ended", done);
-    audio.addEventListener("error", done);
-    audio.play().catch(() => done());
+    audio.addEventListener("ended", () => finish(true), { once: true });
+    audio.addEventListener("error", () => finish(false), { once: true });
+    // Say no when it was refused, rather than reporting success and leaving
+    // her looking at a screen that promised to read something out.
+    const go = audio.play();
+    if (go && go.catch) go.catch(() => finish(false));
   });
 }
 
@@ -274,7 +360,7 @@ export async function read(text, lang, options) {
   if (!plain.trim()) return false;
 
   try {
-    const voices = await import("./voices.js?v=47");
+    const voices = await import("./voices.js?v=48");
     // The language of the words, not the language of the screen. Reading a
     // French letter with the Dutch voice would be worse than reading it with
     // the phone's own French voice, and reading German with either is wrong.
@@ -283,9 +369,14 @@ export async function read(text, lang, options) {
       const wav = await voices.makeAudio(plain, code);
       if (wav) {
         // Stop the ordinary queue too, or both voices talk at once.
-        if (canSpeak()) window.speechSynthesis.cancel();
-        await playWav(wav, options && options.rate);
-        return true;
+        if (canSpeak() && (window.speechSynthesis.speaking ||
+            window.speechSynthesis.pending)) {
+          window.speechSynthesis.cancel();
+        }
+        // This used to return true whatever happened. If the browser refuses
+        // to play, fall through to the phone's own voice instead of claiming
+        // to have read it out.
+        if (await playWav(wav, options && options.rate)) return true;
       }
     }
   } catch (err) {

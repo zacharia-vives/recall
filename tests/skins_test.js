@@ -1,4 +1,4 @@
-/* The twenty four skins, and the promise that none of them can break the app.
+/* Every skin, and the promise that none of them can break the app.
 
        node tests/skins_test.js
 
@@ -29,6 +29,12 @@ function check(name, ok, detail) {
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
+
+// skins.json is what the generator writes and what the stylesheet, the
+// module and the face list are all built from, so it is the count every
+// one of them has to agree with. Reading it here means adding a skin does
+// not mean editing a number in three tests.
+const data = JSON.parse(read("tools/skins.json"));
 
 /* ------------------------------------------------------------- wcag maths */
 function chan(v) {
@@ -62,7 +68,9 @@ while ((m = re.exec(css)) !== null) {
   if (tokens.paper) blocks.push({ key: key, t: tokens });
 }
 
-check("every skin has a block in the stylesheet", blocks.length === 24, blocks.length + " found");
+check("every skin has a block in the stylesheet",
+  blocks.length === data.skins.length,
+  blocks.length + " blocks for " + data.skins.length + " skins");
 check("the default is a bare :root, so the app works with no skin attribute",
   blocks.length > 0 && blocks[0].key === "warm-paper" &&
   css.indexOf('[data-skin="warm-paper"]') === -1);
@@ -97,7 +105,7 @@ blocks.forEach(function (b) {
   });
 });
 check("every skin clears the rule in every role", !failures.length, failures.slice(0, 3).join("; "));
-check("and the tightest measurement across all twenty four is stated",
+check("and the tightest measurement across all of them is stated",
   worstOverall.r > 0,
   worstOverall.skin + ", " + worstOverall.role + ", " + worstOverall.r.toFixed(2) +
   ":1 against " + worstOverall.need.toFixed(1));
@@ -125,7 +133,8 @@ check("every type stack ends in a generic family, so a missing webfont still rea
 
 /* ------------------------------------------------------------- the module */
 const mod = read("js/skins.js");
-check("the module lists all twenty four", (mod.match(/key: "/g) || []).length === 24,
+check("the module lists every skin",
+  (mod.match(/key: "/g) || []).length === data.skins.length,
   (mod.match(/key: "/g) || []).length + " entries");
 check("the default needs no stylesheet of its own",
   /export const DEFAULT = "warm-paper"/.test(mod));
@@ -139,8 +148,12 @@ check("the default carries no face of its own, so a fresh phone downloads no typ
   /\{ key: "warm-paper", layout: "cards", base: 22, group: "daylight" \}/.test(mod));
 
 const withFace = (mod.match(/face: "/g) || []).length;
-check("twenty of the twenty four want type the phone lacks, four want none",
-  withFace === 20, withFace + " needing a face");
+// The four that need no download are the ones on a face every phone has.
+const noFace = data.skins.filter((x) => ["system", "verdana", "georgia"]
+  .indexOf(x.font) >= 0).length;
+check("the skins wanting a downloaded face are the ones not on a system face",
+  withFace === data.skins.length - noFace,
+  withFace + " needing a face, " + noFace + " on a system face");
 
 /* The faces are ours, and every one a skin asks for has to exist. */
 const fontsCss = read("css/fonts.css");
@@ -241,7 +254,8 @@ check("the current one is not shown by colour alone",
 check("a long tab label wraps instead of widening the pill",
   /\.tab \{[^}]*overflow-wrap: anywhere;/.test(style));
 check("the page leaves room for the pill to float over",
-  /padding-bottom: calc\(96px \+ env\(safe-area-inset-bottom/.test(style));
+  /padding-bottom: var\(--pill-room,/.test(style) &&
+  /env\(safe-area-inset-bottom/.test(style));
 
 /* --------------------------------------------- the camera screen is one page
 
@@ -258,8 +272,10 @@ check("it is recalculated when the viewport changes",
   /visualViewport\.addEventListener\("resize", fitCameraScreen\)/.test(app));
 
 /* The pill sits low without standing on the home indicator. */
+// The number itself is measured at runtime now, because a fixed one was
+// short by up to sixty pixels once the iOS toolbar lifted the pill.
 check("and the page reserves the matching room",
-  /padding-bottom: calc\(96px \+ env\(safe-area-inset-bottom, 0px\) \/ 4\)/.test(style));
+  /padding-bottom: var\(--pill-room,[\s\S]{0,24}calc\(96px/.test(style));
 
 /* The lozenge that slides between the three. */
 const markup = read("index.html");
@@ -313,8 +329,14 @@ check("there is a picker and a way back to the ordinary look",
   /id="skin-pick"/.test(index) && /id="skin-reset"/.test(index));
 
 /* one row, eight layouts */
+// The point of this one is that the time comes out as its own span, so the
+// eight layouts can place it where each of them wants. It used to name the
+// exact expression, clockTime(reminder.dueAt), which broke when the stored
+// time stopped moving and the row started asking which occurrence is current
+// instead. What matters is that a clock time is emitted in that span.
 check("the row emits the time on its own, for the layouts that place it",
-  /class="when"/.test(app) && /clockTime\(reminder\.dueAt\)/.test(app));
+  /class="when"/.test(app) && /clockTime\(/.test(app) &&
+  /class="when"[\s\S]{0,120}clockTime\(/.test(app));
 check("and still emits the state, the title and the rest of the line",
   /class="title"/.test(app) && /class="meta"/.test(app) && /class="status"/.test(app));
 check("a missing time renders as nothing rather than a dangling colon",
@@ -344,7 +366,39 @@ check("every skin has a name in the dictionary", !missingNames.length,
 check("no skin name is left in English in the other two languages",
   !/"skin\.[a-z0-9-]+":\s*\{ en: "([^"]+)",\s*nl: "\1",\s*fr: "\1"/.test(dict));
 
+/* ------------------------------------------------- the chrome band
+   The header was painted with --ink and --paper, and ink is the text colour,
+   so on all eleven dark palettes it came out as a bright white band across a
+   dark app. The sober dark skin is what made it obvious. --bar and --on-bar
+   always resolve to a dark surface with light type. R2.11. */
+const barSkins = data.skins.map((s) => {
+  const sel = s.key === "warm-paper" ? ":root {"
+    : ':root[data-skin="' + s.key + '"] {';
+  const at = css.indexOf(sel);
+  const block = at < 0 ? "" : css.slice(at, css.indexOf("}", at));
+  const bar = (block.match(/--bar: (#[0-9A-Fa-f]{6})/) || [])[1];
+  const on = (block.match(/--on-bar: (#[0-9A-Fa-f]{6})/) || [])[1];
+  return { key: s.key, bar: bar, on: on };
+});
+
+check("every skin declares a chrome band",
+  barSkins.every((s) => s.bar && s.on),
+  barSkins.filter((s) => !s.bar).map((s) => s.key).join(",") || "all present");
+
+check("no skin has a header brighter than its own type",
+  barSkins.every((s) => lum(s.bar) < 0.4),
+  barSkins.filter((s) => lum(s.bar) >= 0.4).map((s) => s.key).join(",") ||
+  "all dark");
+
+check("and the header type clears 4.5:1 on every one of them",
+  barSkins.every((s) => ratio(s.on, s.bar) >= 4.5),
+  "tightest " + Math.min.apply(null, barSkins.map(
+    (s) => Math.round(ratio(s.on, s.bar) * 100) / 100)) + ":1");
+
+check("the stylesheet paints the header from the band, not from the ink",
+  /\.topbar \{[^}]*background: var\(--bar/.test(read("css/style.css")));
+
 console.log(results.join("\n"));
 const failed = results.filter(function (r) { return r.indexOf("FAIL") === 0; });
 console.log("\n" + (results.length - failed.length) + " passed, " + failed.length + " failed");
-process.exit(failed.length ? 1 : 0);
+process.exit(failed.length ? 1 : 0)

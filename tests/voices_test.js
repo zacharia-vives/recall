@@ -244,6 +244,40 @@ async function run() {
       mapAt > 0 && mapAt < modAt, "map at " + mapAt + ", module at " + modAt);
   }
 
+  /* ---- which voice reads the words, and what happens when none can
+
+     Two bugs, one line apart. The voice she picked in the settings was
+     looked up across every voice on the phone rather than only the ones that
+     speak the language being read, so picking a French voice once meant
+     English and Dutch came out French from then on, in every language,
+     permanently. And when nothing matched at all it took the first voice the
+     phone listed, which on a Belgian phone is French. Her own language is the
+     fallback now. R2.14. */
+
+  const speechSrc = speech;
+
+  check("a stored voice is only used for the language it speaks",
+    !/allVoices\(\)\.find\(\(v\) => v\.name === mine\)/.test(speechSrc) &&
+    /list\.find\(\(v\) => v\.name === mine\)/.test(speechSrc));
+
+  check("nothing falls back to the first voice on the phone any more",
+    !/return any\.length \? any\[0\] : null/.test(speechSrc));
+
+  check("the fallback is the language she set the app to",
+    /const hers = i18n\.spokenLang\(\);/.test(speechSrc) &&
+    /bestOf\(voicesFor\(hers\), hers\)/.test(speechSrc));
+
+  check("and it does not look twice when that is the language already",
+    /hers\.slice\(0, 2\)\.toLowerCase\(\) !== useLang\.slice\(0, 2\)\.toLowerCase\(\)/
+      .test(speechSrc));
+
+  check("with no voice at all it names none and lets the browser choose",
+    /\n  return null;\n\}/.test(speechSrc) &&
+    /u\.lang = \(voice && voice\.lang\) \|\| useLang;/.test(speechSrc));
+
+  check("a voice the phone calls remote still beats one in the wrong language",
+    /return onDevice\.length \? onDevice : sameLang;/.test(speechSrc));
+
   console.log(results.join("\n"));
   const failed = results.filter((r) => r.indexOf("FAIL") === 0);
   console.log("\n" + (results.length - failed.length) + " passed, " + failed.length + " failed");
