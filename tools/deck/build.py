@@ -468,7 +468,9 @@ L.section("sec_road", "06", "what comes next",
           "What was cut, what was always next, and what a jury asked for.")
 
 L.points("roadmap", "the roadmap", "Everything that is next", [
-    ("itsme", "To prove who signed a legal document."),
+    ("itsme, FranceConnect, and after that",
+     "To prove who really signed a legal document. Belgium first, France "
+     "next, then a country at a time."),
     ("Social media", "The people she saved, and what they post."),
     ("Web push", "Reminders while the app is closed."),
     ("Multiple keepers", "The 6.99 and 14.99 tiers need it."),
@@ -476,7 +478,9 @@ L.points("roadmap", "the roadmap", "Everything that is next", [
     ("Mobility, memory walks", "Needs a native shell."),
     ("Faces, on the device", "Article 9. Consent design first."),
     ("Self-hosting", "Closes the loudest DPIA finding."),
-    ("FranceConnect, EU wallet", "Same seam. eIDAS 2.0, 2027."),
+    ("One seam, every country",
+     "All of them are OpenID Connect, so the app side is one function that "
+     "exists already. The EU wallet, 2027, opens the rest."),
     ("The cut list", "Unlink, torch, asking out loud."),
 ], columns=2, head_size=92,
    note="No API exists to read a private WhatsApp inbox, so we will never "

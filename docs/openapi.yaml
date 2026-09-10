@@ -1,0 +1,402 @@
+openapi: 3.0.3
+
+# The partner API, written out so it can be read by a machine as well as by a
+# person. docs/api.md is the prose version and stays the one to read first;
+# this is the same thing in a form Swagger UI, Postman or a generator can use,
+# which is what a care organisation's own developer will ask for.
+#
+# The shape is unusual and deliberately so: every call is a POST to an RPC
+# endpoint rather than REST over /cards. That is because the whole surface is
+# Postgres functions behind PostgREST, and a function is the only place we can
+# put "one key reaches one household, may write but never read, and only while
+# her consent stands" so that it cannot be got around by asking a different
+# way.
+
+info:
+  title: Recall partner API
+  version: "1.0.0"
+  description: |
+    Lets a care organisation's own software put a card on one keeper's phone
+    without anybody retyping it.
+
+    **The three rules.** One key reaches one household and no other. A key may
+    write but never read the contents of a card. Consent gates a partner
+    exactly as it gates a person: the moment the keeper withdraws it, every
+    call below starts failing.
+
+    **The key is the credential.** There is no session and no login, because a
+    partner's server has no session. The key travels in the `secret` field of
+    the body, not in a header, so it is never in a URL or a proxy log.
+
+    **What is deliberately absent:** there is no endpoint that returns the text
+    of a card, the photograph on it, or anything the keeper has read. A
+    scheduling system has no business reading her post.
+  contact:
+    name: Recall
+    url: https://zacharia-vives.github.io/recall
+  license:
+    name: Student project, VIVES Kortrijk
+
+servers:
+  - url: https://xoczuvvxengzkcxybfbx.supabase.co/rest/v1/rpc
+    description: Production, Frankfurt (eu-central-1)
+
+tags:
+  - name: Setup
+    description: Called once, when a partner configures the integration.
+  - name: Writing
+    description: Needs a key with the write scope.
+  - name: Reading
+    description: Needs a key with the read scope. Titles and times only.
+
+components:
+  securitySchemes:
+    projectKey:
+      type: apiKey
+      in: header
+      name: apikey
+      description: |
+        The Supabase project's anonymous key, which lets the request reach
+        PostgREST at all. It grants nothing on its own: every function below
+        authorises on the `secret` in the body.
+
+  schemas:
+    Secret:
+      type: string
+      pattern: '^rk_[A-Za-z0-9]{16,}$'
+      example: rk_9f3c1a77b20d4e56
+      description: The partner key. Issued once, shown once, revocable.
+
+    Ok:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+          example: true
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A plain sentence, safe to show a support engineer.
+          enum:
+            - that key is not known
+            - that key was revoked
+            - that key may not write
+            - this household has not agreed to sharing, or has stopped
+          example: this household has not agreed to sharing, or has stopped
+
+    PingBody:
+      type: object
+      required: [secret]
+      properties:
+        secret:
+          $ref: '#/components/schemas/Secret'
+
+    PingReply:
+      allOf:
+        - $ref: '#/components/schemas/Ok'
+        - type: object
+          properties:
+            household:
+              type: string
+              example: Familie Devos
+              description: The household's own name, so a setup screen can
+                show which one the key reaches.
+            scopes:
+              type: array
+              items:
+                type: string
+                enum: [read, write]
+              example: [read, write]
+            can_write:
+              type: boolean
+              example: true
+
+    AddCardBody:
+      type: object
+      required: [secret, title]
+      properties:
+        secret:
+          $ref: '#/components/schemas/Secret'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Kinesitherapie, dinsdag
+        kind:
+          type: string
+          enum: [person, letter, place, list]
+          default: letter
+        happens_at:
+          type: string
+          format: date-time
+          example: "2026-09-15T09:30:00Z"
+        place:
+          type: string
+          example: AZ Groeninge, Kortrijk
+          description: |
+            What the maps buttons search for. A real address gets her there;
+            an internal room code does not.
+        people:
+          type: array
+          items:
+            type: string
+          example: [kinesist Devos]
+        spoken_text:
+          type: string
+          example: Kinesitherapie op dinsdag om half tien.
+          description: |
+            What the app reads out loud when she presses the card. Write it as
+            a sentence a person would say, not as a database row:
+            "Kinesitherapie op dinsdag om half tien", never
+            "APPT KINE 15/09 09:30".
+        phone:
+          type: string
+          example: 056 63 30 00
+
+    AddCardReply:
+      allOf:
+        - $ref: '#/components/schemas/Ok'
+        - type: object
+          properties:
+            card:
+              type: string
+              format: uuid
+
+    SetReminderBody:
+      type: object
+      required: [secret, card, due_at]
+      properties:
+        secret:
+          $ref: '#/components/schemas/Secret'
+        card:
+          type: string
+          format: uuid
+          description: |
+            Must already be in this household. A card belonging to another
+            household is refused, which is rule one enforced a level down
+            rather than trusted.
+        due_at:
+          type: string
+          format: date-time
+          example: "2026-09-14T18:00:00Z"
+        repeat:
+          type: string
+          enum: [none, daily, twice_daily, weekly]
+          default: none
+        kind:
+          type: string
+          enum: [normal, call]
+          default: normal
+          description: A call reminder shows a dial button, using the phone
+            number on the card.
+        spoken_text:
+          type: string
+          example: Bel de kinesist.
+
+    SetReminderReply:
+      allOf:
+        - $ref: '#/components/schemas/Ok'
+        - type: object
+          properties:
+            reminder:
+              type: string
+              format: uuid
+
+    UpcomingBody:
+      type: object
+      required: [secret]
+      properties:
+        secret:
+          $ref: '#/components/schemas/Secret'
+        days:
+          type: integer
+          minimum: 1
+          maximum: 60
+          default: 7
+
+    UpcomingReply:
+      allOf:
+        - $ref: '#/components/schemas/Ok'
+        - type: object
+          properties:
+            upcoming:
+              type: array
+              items:
+                type: object
+                properties:
+                  reminder:
+                    type: string
+                    format: uuid
+                  card:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                    example: Kinesitherapie, dinsdag
+                  due_at:
+                    type: string
+                    format: date-time
+                  repeat:
+                    type: string
+                    enum: [none, daily, twice_daily, weekly]
+                  kind:
+                    type: string
+                    enum: [normal, call]
+                  done:
+                    type: boolean
+
+    MarkDoneBody:
+      type: object
+      required: [secret, reminder]
+      properties:
+        secret:
+          $ref: '#/components/schemas/Secret'
+        reminder:
+          type: string
+          format: uuid
+
+security:
+  - projectKey: []
+
+paths:
+  /api_ping:
+    post:
+      tags: [Setup]
+      summary: Check a key, and say what it can do
+      description: |
+        Call this from the partner's own configuration screen, so a wrong key
+        is caught while somebody is setting it up rather than at six in the
+        morning when a reminder was supposed to go off.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PingBody'
+      responses:
+        "200":
+          description: The key is live.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PingReply'
+        "400":
+          description: Not known, or revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api_add_card:
+    post:
+      tags: [Writing]
+      summary: Put one card in this household
+      description: |
+        The card appears on the keeper's phone at her next sync and is read out
+        loud like any other. In her own activity list the actor is shown as
+        "a connected system", in her language, because there are no silent
+        writers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddCardBody'
+      responses:
+        "200":
+          description: Written.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddCardReply'
+        "400":
+          description: |
+            Key unknown, revoked, read-only, or the household's consent has
+            been withdrawn.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api_set_reminder:
+    post:
+      tags: [Writing]
+      summary: Hang a reminder on a card in this household
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetReminderBody'
+      responses:
+        "200":
+          description: Set.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetReminderReply'
+        "400":
+          description: |
+            As above, or the card belongs to a different household.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api_upcoming:
+    post:
+      tags: [Reading]
+      summary: What is due, as titles and times
+      description: |
+        Titles and times, never the contents of a card and never the
+        photograph on it. This is the read half of the asymmetry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpcomingBody'
+      responses:
+        "200":
+          description: The list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpcomingReply'
+        "400":
+          description: Key unknown, revoked, or consent withdrawn.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api_mark_done:
+    post:
+      tags: [Writing]
+      summary: Mark a reminder done
+      description: |
+        For when the visit actually happened and the partner's system knows it
+        before we do.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkDoneBody'
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ok'
+        "400":
+          description: Key unknown, revoked, read-only, or consent withdrawn.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

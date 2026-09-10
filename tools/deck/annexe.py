@@ -9,7 +9,7 @@ one in the repository or in Notion, not a rounded-up version of it.
 """
 
 import layout as L
-from PIL import ImageDraw
+from PIL import Image, ImageDraw
 
 W, H = L.W, L.H
 
@@ -107,3 +107,88 @@ L.points_ink("a_docs", "annexe  ·  the documents", "Where everything is written
     "**Both apps, live** — zacharia-vives.github.io/recall",
 ], columns=2, head_size=96,
    note="The long tables live in the repository, next to the code.")
+
+
+# ------------------------------------------------------------------- the api
+def swagger():
+    """The partner API as a machine-readable spec, and the real Swagger UI.
+
+    A care organisation's own developer asks for this before they ask for
+    anything else, so it is worth being able to put the actual page up rather
+    than describing it. docs/openapi.yaml is a valid OpenAPI 3.0.3 document;
+    the picture is Swagger UI rendering it, not a mock of Swagger UI.
+    """
+    im = Image.new("RGB", (L.W, L.H), L.INKY)
+    d = ImageDraw.Draw(im, "RGBA")
+    d.ellipse([1420, -200, 2340, 540], fill=(255, 255, 255, 10))
+
+    d.text((L.MARGIN, L.MARGIN), "  ".join("annexe  ·  the api".upper()),
+           font=L.body(28, 700), fill=L.EMBER, anchor="la")
+    d.rounded_rectangle([L.MARGIN, L.MARGIN + 46, L.MARGIN + 64,
+                         L.MARGIN + 52], 3, fill=L.EMBER)
+    y = L.MARGIN + 74
+    hf = L.display(88)
+    d.text((L.MARGIN, y), "The API, as a spec", font=hf, fill=L.BONE,
+           anchor="la")
+    y += int(88 * 1.14) + 26
+
+    # The capture, on a light card because Swagger UI is a light page and
+    # dropping it straight on the ink would look like a mistake.
+    shot = Image.open("swagger_over.png").convert("RGB")
+    box_w = 1040
+    sc = box_w / shot.width
+    room_h = L.H - y - L.MARGIN - 30
+    if shot.height * sc > room_h:
+        sc = room_h / shot.height
+    shot = shot.resize((int(shot.width * sc), int(shot.height * sc)),
+                       Image.LANCZOS)
+    pad = 14
+    bx, by = L.MARGIN, int(y)
+    d.rounded_rectangle([bx, by, bx + shot.width + pad * 2,
+                         by + shot.height + pad * 2], 16, fill=(252, 250, 247))
+    im.paste(shot, (bx + pad, by + pad))
+    d.text((bx, by + shot.height + pad * 2 + 22),
+           "Swagger UI, rendering docs/openapi.yaml",
+           font=L.body(24, 500), fill=L.MIST, anchor="la")
+
+    # One real call beside it, in mono, because a jury asks what it looks like.
+    cx = bx + shot.width + pad * 2 + 46
+    cw = L.W - L.MARGIN - cx
+    cy = by
+    for title, lines in (
+        ("POST /api_add_card",
+         ['{ "secret": "rk_\u2026",',
+          '  "title": "Kinesitherapie, dinsdag",',
+          '  "happens_at": "2026-09-15T09:30Z",',
+          '  "place": "AZ Groeninge, Kortrijk",',
+          '  "spoken_text": "Kinesitherapie op',
+          '                  dinsdag om half tien." }',
+          '',
+          '\u2192 { "ok": true, "card": "\u2026" }']),
+        ("When she has withdrawn consent",
+         ['\u2192 400  { "message": "this household',
+          '        has not agreed to sharing,',
+          '        or has stopped" }'])):
+        d.text((cx, cy), title, font=L.body(26, 700), fill=L.SAND,
+               anchor="la")
+        cy += 40
+        mono = L.warm._face("mono-400-latin.ttf", 21)
+        block_h = len(lines) * 30 + 26
+        d.rounded_rectangle([cx, cy, cx + cw, cy + block_h], 14,
+                            fill=L.CARD_INK)
+        ly = cy + 14
+        for ln in lines:
+            d.text((cx + 18, ly), ln, font=mono, fill=L.MIST, anchor="la")
+            ly += 30
+        cy += block_h + 34
+
+    d.text((cx, L.H - L.MARGIN - 46),
+           "Five endpoints. Four write,",
+           font=L.body(25, 500), fill=L.EMBER, anchor="la")
+    d.text((cx, L.H - L.MARGIN - 14),
+           "one reads titles and times only.",
+           font=L.body(25, 500), fill=L.EMBER, anchor="la")
+    return L.save(im, "a_swagger")
+
+
+swagger()

@@ -67,8 +67,9 @@ def _model(name, kick, head, shot, figures, line, url):
 
     d.text((L.MARGIN, H - 116), line, font=L.body(30, 500), fill=MAROON,
            anchor="la")
-    d.text((L.MARGIN, H - 74), "Open it:  " + url, font=L.body(25, 500),
-           fill=PANEL, anchor="la")
+    d.text((L.MARGIN, H - 74),
+           "Click the chart to open it live  ·  " + url,
+           font=L.body(25, 500), fill=PANEL, anchor="la")
     return L.save(im, name)
 
 

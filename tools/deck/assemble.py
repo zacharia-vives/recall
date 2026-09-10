@@ -57,12 +57,12 @@ ORDER = [
      "the family model gets users and proves it, the organisation model pays "
      "the salary, and no care organisation buys software with no users. "
      "60 seconds."),
-    ("money", None,
+    ("money", "link:https://zacharia-vives.github.io/recall/m/a5d1392bbee7da00d8/money-over-time.html",
      "MATTIECE. Year one and year three. Say the break-even line out loud "
      "before anybody asks: 752 households at the price we can sell today, "
      "537 once multiple keepers ship. Volunteering that is worth more than "
      "defending it. 60 seconds."),
-    ("funding", None,
+    ("funding", "link:https://zacharia-vives.github.io/recall/m/a5d1392bbee7da00d8/funding-map.html",
      "MATTIECE or ZACHARIA. Calls, not programmes. The one that matters is "
      "imec.istart, which closes 30 September. Finish on the Caring "
      "Technology Principles line, it is the one the Belgian care sector "
@@ -179,6 +179,12 @@ ORDER = [
                          "one gate written once."),
     ("a_arch", None, "If asked about the stack. No framework, no build step, "
                      "local first, and why."),
+    ("a_swagger", None,
+     "If asked about the API, or if a developer on the jury asks for a spec. "
+     "docs/openapi.yaml is a real OpenAPI 3.0.3 document and that is real "
+     "Swagger UI rendering it, not a picture of Swagger UI. The one to point "
+     "at is the error: a partner call fails the moment she withdraws "
+     "consent."),
     ("a_a11y", None, "If asked about accessibility. Zero Axe violations, and "
                      "the honest gap."),
     ("a_costs", None, "If asked about unit economics. Three cents a household "
@@ -223,7 +229,16 @@ def build(out="Recall-end-presentation.pptx"):
         still = numbered(name, made + 1, len(ORDER))
         slide = prs.slides.add_slide(blank)
 
-        if movie:
+        if movie and movie.startswith("link:"):
+            # A slide whose picture opens the live page. PowerPoint has no
+            # dependable way to run a web page inside a slide, so the click
+            # takes the room to the real thing full screen instead, and the
+            # capture underneath means the slide still says something when
+            # there is no network.
+            pic = slide.shapes.add_picture(still, 0, 0, Inches(W_IN),
+                                           Inches(H_IN))
+            pic.click_action.hyperlink.address = movie[5:]
+        elif movie:
             path = os.path.join(DL, movie)
             if not os.path.exists(path):
                 print("  MISSING FILM", path)
