@@ -27,6 +27,16 @@ W, H = warm.W, warm.H
 PEACH, CREAM, PANEL = warm.PEACH, warm.CREAM, warm.PANEL
 RUST, MAROON, INK = warm.RUST, warm.MAROON, warm.INK
 
+# The dark half of the deck: the dividers and the annexe. These are the
+# colours the two live models on the site already use, which is the reason
+# for choosing them over a second invented dark palette.
+INKY = (34, 22, 16)          # the ground
+CARD_INK = (48, 32, 24)      # a raised card on it
+BONE = (247, 240, 232)       # display type
+EMBER = (230, 130, 80)       # kickers, rules, card edges
+SAND = (255, 190, 149)       # a card's title
+MIST = (226, 210, 198)       # body text
+
 MARGIN = 116
 OUT = os.path.dirname(os.path.abspath(__file__))
 
@@ -186,26 +196,129 @@ def title(name, big, sub=None, tag=None):
 
 
 def section(name, number, label, big, sub=None):
-    """A divider, on the deep panel colour with cream type."""
-    im = Image.new("RGB", (W, H), PANEL)
-    d = ImageDraw.Draw(im, "RGBA")
-    # The same flat shapes as the peach ground, a shade lighter.
-    for x, y0, w, h in ((-200, 560, 820, 560), (1500, -160, 860, 700)):
-        d.ellipse([x, y0, x + w, y0 + h], fill=(255, 255, 255, 18))
+    """A divider on the near-black ground: style C's half of the choice.
 
-    d.text((W - MARGIN, H - 96), number, font=display(420),
-           fill=(224, 118, 66), anchor="rs")
+    The dark break is the point. Six of these bracket the peach content
+    slides, and they are the same near-black the two live models on the site
+    already use, so a divider, a model capture and the annexe are all one
+    material rather than three."""
+    im = Image.new("RGB", (W, H), INKY)
+    d = ImageDraw.Draw(im, "RGBA")
+    d.ellipse([1420, -200, 2340, 540], fill=(255, 255, 255, 10))
+
     d.text((MARGIN, 236), "  ".join(label.upper()), font=body(30, 700),
-           fill=(255, 206, 172), anchor="ls")
-    d.rounded_rectangle([MARGIN, 262, MARGIN + 72, 268], 3,
-                        fill=(255, 206, 172))
-    fnt = display(116)
-    y = 340
+           fill=EMBER, anchor="ls")
+    d.rounded_rectangle([MARGIN, 262, MARGIN + 72, 268], 3, fill=EMBER)
+    fnt = display(120)
+    y = 330
     for line in wrap(d, big, fnt, W - MARGIN * 2 - 300):
-        d.text((MARGIN, y), line, font=fnt, fill=CREAM, anchor="la")
-        y += 134
+        d.text((MARGIN, y), line, font=fnt, fill=BONE, anchor="la")
+        y += 138
     if sub:
-        para(d, (MARGIN, y + 30), sub, body(36, 300), (255, 222, 198), 1180)
+        para(d, (MARGIN, y + 30), sub, body(36, 300), MIST, 1180)
+    # Last, so the number sits under the type rather than over it.
+    d.text((W - MARGIN, H - 96), number, font=display(420),
+           fill=(58, 38, 28), anchor="rs")
+    return save(im, name)
+
+
+def _ink_height(d, items, columns, scale, col):
+    """The tallest column of ink cards, so they can be fitted before drawing."""
+    cols = 2 if columns == 2 else 1
+    per = (len(items) + cols - 1) // cols
+    tallest = 0
+    for c in range(cols):
+        h = 0
+        for item in items[c * per:(c + 1) * per]:
+            h += _ink_card_height(d, item, scale, col) + int(22 * scale)
+        tallest = max(tallest, h)
+    return tallest
+
+
+def _ink_card_height(d, item, scale, col):
+    """One card: its padding, its title and its line."""
+    inner = col - 68
+    if isinstance(item, tuple):
+        t, line = item
+        tf = body(int(36 * scale), 700)
+        lf = body(int(28 * scale), 300)
+        h = int(30 * scale)
+        h += len(wrap(d, t, tf, inner)) * int(36 * scale * 1.2)
+        h += int(10 * scale)
+        h += len(wrap(d, line, lf, inner)) * int(28 * scale * 1.34)
+        return h + int(30 * scale)
+    lf = body(int(31 * scale), 300)
+    h = int(28 * scale)
+    h += len(wrap(d, item.replace("**", ""), lf, inner)) * int(31 * scale * 1.34)
+    return h + int(28 * scale)
+
+
+def points_ink(name, kick, head, items, note=None, columns=2, head_size=96):
+    """Style F: the near-black ground, one raised card per item.
+
+    Used for the annexe, so the detail slides read as a different part of
+    the talk the moment one goes up, without a word being said."""
+    im = Image.new("RGB", (W, H), INKY)
+    d = ImageDraw.Draw(im, "RGBA")
+    d.ellipse([1420, -200, 2340, 540], fill=(255, 255, 255, 10))
+
+    d.text((MARGIN, MARGIN), "  ".join(kick.upper()), font=body(28, 700),
+           fill=EMBER, anchor="la")
+    d.rounded_rectangle([MARGIN, MARGIN + 46, MARGIN + 64, MARGIN + 52], 3,
+                        fill=EMBER)
+    y = MARGIN + 74
+    hf = display(head_size)
+    for line in wrap(d, head, hf, W - MARGIN * 2):
+        d.text((MARGIN, y), line, font=hf, fill=BONE, anchor="la")
+        y += int(head_size * 1.14)
+    y += 30
+
+    probe = ImageDraw.Draw(Image.new("RGB", (10, 10)))
+    if note:
+        note_lines = len(wrap(probe, note, body(28, 500), W - MARGIN * 2))
+    else:
+        note_lines = 0
+    limit = H - MARGIN - (30 + note_lines * 38 if note else 0)
+
+    cols = 2 if columns == 2 else 1
+    gap = 60
+    col = (W - MARGIN * 2 - (gap if cols == 2 else 0)) / cols
+
+    # Same shrink-to-fit rule as the cream slides: small beats clipped.
+    scale = 1.0
+    for _ in range(14):
+        if y + _ink_height(probe, items, columns, scale, col) <= limit:
+            break
+        scale -= 0.05
+
+    per = (len(items) + cols - 1) // cols
+    for c in range(cols):
+        x = MARGIN + c * (col + gap)
+        cy = y
+        for item in items[c * per:(c + 1) * per]:
+            hh = _ink_card_height(probe, item, scale, col)
+            d.rounded_rectangle([x, cy, x + col, cy + hh], 20, fill=CARD_INK)
+            d.rounded_rectangle([x, cy, x + 7, cy + hh], 20, fill=EMBER)
+            if isinstance(item, tuple):
+                t, line = item
+                ty = cy + int(30 * scale)
+                ty = para(d, (x + 34, ty), t, body(int(36 * scale), 700),
+                          SAND, col - 68, leading=1.2)
+                para(d, (x + 34, ty + int(10 * scale)), line,
+                     body(int(28 * scale), 300), MIST, col - 68, leading=1.34)
+            else:
+                para(d, (x + 34, cy + int(28 * scale)), item,
+                     body(int(31 * scale), 300), MIST, col - 68, leading=1.34,
+                     bold=body(int(31 * scale), 700))
+            cy += hh + int(22 * scale)
+
+    if note:
+        nf = body(28, 500)
+        lines = wrap(d, note, nf, W - MARGIN * 2)
+        ny = H - MARGIN - 24 - (len(lines) - 1) * 38
+        for ln in lines:
+            d.text((MARGIN, ny), ln, font=nf, fill=EMBER, anchor="la")
+            ny += 38
     return save(im, name)
 
 
