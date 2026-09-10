@@ -213,7 +213,9 @@ def _points_height(d, items, columns, note, scale=1.0):
         for item in items[c * per:(c + 1) * per]:
             if isinstance(item, tuple):
                 t, line = item
-                h += int(52 * scale)
+                tf = body(int(38 * scale), 700)
+                h += len(wrap(d, t, tf, inner - 34)) * int(38 * scale * 1.18)
+                h += int(12 * scale)
                 h += len(wrap(d, line, body(int(29 * scale), 300),
                               inner - 34)) * int(29 * scale * 1.34)
                 h += int(26 * scale)
@@ -234,7 +236,12 @@ def points(name, kick, head, items, note=None, columns=1, head_size=96):
     y = headline(im, head, y, size=head_size)
     y += 24
     top = y
-    limit = H - MARGIN - (96 if note else 0)
+    if note:
+        probe0 = ImageDraw.Draw(Image.new("RGB", (10, 10)))
+        note_lines = len(wrap(probe0, note, body(28, 500), W - MARGIN * 2))
+    else:
+        note_lines = 0
+    limit = H - MARGIN - (30 + note_lines * 38 if note else 0)
 
     # Measure first, then draw the card to fit. A card sized to the slide
     # rather than to its contents leaves a pool of empty cream under three
@@ -265,9 +272,13 @@ def points(name, kick, head, items, note=None, columns=1, head_size=96):
                 t, line = item
                 d.rounded_rectangle([x, yy + 12, x + 13, yy + 40], 6,
                                     fill=PANEL)
-                d.text((x + 34, yy), t, font=body(int(38 * scale), 700),
-                       fill=RUST, anchor="la")
-                yy = para(d, (x + 34, yy + int(52 * scale)), line,
+                # The title wraps like everything else. It did not, so a
+                # long one ("What a care organisation is actually buying")
+                # ran straight out of the column and off the card.
+                tf = body(int(38 * scale), 700)
+                yy = para(d, (x + 34, yy), t, tf, RUST, inner - 34,
+                          leading=1.18)
+                yy = para(d, (x + 34, yy + int(12 * scale)), line,
                           body(int(29 * scale), 300), INK,
                           inner - 34, leading=1.34)
                 yy += int(26 * scale)
@@ -279,8 +290,14 @@ def points(name, kick, head, items, note=None, columns=1, head_size=96):
                           bold=body(int(33 * scale), 700))
                 yy += int(22 * scale)
     if note:
-        d.text((MARGIN, H - MARGIN - 30), note, font=body(28, 500),
-               fill=MAROON, anchor="ls")
+        # Wrapped, and measured from the card rather than from a fixed
+        # baseline. As one unwrapped line it ran off the right edge.
+        nf = body(28, 500)
+        lines = wrap(d, note, nf, W - MARGIN * 2)
+        ny = max(box_bottom + 30, H - MARGIN - 24 - (len(lines) - 1) * 38)
+        for ln in lines:
+            d.text((MARGIN, ny), ln, font=nf, fill=MAROON, anchor="la")
+            ny += 38
     return save(im, name)
 
 

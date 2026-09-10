@@ -171,10 +171,128 @@ L.points("model", "the model", "Two customers, deliberately both", [
 charts.money()
 charts.funding()
 
-# The campaign, as Julia delivered it. Only the body text was darkened.
+# Page one of Julia's campaign deck, as delivered: only the body text was
+# darkened, and the page is supersampled so the type is crisp.
 L.full("campaign1", "ad_touched_p1.png")
-L.full("campaign2", "ad_touched_p2.png")
-L.full("campaign3", "ad_touched_p3.png")
+
+
+def campaign2():
+    """The social half, recomposed in the deck's own grid.
+
+    Julia's page had the four logos in a block and the copy as one run of
+    text. Same content, same images, laid out on the deck's columns so it
+    reads from the back of a room.
+    """
+    im = L.ground()
+    y = L.kicker(im, "the campaign")
+    d = ImageDraw.Draw(im)
+    fnt = L.display(84)
+    yy = y
+    for line in L.wrap(d, "And the people who install it for them", fnt, 980):
+        d.text((L.MARGIN, yy), line, font=fnt, fill=L.MAROON, anchor="la")
+        yy += 98
+    yy += 18
+
+    top = yy
+    col = 900
+    L.card(im, [L.MARGIN, top, L.MARGIN + col, top + 330], radius=34)
+    for i, (t, line) in enumerate([
+        ("Posts, and video adverts",
+         "Instagram and Facebook for the posts; YouTube and Spotify for the "
+         "video and audio adverts."),
+        ("Aimed at 18 to 50, on purpose",
+         "Not at the person who will use Recall, but at the son or daughter "
+         "who sets the phone up for them."),
+    ]):
+        by = top + 62 + i * 148
+        d.rounded_rectangle([L.MARGIN + 44, by + 10, L.MARGIN + 57, by + 38],
+                            6, fill=L.PANEL)
+        d.text((L.MARGIN + 78, by), t, font=L.body(36, 700), fill=L.RUST,
+               anchor="la")
+        L.para(d, (L.MARGIN + 78, by + 52), line, L.body(28, 300), L.INK,
+               col - 122, leading=1.34)
+
+    # The right column, fitted to the room that is actually left rather than
+    # laid out and hoped for: the photograph ran off the bottom of the slide.
+    gx = L.MARGIN + col + 56
+    gw = W - L.MARGIN - gx
+    gtop = top
+    gbot = H - L.MARGIN
+    row_h = 168 + 34                    # tile plus its label
+    ph_room = (gbot - gtop) - row_h - 34
+
+    # Julia's photograph, at the top of the column, fitted to that room.
+    ph = Image.open("p_photo.png").convert("RGB")
+    sc = min(gw / ph.width, ph_room / ph.height)
+    ph = ph.resize((int(ph.width * sc), int(ph.height * sc)), Image.LANCZOS)
+    px = int(gx + (gw - ph.width) / 2)
+    py = int(gtop)
+    d.rounded_rectangle([px + 8, py + 10, px + ph.width + 8,
+                         py + ph.height + 10], 20, fill=(190, 110, 70, 70))
+    im.paste(ph, (px, py))
+
+    # The four platforms in one even row underneath. Named from the files as
+    # they actually are: the extraction order was not the reading order.
+    tiles = [("p_logo_ig.png", "Instagram"), ("p_logo_fb.png", "Facebook"),
+             ("p_logo_yt.png", "YouTube"), ("p_logo_sp.png", "Spotify")]
+    gap = 22
+    side = int((gw - gap * 3) / 4)
+    ty = gbot - row_h
+    for i, (path, label) in enumerate(tiles):
+        cx = gx + i * (side + gap)
+        L.card(im, [cx, ty, cx + side, ty + side], radius=24, shadow=False)
+        inset = int(side * 0.18)
+        logo = Image.open(path).convert("RGB").resize(
+            (side - inset * 2, side - inset * 2), Image.LANCZOS)
+        im.paste(logo, (int(cx + inset), int(ty + inset)))
+        d.text((cx + side / 2, ty + side + 12), label,
+               font=L.body(21, 500), fill=L.INK, anchor="ma")
+
+    L.para(d, (L.MARGIN, top + 372),
+           "A QR code on every advert, so the app is one scan away from "
+           "wherever somebody sees it: a magazine, a waiting room, a "
+           "television spot or a feed.",
+           L.body(29, 300), L.MAROON, col, leading=1.36)
+    return L.save(im, "campaign2")
+
+
+campaign2()
+
+
+def campaign3():
+    """The two pieces of creative, on equal cards with captions."""
+    im = L.ground()
+    y = L.kicker(im, "the campaign")
+    y = L.headline(im, "What the advert looks like", y, size=88)
+    y += 22
+    d = ImageDraw.Draw(im)
+
+    shots = [("p_mock_post.png", "The Instagram post",
+              "Organic, in the feed, from the Recall account"),
+             ("p_mock_poster.png", "The poster",
+              "Pharmacies, surgeries and magazines, with the QR code")]
+    room = H - y - L.MARGIN - 96
+    slot = (W - L.MARGIN * 2) / 2.0
+    for i, (path, title, cap) in enumerate(shots):
+        pic = Image.open(path).convert("RGB")
+        scale = min((slot - 260) / pic.width, room / pic.height)
+        pic = pic.resize((int(pic.width * scale), int(pic.height * scale)),
+                         Image.LANCZOS)
+        cx = L.MARGIN + slot * i + slot / 2
+        px = int(cx - pic.width / 2)
+        py = int(y + (room - pic.height) / 2)
+        pad = 26
+        L.card(im, [px - pad, py - pad, px + pic.width + pad,
+                    py + pic.height + pad], radius=30)
+        im.paste(pic, (px, py))
+        d.text((cx, y + room + 34), title, font=L.body(36, 700), fill=L.RUST,
+               anchor="ma")
+        d.text((cx, y + room + 80), cap, font=L.body(26, 300), fill=L.INK,
+               anchor="ma")
+    return L.save(im, "campaign3")
+
+
+campaign3()
 
 
 def swot():
