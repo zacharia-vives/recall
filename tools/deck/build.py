@@ -124,6 +124,8 @@ L.points("model", "the model", "Two customers, both", [
     ("What they buy", "The end of retyping."),
 ], note="Balanced, rather than leading with one.", columns=2, head_size=96)
 
+charts.costs_out()
+charts.costs_in()
 charts.money()
 charts.funding()
 

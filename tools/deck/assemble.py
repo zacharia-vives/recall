@@ -57,6 +57,17 @@ ORDER = [
      "the family model gets users and proves it, the organisation model pays "
      "the salary, and no care organisation buys software with no users. "
      "60 seconds."),
+    ("costs_out", None,
+     "MATTIECE. Money out, line by line, and the two years are different "
+     "animals: year one has no salary in it, year two has one. Land the strip "
+     "at the bottom: 65,000 to build it and six months when nothing can be "
+     "sold, before either column starts. 60 seconds."),
+    ("costs_in", None,
+     "MATTIECE. Money in, and the result. Do not soften year one: minus "
+     "40,300 is the honest number and the plan says how it is carried. Then "
+     "the break-even line out loud, because it is the question and the answer "
+     "in one sentence. 60 seconds."),
+
     ("money", "link:https://zacharia-vives.github.io/recall/m/a5d1392bbee7da00d8/money-over-time.html",
      "MATTIECE. Year one and year three. Say the break-even line out loud "
      "before anybody asks: 752 households at the price we can sell today, "

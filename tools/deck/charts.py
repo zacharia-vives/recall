@@ -97,3 +97,149 @@ def funding():
          ("Next deadline", "30 Sep", "imec.istart, Belgium call")],
         "Nine routes. One closes this month.",
         "zacharia-vives.github.io/recall/m/\u2026/funding-map.html")
+
+
+# ---------------------------------------------------------------- in and out
+#
+# These went missing. The business section used to carry a table of
+# households, revenue, costs and result, and when the money slide was
+# replaced with a capture of the live model that table went with it. So the
+# section showed where the money comes from and what the curve looks like,
+# and never once said what it costs or what comes in.
+#
+# Every figure is Mattiece's, from his own cost model. Nothing is rounded and
+# nothing is invented: where his model does not give a number, the slide says
+# so rather than filling the gap.
+
+def _ledger(im, d, x, y, w, title, sub, items, total_label, total,
+            total_colour=None, tall=None):
+    """One column of a ledger: a heading, lines with amounts, then a total.
+
+    Amounts are right-aligned on a tabular figure so the columns line up,
+    which is the whole reason anybody trusts a cost slide."""
+    pad = 34
+    line_h = 54
+    # Measured, not fixed: a subheading that wraps to two lines used to run
+    # into the first row of figures.
+    sub_font = L.body(23, 300)
+    sub_lines = len(L.wrap(d, sub, sub_font, w - pad * 2))
+    head_h = 74 + sub_lines * int(23 * 1.24) + 18
+    need = head_h + len(items) * line_h + 96
+    box_h = tall if tall else need
+    L.card(im, [x, y, x + w, y + box_h], radius=28)
+
+    d.text((x + pad, y + 30), title, font=L.body(34, 700), fill=RUST,
+           anchor="la")
+    L.para(d, (x + pad, y + 68), sub, sub_font, INK, w - pad * 2,
+           leading=1.24)
+
+    yy = y + head_h
+    money = L.warm._face("mono-400-latin.ttf", 27)
+    for label, amount in items:
+        d.text((x + pad, yy), label, font=L.body(27, 300), fill=INK,
+               anchor="la")
+        d.text((x + w - pad, yy), amount, font=money, fill=INK, anchor="ra")
+        yy += line_h
+
+    ry = y + box_h - 82
+    d.line([x + pad, ry, x + w - pad, ry], fill=(226, 198, 178), width=2)
+    d.text((x + pad, ry + 20), total_label, font=L.body(30, 700), fill=MAROON,
+           anchor="la")
+    d.text((x + w - pad, ry + 18), total,
+           font=L.warm._face("mono-700-latin.ttf", 34),
+           fill=total_colour or MAROON, anchor="ra")
+    return box_h
+
+
+OUT_Y1 = [("Running the service", "15,600"),
+          ("Marketing", "21,500"),
+          ("Legal and compliance", "4,000"),
+          ("Accounting, insurance, admin", "2,400"),
+          ("Three second-hand test devices", "1,500")]
+
+OUT_Y2 = [("One person, gross", "72,000"),
+          ("Running the service", "19,200"),
+          ("Marketing", "21,500"),
+          ("Legal, accounting, admin", "5,300"),
+          ("Devices, tooling, contingency", "2,000")]
+
+
+def costs_out():
+    """Money out, line by line, both years."""
+    im = L.ground()
+    y = L.kicker(im, "the money")
+    y = L.headline(im, "What it costs to run", y, size=92)
+    y += 22
+    d = ImageDraw.Draw(im)
+
+    gap = 44
+    col = (W - L.MARGIN * 2 - gap) / 2
+    tall = 74 + 1 * 29 + 18 + 5 * 54 + 96
+    _ledger(im, d, L.MARGIN, y, col, "Year one, lean",
+            "No salary. The build is already paid for.", OUT_Y1,
+            "Total out", "45,000", tall=tall)
+    _ledger(im, d, L.MARGIN + col + gap, y, col, "Year two onward",
+            "The year somebody gets paid to do this.", OUT_Y2,
+            "Total out", "120,000", tall=tall)
+
+    ny = y + tall + 30
+    d.rounded_rectangle([L.MARGIN, ny, W - L.MARGIN, ny + 84], 20,
+                        fill=(255, 230, 210))
+    d.text((L.MARGIN + 30, ny + 42),
+           "Before either of these: 65,000 to build it, and six months "
+           "in which nothing can be sold.",
+           font=L.body(29, 500), fill=MAROON, anchor="lm")
+    d.text((L.MARGIN, H - 74),
+           "Hosting is the small half: about three cents per household per "
+           "month, and it falls as households are added.",
+           font=L.body(27, 300), fill=MAROON, anchor="la")
+    return L.save(im, "costs_out")
+
+
+IN_Y1 = [("945 household-months at 4.99", "4,716"),
+         ("Care organisations", "0")]
+
+IN_Y3 = [("1,900 households at 79.08 a year", "150,252"),
+         ("Six organisations, 2 a resident", "21,600")]
+
+
+def costs_in():
+    """Money in, and what is left after the money out."""
+    im = L.ground()
+    y = L.kicker(im, "the money")
+    y = L.headline(im, "What comes in, and what is left", y, size=88)
+    y += 22
+    d = ImageDraw.Draw(im)
+
+    gap = 44
+    col = (W - L.MARGIN * 2 - gap) / 2
+    tall = 74 + 2 * 29 + 18 + 3 * 54 + 96
+    _ledger(im, d, L.MARGIN, y, col, "Year one",
+            "Six months building, six selling. The pilot is twenty "
+            "households, free for six months.", IN_Y1,
+            "Total in", "4,716", tall=tall)
+    _ledger(im, d, L.MARGIN + col + gap, y, col, "Year three",
+            "All three price tiers sellable, because multiple keepers has "
+            "shipped by then.", IN_Y3,
+            "Total in", "171,852", tall=tall)
+
+    # The two bottom lines: what is left, and the sentence that answers the
+    # obvious question before anybody asks it.
+    ry = y + tall + 28
+    half = (W - L.MARGIN * 2 - gap) / 2
+    for i, (label, amount, colour) in enumerate((
+            ("Year one result", "\u2212 40,300", BAD),
+            ("Year three result", "+ 26,900", GOOD))):
+        x = L.MARGIN + i * (half + gap)
+        L.card(im, [x, ry, x + half, ry + 108], radius=24, shadow=False)
+        d.text((x + 34, ry + 54), label, font=L.body(30, 700), fill=MAROON,
+               anchor="lm")
+        d.text((x + half - 34, ry + 52), amount,
+               font=L.warm._face("mono-700-latin.ttf", 46), fill=colour,
+               anchor="rm")
+
+    d.text((L.MARGIN, H - 74),
+           "Break even: 752 households at the price we can sell today, "
+           "537 once multiple keepers ship.",
+           font=L.body(29, 500), fill=MAROON, anchor="la")
+    return L.save(im, "costs_in")
